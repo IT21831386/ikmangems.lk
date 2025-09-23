@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router";
 import HomePage from "./pages/payment_home";
 import Online from "./pages/onlinepayment";
 import PaymentHistory from "./pages/PaymentHistory";
+import AdminPaymentStatus from "./pages/adminPaymentStatus";
 //import NoteDetailPage from "./pages/NoteDetailPage";
 //import toast from "react-hot-toast";
 
@@ -15,6 +16,7 @@ const App = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/online" element={<Online />} />
         <Route path="/payment-history" element={<PaymentHistory />} />
+        <Route path="/admin-payment-status" element={<AdminPaymentStatus />} />
       </Routes>
     </div>
   );
