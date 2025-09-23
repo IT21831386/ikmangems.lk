@@ -31,6 +31,7 @@ const GemsAuctionPage = () => {
   const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
   const [sortBy, setSortBy] = useState("ending_soon");
   const [searchQuery, setSearchQuery] = useState("");
+  // eslint-disable-next-line no-unused-vars
   const [selectedGems, setSelectedGems] = useState([]);
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [selectedCertifications, setSelectedCertifications] = useState([]);
@@ -193,6 +194,7 @@ const GemsAuctionPage = () => {
     "Matara",
     "Badulla",
   ];
+  // eslint-disable-next-line no-unused-vars
   const features = [
     "Natural",
     "Unheated",
