@@ -31,6 +31,7 @@ import {
   Maximize2,
 } from "lucide-react";
 
+// eslint-disable-next-line no-unused-vars
 const GemDetailPage = ({ gemId = 1, onBack }) => {
   const navigate = useNavigate();
 
