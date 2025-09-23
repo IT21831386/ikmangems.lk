@@ -1,8 +1,17 @@
 import React, { useState } from "react";
 import { User, Menu } from "lucide-react";
+import { Link } from "react-router-dom"; // import Link
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Define routes for each menu item
+  const menuItems = [
+    { name: "Home", path: "/" },
+    { name: "Auction", path: "/auction" },
+    { name: "Contact us", path: "/contact" },
+    { name: "Notifications", path: "/notifications" },
+  ];
 
   return (
     <nav className="bg-white shadow-sm border-b">
@@ -16,21 +25,19 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
-              {["Home", "Bids", "Auctions", "Contact us", "Notifications"].map(
-                (item, index) => (
-                  <a
-                    key={index}
-                    href="#"
-                    className={`px-3 py-2 text-sm font-medium ${
-                      index === 0
-                        ? "text-gray-900 hover:text-blue-600"
-                        : "text-gray-600 hover:text-blue-600"
-                    }`}
-                  >
-                    {item}
-                  </a>
-                )
-              )}
+              {menuItems.map((item, index) => (
+                <Link
+                  key={index}
+                  to={item.path} // use React Router path
+                  className={`px-3 py-2 text-sm font-medium ${
+                    index === 0
+                      ? "text-gray-900 hover:text-blue-600"
+                      : "text-gray-600 hover:text-blue-600"
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              ))}
             </div>
           </div>
 
@@ -58,17 +65,16 @@ const Navigation = () => {
       {isMenuOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
-            {["Home", "Bids", "Auctions", "Contact us", "Notifications"].map(
-              (item, index) => (
-                <a
-                  key={index}
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 block px-3 py-2 text-base font-medium"
-                >
-                  {item}
-                </a>
-              )
-            )}
+            {menuItems.map((item, index) => (
+              <Link
+                key={index}
+                to={item.path} // use React Router path
+                className="text-gray-600 hover:text-gray-900 block px-3 py-2 text-base font-medium"
+                onClick={() => setIsMenuOpen(false)} // close menu on click
+              >
+                {item.name}
+              </Link>
+            ))}
           </div>
         </div>
       )}
