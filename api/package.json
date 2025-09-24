@@ -1,25 +1,35 @@
 {
   "name": "paymentbackend",
   "version": "1.0.0",
-  "description": "",
   "main": "server.js",
-  "scripts": {
-    "dev": "nodemon server.js",
-    "start": "node server.js"
-  },
   "type": "module",
-  "keywords": [],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "src/server.js",
+    "dev": "nodemon server.js"
+  },
   "author": "",
   "license": "ISC",
+  "description": "",
   "dependencies": {
+    "express-rate-limit": "^8.1.0",
     "@upstash/ratelimit": "^2.0.5",
     "@upstash/redis": "^1.34.9",
+
+    "@tanstack/react-query": "^5.90.1",
+    "bcryptjs": "^3.0.2",
+    "body-parser": "^2.2.0",
+    "cloudinary": "^2.7.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "dotenv": "^16.5.0",
+    "dotenv": "^17.2.2",
     "express": "^4.18.2",
-    "express-rate-limit": "^8.1.0",
-    "mongoose": "^8.14.3",
-    "multer": "^2.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.1",
+    "multer": "^2.0.2",
+    "node-fetch": "^3.3.2",
+    "nodemailer": "^7.0.6",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
