@@ -1,6 +1,7 @@
 //Dana
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import PaymentHistory from "../paymentHistory";
 
 import {
   Inbox,
@@ -98,11 +99,12 @@ export default function ManageUsers() {
   const renderContent = () => {
     switch (activeSection) {
       case "dashboard":
-        return <div>Welcome to the Admin Dashboard</div>;
+        return <div>Welcome to the...</div>;
       case "users":
         return (
           <>
             <h1 className="text-2xl font-bold mb-4">User Management</h1>
+            <h1 className="text-2xl font-bold mb-4">section added for testing</h1>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -133,7 +135,7 @@ export default function ManageUsers() {
           </>
         );
       case "transactions":
-        return <div>All payment transactions go here</div>;
+        return <PaymentHistory />;
       case "mybids":
         return <div>Ongoing auctions you placed bids on</div>;
       case "profile":
