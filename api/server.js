@@ -10,6 +10,8 @@ import userRouter from "./routes/userRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import onlinePaymentRoutes from "./routes/onlinepaymentRoutes.js";
 import { connectDB } from "./config/db.js";
+import gemRoutes from "./routes/gemRoutes.js";
+import bidRoutes from "./routes/bidRoutes.js";
 
 // Load .env file from root directory (one level up from api folder)
 const rootPath = path.resolve();
@@ -45,7 +47,8 @@ app.use("/api/online-payments", onlinePaymentRoutes);
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/otp", otpRoutes);
-
+app.use("/api/gems", gemRoutes);
+app.use("/api/bids", bidRoutes);
 // Simple API check route
 app.get("/", (req, res) => res.send("API working"));
 
