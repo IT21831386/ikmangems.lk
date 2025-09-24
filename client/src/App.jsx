@@ -13,15 +13,15 @@ import AdminPaymentStatus from "./pages/adminPaymentStatus";
 
 //import { BrowserRouter, Routes, Route } from "react-router-dom";
 //import Home from "./pages/Home";
-import Login from "./auth/Login";
-import Signup from "./auth/Signup";
+import Login from "./pages/auth/Login";
+import Signup from "./pages/auth/Signup";
 //import Dashboard from "./pages/bidderDashboard";
 //import DashboardPage from "./pages/sellerDashboard";
-import ForgotPassword from "./auth/ForgotPassword";
+import ForgotPassword from "./pages/auth/ForgotPassword";
 //import { Routes } from "react-router-dom";
-import UserManagement from "./pages/manageUsers";
+import UserManagement from "./pages/user/manageUsers";
 import ProtectedRoute from "./components/ProtectedRoute";
-import BidderDashboard from "./pages/bidderDashboard";
+import BidderDashboard from "./pages/user/bidderDashboard";
 
 const App = () => {
   return (
