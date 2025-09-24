@@ -1,3 +1,6 @@
+//should be deleted
+//commented by Dana
+
 
 /*import ratelimit from "../config/upstash.js";
 
@@ -22,7 +25,7 @@ const rateLimiter = async (req, res, next) => {
   }
 };
 
-export default rateLimiter;*/
+export default rateLimiter;*//*
 import ratelimit from "../config/upstash.js";
 
 const rateLimiter = async (req, res, next) => {
@@ -42,4 +45,4 @@ const rateLimiter = async (req, res, next) => {
   }
 };
 
-export default rateLimiter;
+export default rateLimiter;*/

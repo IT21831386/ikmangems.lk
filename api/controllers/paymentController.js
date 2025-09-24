@@ -1,4 +1,5 @@
    import Payment from "../models/paymentModel.js"
+   import emailService from "../services/emailService.js"
 
 export async function getAllPayments(_, res) {
   try {
@@ -26,6 +27,7 @@ export async function createPayment(req, res) {
     console.log("=== CREATE PAYMENT REQUEST ===");
     console.log("Request body:", req.body);
     console.log("Request file:", req.file);
+    console.log("Request headers:", req.headers);
     
    const { amount, paiddate, bank, branch, remark, fullName, emailAddress, contactNumber, billingAddress, auctionId } = req.body;
    
@@ -74,20 +76,24 @@ export async function createPayment(req, res) {
     });
   } catch (error) {
     console.error("Error in createPayment controller", error);
-    res.status(500).json({ message: "Internal server error", error: error.message });
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
+    res.status(500).json({ 
+      success: false,
+      message: "Failed to submit bank deposit. Please try again.", 
+      error: error.message 
+    });
   }
 }
 
 export async function updatePayment(req, res) {
   try {
      const { amount, paiddate, bank, branch, slip, remark, fullName, emailAddress, contactNumber, billingAddress, auctionId } = req.body;
-     const updatedPayment = await Payment.findByIdAndUpdate(req.params.id,{amount, paiddate, bank, branch, slip, remark, fullName, emailAddress, contactNumber, billingAddress, auctionId },
-      {
-       new:true,
-      }
-    );
-     if (!updatedPayment) return res.status(404).json({ message: "Payment not found" });
-     res.status(200).json({message:"updated"});
+     const payment = await Payment.findByIdAndUpdate(req.params.id, {
+       amount, paiddate, bank, branch, slip, remark, fullName, emailAddress, contactNumber, billingAddress, auctionId
+     }, { new: true });
+     if (!payment) return res.status(404).json({ message: "Payment not found!" });
+     res.json(payment);
   } catch (error) {
     console.error("Error in updatePayment controller", error);
     res.status(500).json({ message: "Internal server error" });
@@ -96,33 +102,19 @@ export async function updatePayment(req, res) {
 
 export async function deletePayment(req, res) {
   try {
-    const deletedPayment = await Payment.findByIdAndDelete(req.params.id);
-    if (!deletedPayment) return res.status(404).json({ message: "Payment not found" });
-    res.status(200).json({ message: "Payment deleted successfully!" });
+    const payment = await Payment.findByIdAndDelete(req.params.id);
+    if (!payment) return res.status(404).json({ message: "Payment not found!" });
+    res.json({ message: "Payment deleted successfully" });
   } catch (error) {
     console.error("Error in deletePayment controller", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }
 
-// Get payment history for a specific user
 export async function getPaymentHistory(req, res) {
   try {
-    const { userId, email } = req.query;
-    
-    // Build query based on available parameters
-    let query = {};
-    if (userId) {
-      query._id = userId;
-    }
-    if (email) {
-      query.emailAddress = email;
-    }
-
-    const payments = await Payment.find(query)
-      .sort({ createdAt: -1 })
-      .limit(100); // Limit to last 100 payments
-
+    const { auctionId } = req.params;
+    const payments = await Payment.find({ auctionId }).sort({ createdAt: -1 });
     res.status(200).json({
       success: true,
       count: payments.length,
@@ -130,10 +122,80 @@ export async function getPaymentHistory(req, res) {
     });
   } catch (error) {
     console.error("Error in getPaymentHistory controller", error);
-    res.status(500).json({ 
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+// Update payment status (for admin approval)
+export async function updatePaymentStatus(req, res) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status || !['success', 'failure'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Status must be 'success' or 'failure'"
+      });
+    }
+
+    const payment = await Payment.findById(id);
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment not found"
+      });
+    }
+
+    // Update payment status
+    payment.status = status;
+    await payment.save();
+
+    // Send confirmation email if status is success
+    if (status === 'success') {
+      try {
+        const emailData = {
+          fullName: payment.fullName,
+          emailAddress: payment.emailAddress,
+          paymentId: `BNK_${payment._id.slice(-8).toUpperCase()}`,
+          transactionId: null, // Bank deposits don't have transaction ID
+          auctionId: payment.auctionId,
+          amount: payment.amount,
+          paymentType: 'Bank Deposit',
+          cardType: null,
+          bank: payment.bank,
+          branch: payment.branch,
+          date: payment.paiddate ? new Date(payment.paiddate).toLocaleDateString('en-LK') : new Date().toLocaleDateString('en-LK')
+        };
+
+        const emailResult = await emailService.sendPaymentConfirmation(emailData);
+        
+        if (emailResult.success) {
+          console.log('Bank deposit confirmation email sent successfully:', emailResult.messageId);
+        } else {
+          console.error('Failed to send bank deposit confirmation email:', emailResult.error);
+        }
+      } catch (emailError) {
+        console.error('Error sending bank deposit confirmation email:', emailError);
+        // Don't fail the status update if email fails
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Payment status updated to ${status}`,
+      data: {
+        id: payment._id,
+        status: payment.status,
+        updatedAt: payment.updatedAt
+      }
+    });
+  } catch (error) {
+    console.error("Error updating payment status:", error);
+    res.status(500).json({
       success: false,
       message: "Internal server error",
-      error: error.message 
+      error: error.message
     });
   }
 }

@@ -32,33 +32,16 @@ const onlinePaymentSchema = new mongoose.Schema({
         required: true,
     },
     
-    // Card details
+    // Card details (only store non-sensitive info)
     cardType: {
         type: String,
         required: true,
         enum: ['visa', 'mastercard'],
         default: 'visa'
     },
-    cardNumber: {
-        type: String,
-        required: true,
-    },
-    expiryMonth: {
-        type: String,
-        required: true,
-    },
-    expiryYear: {
-        type: String,
-        required: true,
-    },
-    cardHolderName: {
-        type: String,
-        required: true,
-    },
-    cvvNumber: {
-        type: String,
-        required: true,
-    },
+    // Note: cardNumber, expiryMonth, expiryYear, cardHolderName, cvvNumber 
+    // should NOT be stored in database for security reasons
+    // These should only be used temporarily during payment processing
     
     // OTP verification
     otp: {
@@ -117,4 +100,3 @@ onlinePaymentSchema.methods.getMaskedCardNumber = function() {
 const OnlinePayment = mongoose.model("OnlinePayment", onlinePaymentSchema);
 
 export default OnlinePayment;
-
