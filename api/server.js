@@ -13,6 +13,7 @@ import userRouter from './routes/userRoutes.js';
 import paymentRoutes from "./routes/paymentRoutes.js";
 import onlinePaymentRoutes from "./routes/onlinepaymentRoutes.js";
 import { connectDB } from "./config/db.js";
+
 //import rateLimiter from "./middleware/rateLimiter.js";
 
 // Load .env file from root directory (one level up from api folder)
@@ -33,9 +34,9 @@ app.use(cors({
 }));
 
 //app.use(cors()); //commented by Dana++  
-app.use(bodyParser.json());
-app.use(cookieParser());
+//app.use(bodyParser.json());
 app.use(express.json()); // this middleware will parse JSON bodies: req.body
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true })); // for form data
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // serve uploaded files
 //app.use(rateLimiter);
