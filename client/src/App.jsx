@@ -10,7 +10,6 @@ import AdminPaymentStatus from "./pages/adminPaymentStatus";
 //import NoteDetailPage from "./pages/NoteDetailPage";
 //import toast from "react-hot-toast";
 
-
 //import { BrowserRouter, Routes, Route } from "react-router-dom";
 //import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
@@ -22,6 +21,8 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import UserManagement from "./pages/user/manageUsers";
 import ProtectedRoute from "./components/ProtectedRoute";
 import BidderDashboard from "./pages/user/bidderDashboard";
+import SellerDashboard from "./pages/seller/SellerDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 const App = () => {
   return (
@@ -36,20 +37,21 @@ const App = () => {
         <Route path="/admin-payment-status" element={<AdminPaymentStatus />} />
       </Route>
 
-       <Route path="/" element={<Home />} />
-       <Route path="/login" element={<Login />} />
-       <Route path="/signup" element={<Signup />} />
-       <Route
-          path="/bidder-dashboard"
-          element={
-            <ProtectedRoute>
-              <BidderDashboard />
-            </ProtectedRoute>
-          }
-       />
-       <Route path="/forgot-password" element={<ForgotPassword />} />
-       <Route path="/manage-users" element={<UserManagement />} />
-
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route
+        path="/bidder-dashboard"
+        element={
+          <ProtectedRoute>
+            <BidderDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/manage-users" element={<UserManagement />} />
+      <Route path="/seller" element={<SellerDashboard />} />
+      <Route path="/admin" element={<AdminDashboard />} />
     </Routes>
   );
 };
