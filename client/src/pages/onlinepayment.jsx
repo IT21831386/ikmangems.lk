@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
-const OnlinePayment = ({ goBack }) => {
+const OnlinePayment = ({ goBack, bidderData }) => {
   const [formData, setFormData] = useState({
     auctionId: "",
     amount: "",
@@ -12,12 +12,17 @@ const OnlinePayment = ({ goBack }) => {
     expiryYear: "",
     cardHolderName: "",
     cvvNumber: "",
+    // Use bidder data if available
+    fullName: bidderData?.fullName || "",
+    emailAddress: bidderData?.emailAddress || "",
+    contactNumber: bidderData?.contactNumber || "",
+    billingAddress: bidderData?.billingAddress || "",
   });
 
   const [currentStep, setCurrentStep] = useState(1);
   const [otpCode, setOtpCode] = useState("");
-  const [generatedOtp, setGeneratedOtp] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentId, setPaymentId] = useState(null);
 
   const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, "0"));
   const years = Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() + i).toString().slice(2));
@@ -27,11 +32,11 @@ const OnlinePayment = ({ goBack }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
     // Validation per step
     if (currentStep === 1) {
-      if (!formData.auctionId || !formData.amount) {
-        toast.error("Please fill in Auction ID and Payment Amount");
+      if (!formData.auctionId || !formData.amount || !formData.contactNumber) {
+        toast.error("Please fill in Auction ID, Payment Amount, and Contact Number");
         return;
       }
     }
@@ -46,12 +51,9 @@ const OnlinePayment = ({ goBack }) => {
         toast.error("Please enter CVV");
         return;
       }
-    }
-    if (currentStep === 3) {
-      // Generate OTP and move to step 4
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedOtp(otp);
-      toast.success(`OTP sent to your registered mobile: ${otp}`); // For demo/testing
+      // Create payment and send OTP
+      await createPaymentAndSendOTP();
+      return; // Don't increment step here, createPaymentAndSendOTP handles it
     }
     setCurrentStep((prev) => prev + 1);
   };
@@ -60,17 +62,9 @@ const OnlinePayment = ({ goBack }) => {
     if (currentStep > 1) setCurrentStep((prev) => prev - 1);
   };
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    // Verify OTP
-    if (otpCode !== generatedOtp) {
-      toast.error("Invalid OTP. Please try again.");
-      setIsSubmitting(false);
-      return;
-    }
-
+  const createPaymentAndSendOTP = async () => {
     try {
-      // Send payment data to backend API
+      setIsSubmitting(true);
       const response = await fetch('http://localhost:5001/api/online-payments', {
         method: 'POST',
         headers: {
@@ -82,18 +76,88 @@ const OnlinePayment = ({ goBack }) => {
       const result = await response.json();
 
       if (result.success) {
-        toast.success("Payment successful!");
-        setCurrentStep(6); // success screen
+        setPaymentId(result.data.id);
+        toast.success("OTP sent to your mobile number");
+        setCurrentStep((prev) => prev + 1);
       } else {
-        toast.error(result.message || "Payment failed");
-        setCurrentStep(7); // error screen
+        toast.error(result.message || "Failed to create payment");
       }
     } catch (error) {
-      console.error('Payment error:', error);
-      toast.error("Payment failed. Please try again.");
-      setCurrentStep(7); // error screen
+      console.error('Payment creation error:', error);
+      toast.error("Failed to create payment. Please try again.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    
+    try {
+      // Verify OTP with backend
+      const response = await fetch('http://localhost:5001/api/online-payments/verify-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentId: paymentId,
+          otp: otpCode
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update payment status to completed
+        const updateResponse = await fetch(`http://localhost:5001/api/online-payments/${paymentId}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: 'completed' }),
+        });
+
+        if (updateResponse.ok) {
+          toast.success("Payment successful!");
+          setCurrentStep(6); // success screen
+        } else {
+          toast.error("Payment verification failed");
+          setCurrentStep(7); // error screen
+        }
+      } else {
+        toast.error(result.message || "Invalid OTP. Please try again.");
+      }
+    } catch (error) {
+      console.error('Verification error:', error);
+      toast.error("Verification failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/api/online-payments/resend-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentId: paymentId
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("OTP resent successfully");
+      } else {
+        toast.error(result.message || "Failed to resend OTP");
+      }
+    } catch (error) {
+      console.error('Resend OTP error:', error);
+      toast.error("Failed to resend OTP");
     }
   };
 
@@ -317,8 +381,13 @@ const OnlinePayment = ({ goBack }) => {
               <button onClick={prevStep} className="px-8 py-3 bg-gray-500 text-white rounded-[30px]" style={{ fontFamily: "Poppins" }}>
                 Previous
               </button>
-              <button onClick={nextStep} className="px-8 py-3 bg-green-600 text-white rounded-[30px]" style={{ fontFamily: "Poppins" }}>
-                Pay Now
+              <button 
+                onClick={nextStep} 
+                disabled={isSubmitting}
+                className={`px-8 py-3 rounded-[30px] text-white ${isSubmitting ? "bg-green-300 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"}`} 
+                style={{ fontFamily: "Poppins" }}
+              >
+                {isSubmitting ? "Sending OTP..." : "Pay Now"}
               </button>
             </div>
           </div>
@@ -379,6 +448,15 @@ const OnlinePayment = ({ goBack }) => {
               <p className="text-gray-700 mb-6" style={{ fontFamily: "Poppins" }}>
                 For the transaction performed on card ending {formData.cardNumber.slice(-4)}. You are paying merchant ikmangems.lk the amount of LKR {formData.amount}.
               </p>
+              <p className="text-sm text-gray-600 mb-4" style={{ fontFamily: "Poppins" }}>
+                OTP sent to: {formData.contactNumber}
+              </p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-yellow-800" style={{ fontFamily: "Poppins" }}>
+                  <strong>Note:</strong> If you don't receive the SMS, check the backend console for the OTP code. 
+                  This might be due to free account limitations on the SMS service.
+                </p>
+              </div>
               <label className="block mb-2 font-medium text-gray-700" style={{ fontFamily: "Poppins" }}>
                 Enter your OTP code below:
               </label>
@@ -392,7 +470,11 @@ const OnlinePayment = ({ goBack }) => {
                 style={{ fontFamily: "Poppins" }}
               />
               <div className="flex justify-center space-x-4 mt-6">
-                <button className="px-6 py-2 bg-gray-500 text-white rounded-[30px]" style={{ fontFamily: "Poppins" }}>
+                <button 
+                  onClick={handleResendOTP}
+                  className="px-6 py-2 bg-gray-500 text-white rounded-[30px]" 
+                  style={{ fontFamily: "Poppins" }}
+                >
                   RESEND
                 </button>
                 <button
@@ -427,9 +509,6 @@ const OnlinePayment = ({ goBack }) => {
               Payment Successful!
             </h1>
             <div className="bg-green-50 p-6 rounded-[20px] text-green-700" style={{ fontFamily: "Poppins" }}>
-              <p>Transaction ID: TXN{Date.now()}</p>
-              <p>Amount Paid: LKR {formData.amount}</p>
-              <p>Auction ID: {formData.auctionId}</p>
               <p>Your payment has been processed successfully. You will receive a confirmation email shortly.</p>
             </div>
           </div>

@@ -15,8 +15,10 @@ import onlinePaymentRoutes from "./routes/onlinepaymentRoutes.js";
 import { connectDB } from "./config/db.js";
 //import rateLimiter from "./middleware/rateLimiter.js";
 
-dotenv.config();
-
+// Load .env file from root directory (one level up from api folder)
+const rootPath = path.resolve();
+const envPath = path.join(rootPath, '..', '.env');
+dotenv.config({ path: envPath });
 
 const app = express();
 const PORT = process.env.PORT || 5001;

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import OnlinePayment from "./onlinepayment";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 
 const PaymentForm = () => {
   const navigate = useNavigate();
@@ -299,6 +299,29 @@ const PaymentForm = () => {
   // --- Main Render ---
   return (
     <div className="min-h-screen py-8 px-4" style={{ background: "#fff", fontFamily: 'Poppins' }}>
+      {/* Navigation Header */}
+      <div className="max-w-6xl mx-auto mb-6">
+        <div className="bg-white rounded-[20px] shadow-sm p-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-800">ikmangems.lk Payment System</h1>
+            <div className="flex space-x-4">
+              <Link 
+                to="/payment-history" 
+                className="px-4 py-2 bg-blue-500 text-white rounded-[10px] hover:bg-blue-600 transition-colors text-sm font-medium"
+              >
+                📋 Payment History
+              </Link>
+              <Link 
+                to="/admin-payment-status" 
+                className="px-4 py-2 bg-purple-500 text-white rounded-[10px] hover:bg-purple-600 transition-colors text-sm font-medium"
+              >
+                ⚙️ Admin Dashboard
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <div className="flex flex-col md:flex-row max-w-6xl mx-auto gap-7">
         {/* Left: Order Form or Bank Deposit */}
         <div className="flex-1">
@@ -310,7 +333,7 @@ const PaymentForm = () => {
             </div>
           )}
           {currentPage === "bank" && renderBankDepositPortal}
-          {currentPage === "online" && <OnlinePayment goBack={goBackToHome} />}
+          {currentPage === "online" && <OnlinePayment goBack={goBackToHome} bidderData={formData} />}
         </div>
 
         {/* Right: Placeholder for Gem Details */}
