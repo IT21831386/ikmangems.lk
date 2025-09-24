@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { User, Menu } from "lucide-react";
-import { Link } from "react-router-dom"; // import Link
+import { Link } from "react-router-dom"; 
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -42,21 +42,28 @@ const Navigation = () => {
           </div>
 
           {/* User Actions */}
+          <Link to="/login">
+          
           <div className="hidden md:flex items-center space-x-4">
             <span className="text-sm text-gray-600">User</span>
             <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-              <User size={16} />
+            <User size={16} /> 
             </div>
           </div>
 
+          </Link>
+
+
           {/* Mobile menu button */}
           <div className="md:hidden">
+
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-gray-600 hover:text-gray-900"
             >
               <Menu size={24} />
             </button>
+
           </div>
         </div>
       </div>
