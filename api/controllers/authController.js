@@ -1,17 +1,18 @@
-// controllers/authController.js
+
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
 import transporter from "../config/nodemailer.js";
+import dotenv from 'dotenv';
+dotenv.config();
 
-// 👇 Define cookie options once
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production" ? true : false,
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
 };
 
-// Middleware to verify JWT token from cookie
+
 export const verifyToken = (req, res, next) => {
   const token = req.cookies.token;
 
@@ -31,7 +32,7 @@ export const verifyToken = (req, res, next) => {
   }
 };
 
-// REGISTER
+
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -72,7 +73,7 @@ export const register = async (req, res) => {
   }
 };
 
-// LOGIN
+
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -105,9 +106,8 @@ export const login = async (req, res) => {
   }
 };
 
-// LOGOUT
 
-// authController.js
+
 export const logout = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
@@ -118,7 +118,7 @@ export const logout = (req, res) => {
 };
 
 
-// CHECK AUTH
+
 export const isAuthenticated = (req, res) => {
   const token = req.cookies.token;
   if (!token) {
@@ -137,7 +137,7 @@ export const isAuthenticated = (req, res) => {
   }
 };
 
-// SEND VERIFY OTP
+
 export const sendVerifyOtp = async (req, res) => {
   try {
     const { userId } = req.body;
@@ -165,7 +165,7 @@ export const sendVerifyOtp = async (req, res) => {
   }
 };
 
-// VERIFY EMAIL OTP
+
 export const verifyEmail = async (req, res) => {
   const { userId, otp } = req.body;
   if (!userId || !otp)
@@ -192,7 +192,7 @@ export const verifyEmail = async (req, res) => {
   }
 };
 
-// SEND RESET OTP
+
 export const sendResetOtp = async (req, res) => {
   const { email } = req.body;
   if (!email) return res.json({ success: false, message: "Email required" });
@@ -220,7 +220,7 @@ export const sendResetOtp = async (req, res) => {
   }
 };
 
-// RESET PASSWORD
+
 export const resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;
   if (!email || !otp || !newPassword)

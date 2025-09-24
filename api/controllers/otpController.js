@@ -4,12 +4,11 @@ dotenv.config();
 
 const otpStore = {}; // Temporary in-memory OTP storage
 
-// Generate 6-digit OTP
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Send OTP
+
 export const sendOTP = async (req, res) => {
   const { phone } = req.body;
   if (!phone) return res.status(400).json({ message: "Phone number is required" });
@@ -47,13 +46,13 @@ export const sendOTP = async (req, res) => {
   }
 };
 
-// Verify OTP
+
 export const verifyOTP = (req, res) => {
   const { phone, otp } = req.body;
   if (!phone || !otp) return res.status(400).json({ message: "Phone and OTP are required" });
 
   if (otpStore[phone] && otpStore[phone] === otp) {
-    delete otpStore[phone]; // Remove OTP after verification
+    delete otpStore[phone]; 
     return res.json({ message: "OTP verified successfully" });
   } else {
     return res.status(400).json({ message: "Invalid OTP" });

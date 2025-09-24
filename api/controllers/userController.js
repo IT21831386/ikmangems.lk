@@ -29,9 +29,9 @@ export async function createUser (req, res) {
 
 export async function updateUser(req, res) {
   try {
-    // you can pass the user ID in params (better) like /api/users/:id
-    const { id } = req.params; // or req.body.id if you send it in body
-    const { name, email, password } = req.body; // fields you want to update
+    
+    const { id } = req.params; 
+    const { name, email, password } = req.body; 
 
     const updatedUser = await userModel.findByIdAndUpdate(
       id,

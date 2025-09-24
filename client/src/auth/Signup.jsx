@@ -51,7 +51,7 @@ export default function Signup() {
     setServerError("");
     try {
       const response = await axios.post(
-        "http://localhost:5001/api/auth/register", // replace with your backend URL
+        "http://localhost:5001/api/auth/register", 
         {
           name: data.name,
           email: data.email,
@@ -61,7 +61,7 @@ export default function Signup() {
       );
 
       if (response.data.success) {
-        navigate("/login"); // redirect after successful signup
+        navigate("/login"); 
       } else {
         setServerError(response.data.message || "Signup failed");
       }

@@ -15,7 +15,7 @@ import AdminPaymentStatus from "./pages/adminPaymentStatus";
 //import Home from "./pages/Home";
 import Login from "./auth/Login";
 import Signup from "./auth/Signup";
-import Dashboard from "./pages/bidderDashboard";
+//import Dashboard from "./pages/bidderDashboard";
 //import DashboardPage from "./pages/sellerDashboard";
 import ForgotPassword from "./auth/ForgotPassword";
 //import { Routes } from "react-router-dom";

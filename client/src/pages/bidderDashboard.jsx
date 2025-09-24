@@ -176,7 +176,7 @@ export default function ManageUsers() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton>
-                    <User2 className="mr-2" /> Admin
+                    <User2 className="mr-2" /> User
                     <ChevronUp className="ml-auto" />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>

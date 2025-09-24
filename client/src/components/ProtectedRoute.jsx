@@ -15,7 +15,7 @@ export default function ProtectedRoute({ children }) {
     const checkAuth = async () => {
       try {
         const { data } = await axios.get(
-          "http://localhost:4000/api/auth/is-auth",
+          "http://localhost:5001/api/auth/is-auth",
           { withCredentials: true }
         );
         if (isMounted) setIsAuth(data.success === true);
