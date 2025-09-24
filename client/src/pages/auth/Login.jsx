@@ -47,11 +47,20 @@ export default function Signin() {
       );
 
       if (response.data.success) {
-        const loggedInUser = response.data.user; // make sure backend sends user info
+        const loggedInUser = response.data.user; // user object with role
         setUser(loggedInUser);
         localStorage.setItem("user", JSON.stringify(loggedInUser));
 
-        navigate("/", { replace: true }); // ✅ now goes home
+        // Role-based navigation
+        if (loggedInUser.role === "buyer") {
+          navigate("/", { replace: true });
+        } else if (loggedInUser.role === "seller") {
+          navigate("/seller", { replace: true });
+        } else if (loggedInUser.role === "admin") {
+          navigate("/admin", { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
       } else {
         setServerError(response.data.message || "Login failed");
       }
