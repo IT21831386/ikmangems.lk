@@ -22,6 +22,21 @@ const Navigation = () => {
     navigate("/login");
   };
 
+  // Determine dashboard path based on user role
+  const getDashboardPath = () => {
+    if (!user) return "/login";
+    switch (user.role) {
+      case "buyer":
+        return "/bidder-dashboard";
+      case "seller":
+        return "/seller-dashboard";
+      case "admin":
+        return "/admin-dashboard";
+      default:
+        return "/"; // fallback
+    }
+  };
+
   return (
     <nav className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -74,7 +89,7 @@ const Navigation = () => {
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-10 w-48 bg-white border rounded shadow-md z-50">
                     <Link
-                      to="/bidder-dashboard"
+                      to={getDashboardPath()} // navigate based on role
                       className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
                       onClick={() => setDropdownOpen(false)}
                     >
@@ -133,7 +148,7 @@ const Navigation = () => {
             ) : (
               <>
                 <Link
-                  to="/bidder-dashboard"
+                  to={getDashboardPath()} // mobile dashboard link
                   className="block px-3 py-2 text-gray-600"
                 >
                   Dashboard

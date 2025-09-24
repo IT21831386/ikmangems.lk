@@ -50,8 +50,8 @@ const App = () => {
       />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/manage-users" element={<UserManagement />} />
-      <Route path="/seller" element={<SellerDashboard />} />
-      <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/seller-dashboard" element={<SellerDashboard />} />
+      <Route path="/admin-dashboard" element={<AdminDashboard />} />
     </Routes>
   );
 };

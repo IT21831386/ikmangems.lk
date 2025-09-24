@@ -55,9 +55,9 @@ export default function Signin() {
         if (loggedInUser.role === "buyer") {
           navigate("/", { replace: true });
         } else if (loggedInUser.role === "seller") {
-          navigate("/seller", { replace: true });
+          navigate("/seller-dashboard", { replace: true });
         } else if (loggedInUser.role === "admin") {
-          navigate("/admin", { replace: true });
+          navigate("/admin-dashboard", { replace: true });
         } else {
           navigate("/", { replace: true });
         }
