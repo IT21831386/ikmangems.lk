@@ -31,10 +31,14 @@ export const verifyToken = (req, res, next) => {
 };
 
 export const register = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, role } = req.body; // add role
 
   if (!name || !email || !password) {
-    return res.json({ success: false, message: "Missing Details" });
+    return res.json({ success: false, message: "Missing details" });
+  }
+
+  if (role && !["buyer", "seller", "admin"].includes(role)) {
+    return res.json({ success: false, message: "Invalid role" });
   }
 
   try {
@@ -44,27 +48,40 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new userModel({ name, email, password: hashedPassword });
+
+    const user = new userModel({
+      name,
+      email,
+      password: hashedPassword,
+      role: role || "buyer",
+    });
+
     await user.save();
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    // Include role in JWT
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.cookie("token", token, {
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    const mailOptions = {
+    // Send welcome email
+    await transporter.sendMail({
       from: process.env.SENDER_EMAIL,
       to: email,
       subject: "Welcome!",
-      text: `Welcome, Your account has been created with email id: ${email}`,
-    };
-    await transporter.sendMail(mailOptions);
+      text: `Welcome ${name}! Your account has been created as ${user.role}.`,
+    });
 
-    return res.json({ success: true });
+    return res.json({
+      success: true,
+      user: { id: user._id, name, email, role: user.role },
+    });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
@@ -106,6 +123,7 @@ export const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
     });
   } catch (error) {
