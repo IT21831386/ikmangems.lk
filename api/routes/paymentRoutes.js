@@ -8,6 +8,7 @@ import {
   updatePayment,
   getPaymentHistory,
   updatePaymentStatus,
+  softDeletePayment,
 } from "../controllers/paymentController.js";
 
 const router = express.Router();
@@ -16,8 +17,10 @@ router.get("/", getAllPayments);
 router.get("/history", getPaymentHistory);
 router.get("/:id", getPaymentById);
 router.post("/", upload.single("slip"), createPayment);
+router.post("/cp", upload.single("slip"), createPayment);
 router.put("/:id", updatePayment);
 router.put("/:id/status", updatePaymentStatus);
+router.put("/:id/delete", softDeletePayment);
 router.delete("/:id", deletePayment);
 
 export default router;

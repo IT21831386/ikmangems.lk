@@ -111,6 +111,62 @@ export async function deletePayment(req, res) {
   }
 }
 
+// Soft delete payment (for user deletion)
+export async function softDeletePayment(req, res) {
+  try {
+    const { id } = req.params;
+    const { deleted, deleteReason, deletedBy, deletedAt } = req.body;
+
+    const payment = await Payment.findById(id);
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment not found"
+      });
+    }
+
+    // Update payment with soft delete information
+    console.log('Updating payment with soft delete:', { id, deleted, deleteReason, deletedBy, deletedAt });
+    
+    const updatedPayment = await Payment.findByIdAndUpdate(
+      id,
+      {
+        deleted: deleted || true,
+        deleteReason: deleteReason || 'Deleted by user',
+        deletedBy: deletedBy || 'user',
+        deletedAt: deletedAt || new Date().toISOString()
+      },
+      { new: true, runValidators: false }
+    );
+
+    console.log('Updated payment:', { 
+      id: updatedPayment._id, 
+      deleted: updatedPayment.deleted, 
+      deleteReason: updatedPayment.deleteReason,
+      deletedBy: updatedPayment.deletedBy 
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Payment deleted successfully",
+      data: {
+        id: updatedPayment._id,
+        deleted: updatedPayment.deleted,
+        deleteReason: updatedPayment.deleteReason,
+        deletedBy: updatedPayment.deletedBy,
+        deletedAt: updatedPayment.deletedAt
+      }
+    });
+  } catch (error) {
+    console.error("Error in softDeletePayment controller", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+}
+
 export async function getPaymentHistory(req, res) {
   try {
     const { auctionId } = req.params;
@@ -147,9 +203,12 @@ export async function updatePaymentStatus(req, res) {
       });
     }
 
-    // Update payment status
-    payment.status = status;
-    await payment.save();
+    // Update payment status using findByIdAndUpdate to avoid validation issues
+    const updatedPayment = await Payment.findByIdAndUpdate(
+      id, 
+      { status: status }, 
+      { new: true, runValidators: false }
+    );
 
     // Send confirmation email if status is success
     if (status === 'success') {
@@ -185,9 +244,9 @@ export async function updatePaymentStatus(req, res) {
       success: true,
       message: `Payment status updated to ${status}`,
       data: {
-        id: payment._id,
-        status: payment.status,
-        updatedAt: payment.updatedAt
+        id: updatedPayment._id,
+        status: updatedPayment.status,
+        updatedAt: updatedPayment.updatedAt
       }
     });
   } catch (error) {

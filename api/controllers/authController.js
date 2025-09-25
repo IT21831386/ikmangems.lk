@@ -33,6 +33,7 @@ export const verifyToken = (req, res, next) => {
 export const register = async (req, res) => {
   const { name, email, password, role } = req.body; // add role
 
+
   if (!name || !email || !password) {
     return res.json({ success: false, message: "Missing details" });
   }
@@ -54,6 +55,11 @@ export const register = async (req, res) => {
       email,
       password: hashedPassword,
       role: role || "buyer",
+
+    await user.save();
+
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
     });
 
     await user.save();
@@ -107,7 +113,7 @@ export const login = async (req, res) => {
     if (!isMatch)
       return res.json({ success: false, message: "Invalid password" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: "15m",
     });
 
@@ -126,6 +132,7 @@ export const login = async (req, res) => {
         role: user.role,
       },
     });
+
   } catch (error) {
     console.error(error);
     return res.json({ success: false, message: error.message });

@@ -12,7 +12,8 @@ import {
   testTextLK,
   testSMS,
   testSMSSimple,
-  testEmail
+  testEmail,
+  softDeleteOnlinePayment
 } from "../controllers/onlinepaymentController.js";
 
 const router = express.Router();
@@ -34,6 +35,7 @@ router.post("/test-email", testEmail);
 // PUT routes
 router.put("/:id/status", updatePaymentStatus);
 router.put("/:id/complete", completePayment);
+router.put("/:id/delete", softDeleteOnlinePayment);
 
 // DELETE routes
 router.delete("/:id", deleteOnlinePayment);
