@@ -30,11 +30,9 @@ import GetOTP from "./pages/auth/getOTP";
 import ResetPassword from "./pages/auth/ResetPassword";
 import AccountSettings from "./pages/user/AccountSettings";
 
-import SellerDashboard from "./pages/user/sellerDashboard";
 import DisplayUsers from "./pages/admin-um/DisplayUsers";
 import OrderHistoryPage from "./pages/user/OrderHistoryPage";
 //import EditUsers from "./pages/admin-um/EditUsers";
-
 
 const App = () => {
   return (
@@ -50,31 +48,28 @@ const App = () => {
         <Route path="/admin-payment-status" element={<AdminPaymentStatus />} />
       </Route>
 
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/get-otp" element={<GetOTP />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
-       <Route path="/" element={<Home />} />
-       <Route path="/login" element={<Login />} />
-       <Route path="/signup" element={<Signup />} />
-       <Route path="/get-otp" element={<GetOTP />} />
-       <Route path="/verify-email" element={<VerifyEmail />} />
-       <Route path="/reset-password" element={<ResetPassword />} />
-
-       <Route
-          path="/bidder-dashboard"
-          element={
-            <ProtectedRoute>
-              <BidderDashboard />
-            </ProtectedRoute>
-          }
-       />
-       <Route path="/forgot-password" element={<ForgotPassword />} />
-       <Route path="/manage-users" element={<UserManagement />} />
-        <Route path="/seller-dashboard" element={<SellerDashboard />} />
+      <Route
+        path="/bidder-dashboard"
+        element={
+          <ProtectedRoute>
+            <BidderDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/manage-users" element={<UserManagement />} />
       <Route path="/admin-dashboard" element={<AdminDashboard />} />
-       <Route path="/seller-dashboard" element={<SellerDashboard />} />
-       <Route path="/account-settings" element={<AccountSettings />} />
-       <Route path="/display-users" element={<DisplayUsers />} />
-       <Route path="/order-history" element={<OrderHistoryPage />} />
-
+      <Route path="/seller-dashboard" element={<SellerDashboard />} />
+      <Route path="/account-settings" element={<AccountSettings />} />
+      <Route path="/display-users" element={<DisplayUsers />} />
+      <Route path="/order-history" element={<OrderHistoryPage />} />
     </Routes>
   );
 };
