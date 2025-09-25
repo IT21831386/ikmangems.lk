@@ -34,6 +34,8 @@ export const verifyToken = (req, res, next) => {
 
 
 export const register = async (req, res) => {
+
+  const { role } = req.body;
   const { name, email, password } = req.body;
 
   if (!name || !email || !password) {
@@ -47,10 +49,10 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new userModel({ name, email, password: hashedPassword });
+    const user = new userModel({ name, email, password: hashedPassword, role: role || "user" });
     await user.save();
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
@@ -91,7 +93,7 @@ export const login = async (req, res) => {
     if (!isMatch)
       return res.json({ success: false, message: "Invalid password" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: "15m",
     });
 

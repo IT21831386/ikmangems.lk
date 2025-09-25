@@ -23,6 +23,15 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import UserManagement from "./pages/user/manageUsers";
 import ProtectedRoute from "./components/ProtectedRoute";
 import BidderDashboard from "./pages/user/bidderDashboard";
+import VerifyEmail from "./pages/auth/VerifyEmail";
+import GetOTP from "./pages/auth/getOTP";
+import ResetPassword from "./pages/auth/ResetPassword";
+import AccountSettings from "./pages/user/AccountSettings";
+
+import SellerDashboard from "./pages/user/sellerDashboard";
+import EditUserByAdmin from "./pages/demo/EditUserByAdmin";
+import OrderHistoryPage from "./pages/user/OrderHistoryPage";
+
 
 const App = () => {
   return (
@@ -41,6 +50,10 @@ const App = () => {
        <Route path="/" element={<Home />} />
        <Route path="/login" element={<Login />} />
        <Route path="/signup" element={<Signup />} />
+       <Route path="/get-otp" element={<GetOTP />} />
+       <Route path="/verify-email" element={<VerifyEmail />} />
+       <Route path="/reset-password" element={<ResetPassword />} />
+
        <Route
           path="/bidder-dashboard"
           element={
@@ -51,6 +64,11 @@ const App = () => {
        />
        <Route path="/forgot-password" element={<ForgotPassword />} />
        <Route path="/manage-users" element={<UserManagement />} />
+       
+       <Route path="/seller-dashboard" element={<SellerDashboard />} />
+       <Route path="/account-settings" element={<AccountSettings />} />
+       <Route path="/users-demo-admin" element={<EditUserByAdmin />} />
+       <Route path="/order-history" element={<OrderHistoryPage />} />
 
     </Routes>
   );
