@@ -76,7 +76,7 @@ function Sidebar({ children, isCollapsed, onToggle }) {
         onClick={onToggle}
         className="w-full p-4 text-left hover:bg-gray-50 border-b border-gray-200"
       >
-        {isCollapsed ? '☰' : 'Seller Dashboard'}
+        {isCollapsed ? '' : 'Seller Dashboard'}
       </button>
       {children}
     </div>
@@ -262,10 +262,10 @@ function GemListings({ gems, onEdit, onDelete }) {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      active: { bg: 'bg-green-100', text: 'text-green-800', symbol: '⏰' },
-      sold: { bg: 'bg-blue-100', text: 'text-blue-800', symbol: '✅' },
-      pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', symbol: '⏳' },
-      expired: { bg: 'bg-red-100', text: 'text-red-800', symbol: '❌' }
+      active: { bg: 'bg-green-100', text: 'text-green-800', symbol: '' },
+      sold: { bg: 'bg-blue-100', text: 'text-blue-800', symbol: '' },
+      pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', symbol: '' },
+      expired: { bg: 'bg-red-100', text: 'text-red-800', symbol: '' }
     };
     
     const config = statusConfig[status] || statusConfig.pending;
@@ -423,7 +423,7 @@ function DashboardOverview({ revenue, gems }) {
               <p className="text-sm text-gray-500">Total Revenue</p>
               <p className="text-3xl font-bold text-green-600">${revenue.totalRevenue.toLocaleString()}</p>
             </div>
-            <div className="text-3xl">💰</div>
+            <div className="text-3xl"></div>
           </div>
         </div>
         
@@ -433,7 +433,7 @@ function DashboardOverview({ revenue, gems }) {
               <p className="text-sm text-gray-500">This Month</p>
               <p className="text-3xl font-bold text-blue-600">${revenue.monthlyRevenue.toLocaleString()}</p>
             </div>
-            <div className="text-3xl">📈</div>
+            <div className="text-3xl"></div>
           </div>
         </div>
         
@@ -443,7 +443,7 @@ function DashboardOverview({ revenue, gems }) {
               <p className="text-sm text-gray-500">Average Sale</p>
               <p className="text-3xl font-bold text-purple-600">${revenue.averagePrice.toLocaleString()}</p>
             </div>
-            <div className="text-3xl">💎</div>
+            <div className="text-3xl"></div>
           </div>
         </div>
       </div>
@@ -531,11 +531,11 @@ export default function SellerDashboard() {
   };
 
   const sidebarItems = [
-    { title: "Dashboard", key: "dashboard", icon: "🏠" },
-    { title: "My Listings", key: "listings", icon: "📋" },
-    { title: "Add New Gem", key: "add-gem", icon: "➕" },
-    { title: "Revenue", key: "revenue", icon: "💳" },
-    { title: "Profile", key: "profile", icon: "👤" },
+    { title: "Dashboard", key: "dashboard", icon: "" },
+    { title: "My Listings", key: "listings", icon: "" },
+    { title: "Add New Gem", key: "add-gem", icon: "" },
+    { title: "Revenue", key: "revenue", icon: "" },
+    { title: "Profile", key: "profile", icon: "" },
   ];
 
   const renderContent = () => {
@@ -591,7 +591,7 @@ export default function SellerDashboard() {
                   onClick={handleLogout}
                   className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center text-red-600"
                 >
-                  🚪 Sign out
+                   Sign out
                 </button>
               </div>
             )}
