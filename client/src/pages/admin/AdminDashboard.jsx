@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import UsersList from "./admin-um/DisplayUsers";
 import PaymentHistory from "./payments/paymentHistory";
 import AccountSettings from "../user/AccountSettings";
+import ListingApprovals from "./listing/listing-approval";
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -29,33 +30,93 @@ export default function AdminDashboard() {
   const renderContent = () => {
     switch (activeSection) {
       case "dashboard":
-        return <div>Welcome to Admin Dashboard</div>;
+        return (
+          <div className="p-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">
+              Admin Dashboard
+            </h1>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Total Users
+                </h3>
+                <p className="text-3xl font-bold text-blue-600 mt-2">1,234</p>
+              </div>
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Pending Approvals
+                </h3>
+                <p className="text-3xl font-bold text-yellow-600 mt-2">23</p>
+              </div>
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Verified Listings
+                </h3>
+                <p className="text-3xl font-bold text-green-600 mt-2">456</p>
+              </div>
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Total Revenue
+                </h3>
+                <p className="text-3xl font-bold text-purple-600 mt-2">
+                  $12,345
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "listingapprovals":
+        return <ListingApprovals />;
 
       case "manageusers":
         return <UsersList />;
 
       case "transactions":
         return <PaymentHistory />;
+
       case "profile":
         return <AccountSettings />;
 
       default:
-        return <div>Welcome!</div>;
+        return (
+          <div className="p-6">
+            <h1 className="text-2xl font-bold text-gray-900">
+              Welcome to Admin Dashboard
+            </h1>
+          </div>
+        );
     }
   };
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen">
+      {/* MAIN CHANGE: Fixed container structure */}
+      <div className="w-full h-screen bg-gray-50 flex overflow-hidden">
         <Sidebar>
           <SidebarContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setActiveSection("dashboard")}
-                  className={activeSection === "dashboard" ? "bg-gray-200" : ""}
+                  className={
+                    activeSection === "dashboard" ? "w-full bg-gray-200 " : ""
+                  }
                 >
                   <Home className="mr-2" /> Dashboard
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setActiveSection("listingapprovals")}
+                  className={
+                    activeSection === "listingapprovals"
+                      ? "bg-gray-200 w-full"
+                      : ""
+                  }
+                >
+                  <Users className="mr-2" /> Listing Approvals
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
@@ -103,9 +164,17 @@ export default function AdminDashboard() {
           </SidebarFooter>
         </Sidebar>
 
-        <div className="flex-1 p-6 overflow-auto">
-          <SidebarTrigger className="mb-4 w-full" />
-          {renderContent()}
+        {/* MAIN CHANGE: New content area structure */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Mobile sidebar trigger - only show on mobile */}
+          <div className="md:hidden p-4">
+            <SidebarTrigger />
+          </div>
+
+          {/* Main content area - More explicit width control */}
+          <main className="flex-1 min-w-0 overflow-auto">
+            <div className="w-full h-full">{renderContent()}</div>
+          </main>
         </div>
       </div>
     </SidebarProvider>
