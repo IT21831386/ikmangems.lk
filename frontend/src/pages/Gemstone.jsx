@@ -114,6 +114,116 @@ const CreateGemstoneForm = () => {
     }));
   };
 
+  // Step-level validation with messages for toasts
+  const validateStepWithMessages = (step) => {
+    const messages = [];
+
+    if (step === 1) {
+      if (!formData.name || formData.name.trim().length < 2) messages.push('Name must be at least 2 characters');
+      if (formData.name && formData.name.trim().length > 100) messages.push('Name cannot exceed 100 characters');
+      if (formData.name && !/^[a-zA-Z\s\-.']+$/.test(formData.name.trim())) messages.push("Name allows letters, spaces, hyphens, periods and apostrophes only");
+      if (!formData.category) messages.push('Category is required');
+      if (!formData.description || formData.description.trim().length < 10) messages.push('Description must be at least 10 characters');
+      if (formData.description && formData.description.trim().length > 1000) messages.push('Description cannot exceed 1000 characters');
+    }
+
+    if (step === 2) {
+      // Weight required for step 2 per your earlier logic
+      if (!formData.weight) messages.push('Weight is required');
+      if (formData.weight) {
+        const w = parseFloat(formData.weight);
+        if (isNaN(w) || w < 0.01 || w > 10000) messages.push('Weight must be between 0.01 and 10000');
+      }
+      if (!formData.color) messages.push('Color is required');
+      if (formData.color && !/^[a-zA-Z\s\\-]+$/.test(formData.color)) messages.push('Color should only contain letters, spaces, and hyphens');
+    }
+
+    if (step === 3) {
+      if (!formData.origin?.country) messages.push('Country of Origin is required');
+      // eslint-disable-next-line no-useless-escape
+      if (formData.origin?.country && !/^[a-zA-Z\s\-]+$/.test(formData.origin.country)) messages.push('Country should only contain letters, spaces, and hyphens');
+    }
+
+    if (step === 4) {
+      const fileCount = images.filter(Boolean).length;
+      if (fileCount === 0) messages.push('Please upload at least one image of the gem');
+      if (fileCount > 10) messages.push('Maximum 10 images allowed');
+    }
+
+    if (step === 6) {
+      if (!formData.minimumBid) messages.push('Minimum bid is required');
+      const mb = parseFloat(formData.minimumBid);
+      if (isNaN(mb) || mb < 1) messages.push('Minimum bid must be at least 1 LKR');
+    }
+
+    return { valid: messages.length === 0, messages };
+  };
+
+  const handleNextStep = () => {
+    const v = validateStepWithMessages(currentStep);
+    if (!v.valid) {
+      toast.error(v.messages[0] || 'Please check your inputs.');
+      return;
+    }
+    setCurrentStep(currentStep + 1);
+  };
+
+  // Client-side validation aligned with backend
+  const validateClient = (data, imageFiles) => {
+    const errs = {};
+
+    // Name
+    if (!data.name || data.name.trim().length < 2 || data.name.trim().length > 100) {
+      errs.name = 'Name must be 2-100 characters';
+    } else if (!/^[a-zA-Z\s\-\\.']+$/.test(data.name.trim())) {
+      errs.name = "Name allows letters, spaces, hyphens, periods and apostrophes only";
+    }
+
+    // Description
+    if (!data.description || data.description.trim().length < 10 || data.description.trim().length > 1000) {
+      errs.description = 'Description must be 10-1000 characters';
+    }
+
+    // Category
+    if (!data.category) {
+      errs.category = 'Category is required';
+    }
+
+    // Minimum Bid
+    const mb = parseFloat(data.minimumBid);
+    if (isNaN(mb) || mb < 1) {
+      errs.minimumBid = 'Minimum bid must be at least 1 LKR';
+    }
+
+    // Weight (optional but if provided must be valid)
+    if (data.weight !== '' && data.weight !== undefined) {
+      const w = parseFloat(data.weight);
+      if (isNaN(w) || w < 0.01 || w > 10000) {
+        errs.weight = 'Weight must be between 0.01 and 10000';
+      }
+    }
+
+    // Color (optional letters, spaces, hyphens)
+    if (data.color && !/^[a-zA-Z\s\\-]+$/.test(data.color)) {
+      errs.color = 'Color should only contain letters, spaces, and hyphens';
+    }
+
+    // Origin country (optional letters, spaces, hyphens)
+    if (data.origin?.country && !/^[a-zA-Z\s-]+$/.test(data.origin.country)) {
+      errs['origin.country'] = 'Country should only contain letters, spaces, and hyphens';
+    }
+
+    // Images (at least one, max 5)
+    const fileCount = imageFiles.filter(Boolean).length;
+    if (fileCount === 0) {
+      errs.images = 'At least one image is required';
+    } else if (fileCount > 10) {
+      errs.images = 'Maximum 10 images allowed';
+    }
+
+    return { valid: Object.keys(errs).length === 0, errors: errs };
+  };
+
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     files.forEach(file => {
@@ -215,6 +325,17 @@ const CreateGemstoneForm = () => {
         reservePrice: formData.reservePrice ? parseFloat(formData.reservePrice) : undefined,
         verificationStatus: isDraft ? 'draft' : 'submitted'
       };
+
+      // Client validation
+      const filesToSend = images.map(img => img.file);
+      const v = validateClient(submitData, filesToSend);
+      if (!v.valid) {
+        setValidationErrors(v.errors);
+        setSubmitStatus('error');
+        setSubmitMessage('Please fix the validation errors below.');
+        toast.error('Validation errors. Please check your inputs.');
+        return;
+      }
 
       // Create FormData with files
       const formDataToSend = createFormData(submitData, images.map(img => img.file).filter(Boolean));
@@ -912,9 +1033,8 @@ const CreateGemstoneForm = () => {
                 
                 {currentStep < steps.length ? (
                   <button
-                    onClick={() => setCurrentStep(currentStep + 1)}
-                    disabled={!validateStep(currentStep)}
-                    className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-200 transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                    onClick={handleNextStep}
+                    className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-200 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
                   >
                     Next Step
                   </button>

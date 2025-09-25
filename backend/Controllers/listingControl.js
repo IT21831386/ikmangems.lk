@@ -8,7 +8,7 @@ export const validateGemstone = [
   body("name")
     .notEmpty().withMessage("Name is required")
     .isLength({ min: 2, max: 100 }).withMessage("Name must be between 2-100 characters")
-    .matches(/^[a-zA-Z0-9\s\-_.']+$/).withMessage("Name contains invalid characters")
+    .matches(/^[a-zA-Z\s\-\.']+$/).withMessage("Name allows letters, spaces, hyphens, periods and apostrophes only")
     .trim(),
   
   // Enhanced description validation
@@ -57,8 +57,8 @@ export const validateGemstone = [
   body("imageCount")
     .optional()
     .custom((value, { req }) => {
-      if (req.files && req.files.length > 5) {
-        throw new Error("Maximum 5 images allowed");
+      if (req.files && req.files.length > 10) {
+        throw new Error("Maximum 10 images allowed");
       }
       return true;
     })
@@ -68,7 +68,7 @@ export const validateUpdateGemstone = [
   body("name")
     .optional()
     .isLength({ min: 2, max: 100 }).withMessage("Name must be between 2-100 characters")
-    .matches(/^[a-zA-Z0-9\s\-_.']+$/).withMessage("Name contains invalid characters")
+    .matches(/^[a-zA-Z\s\-\.']+$/).withMessage("Name allows letters, spaces, hyphens, periods and apostrophes only")
     .trim(),
   
   body("description")

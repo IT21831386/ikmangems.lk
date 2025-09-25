@@ -41,7 +41,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024, files: 5 }
+  limits: { fileSize: 5 * 1024 * 1024, files: 10 }
 });
 
 /* ====================== AUTH MIDDLEWARE ====================== */
@@ -84,10 +84,10 @@ const validateImageCount = (req, res, next) => {
 router.use(authMiddleware);
 
 /* ====================== CRUD ROUTES ====================== */
-router.post("/", upload.array("images", 5), handleMulterError, validateImageCount, validateGemstone, createGemstone);
+router.post("/", upload.array("images", 10), handleMulterError, validateImageCount, validateGemstone, createGemstone);
 router.get("/", getGemstones);
 router.get("/:id", getGemstone);
-router.put("/:id", upload.array("images", 5), handleMulterError, validateUpdateGemstone, updateGemstone);
+router.put("/:id", upload.array("images", 10), handleMulterError, validateUpdateGemstone, updateGemstone);
 router.delete("/:id", deleteGemstone);
 
 /* ====================== ADMIN ROUTES ====================== */
