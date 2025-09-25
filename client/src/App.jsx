@@ -4,10 +4,10 @@ import Layout from "./Layout";
 import Home from "./pages/home";
 import PaymentForm from "./pages/payment_home";
 import Online from "./pages/onlinepayment";
-import PaymentHistory from "./pages/PaymentHistory";
+import PaymentHistory from "./pages/admin/payments/paymentHistory";
 import Auction from "./pages/Auction/auction_page";
 import AuctionDetails from "./pages/Auction/auction_details";
-import AdminPaymentStatus from "./pages/adminPaymentStatus";
+import AdminPaymentStatus from "./pages/admin/payments/adminPaymentStatus";
 //import NoteDetailPage from "./pages/NoteDetailPage";
 //import toast from "react-hot-toast";
 
@@ -30,9 +30,13 @@ import GetOTP from "./pages/auth/getOTP";
 import ResetPassword from "./pages/auth/ResetPassword";
 import AccountSettings from "./pages/user/AccountSettings";
 
-import DisplayUsers from "./pages/admin-um/DisplayUsers";
+import DisplayUsers from "./pages/admin/admin-um/DisplayUsers";
 import OrderHistoryPage from "./pages/user/OrderHistoryPage";
 //import EditUsers from "./pages/admin-um/EditUsers";
+
+import Gemstone from "./pages/gem-listing/Gemstone"; // your form component
+import GemDisplay from "./pages/gem-listing/GemDisplay.jsx"; // optional details page
+import CRUDStatus from "./components/CRUDStatus.jsx"; // CRUD status indicator
 
 const App = () => {
   return (
@@ -70,6 +74,8 @@ const App = () => {
       <Route path="/account-settings" element={<AccountSettings />} />
       <Route path="/display-users" element={<DisplayUsers />} />
       <Route path="/order-history" element={<OrderHistoryPage />} />
+      <Route path="/gemsdetails" element={<GemDisplay />} />
+      <Route path="/gem-add" element={<Gemstone />} />
     </Routes>
   );
 };

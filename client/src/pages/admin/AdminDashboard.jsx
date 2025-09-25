@@ -1,4 +1,3 @@
-// AdminDashboard.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Home, LogOut, UserCog, Users, CreditCard } from "lucide-react";
@@ -14,11 +13,9 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-
-// Import the components you already created
-import UsersList from "../admin-um/DisplayUsers";
-import PaymentHistory from "../paymentHistory";
-import AccountSettings from "../user/AccountSettings"; // adjust path if needed
+import UsersList from "./admin-um/DisplayUsers";
+import PaymentHistory from "./payments/paymentHistory";
+import AccountSettings from "../user/AccountSettings";
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -35,13 +32,12 @@ export default function AdminDashboard() {
         return <div>Welcome to Admin Dashboard</div>;
 
       case "manageusers":
-        return <UsersList />; // ✅ show full manage users component
+        return <UsersList />;
 
       case "transactions":
-        return <PaymentHistory />; // ✅ show payment history
-
+        return <PaymentHistory />;
       case "profile":
-        return <AccountSettings />; // ✅ reuse same profile/settings component
+        return <AccountSettings />;
 
       default:
         return <div>Welcome!</div>;
