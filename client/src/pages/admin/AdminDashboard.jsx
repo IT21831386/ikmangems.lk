@@ -1,14 +1,8 @@
+// AdminDashboard.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Home,
-  User2,
-  ChevronUp,
-  LogOut,
-  UserCog,
-  Users,
-  CreditCard,
-} from "lucide-react";
+import { Home, LogOut, UserCog, Users, CreditCard } from "lucide-react";
+
 import {
   Sidebar,
   SidebarContent,
@@ -20,6 +14,11 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+
+// Import the components you already created
+import UsersList from "../admin-um/DisplayUsers";
+import PaymentHistory from "../paymentHistory";
+import AccountSettings from "../user/AccountSettings"; // adjust path if needed
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -34,12 +33,16 @@ export default function AdminDashboard() {
     switch (activeSection) {
       case "dashboard":
         return <div>Welcome to Admin Dashboard</div>;
+
       case "manageusers":
-        return <div>Manage users and roles</div>;
+        return <UsersList />; // ✅ show full manage users component
+
       case "transactions":
-        return <div>View all transactions</div>;
+        return <PaymentHistory />; // ✅ show payment history
+
       case "profile":
-        return <div>Edit your profile</div>;
+        return <AccountSettings />; // ✅ reuse same profile/settings component
+
       default:
         return <div>Welcome!</div>;
     }
@@ -54,31 +57,45 @@ export default function AdminDashboard() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setActiveSection("dashboard")}
+                  className={activeSection === "dashboard" ? "bg-gray-200" : ""}
                 >
                   <Home className="mr-2" /> Dashboard
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setActiveSection("manageusers")}
+                  className={
+                    activeSection === "manageusers" ? "bg-gray-200" : ""
+                  }
                 >
                   <Users className="mr-2" /> Manage Users
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setActiveSection("transactions")}
+                  className={
+                    activeSection === "transactions" ? "bg-gray-200" : ""
+                  }
                 >
                   <CreditCard className="mr-2" /> Transactions
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => setActiveSection("profile")}>
+                <SidebarMenuButton
+                  onClick={() => setActiveSection("profile")}
+                  className={activeSection === "profile" ? "bg-gray-200" : ""}
+                >
                   <UserCog className="mr-2" /> Profile
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarContent>
+
           <SidebarFooter>
             <Button
               variant="outline"

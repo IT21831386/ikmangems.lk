@@ -1,9 +1,7 @@
 //Dana
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import PaymentHistory from "../paymentHistory";
-import UsersList from "../admin-um/DisplayUsers";
-import AccountSettings from "./AccountSettings"; 
+import AccountSettings from "./AccountSettings";
 
 import {
   Inbox,
@@ -58,8 +56,6 @@ export default function ManageUsers() {
 
   const sidebarItems = [
     { title: "Dashboard", key: "dashboard", icon: Home },
-    { title: "Users", key: "users", icon: Inbox },
-    { title: "Transactions", key: "transactions", icon: Wallet },
     { title: "My Bids", key: "mybids", icon: Gavel },
     { title: "Profile", key: "profile", icon: UserCog },
   ];
@@ -68,12 +64,6 @@ export default function ManageUsers() {
     switch (activeSection) {
       case "dashboard":
         return <div>Welcome to the dashboard</div>;
-
-      case "users":
-        return <UsersList />; // <-- use the separate UsersList component here
-
-      case "transactions":
-        return <PaymentHistory />;
 
       case "mybids":
         return <div>Ongoing auctions you placed bids on</div>;
