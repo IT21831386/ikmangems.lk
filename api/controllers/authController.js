@@ -31,14 +31,15 @@ export const verifyToken = (req, res, next) => {
 };
 
 export const register = async (req, res) => {
-  const { name, email, password, role } = req.body; // add role
+  const { name, email, password, userType } = req.body;
 
-
-  if (!name || !email || !password) {
+  if (!name || !email || !password || !userType) {
     return res.json({ success: false, message: "Missing details" });
   }
 
-  if (role && !["buyer", "seller", "admin"].includes(role)) {
+  // Optional: Validate role (you can remove this if not needed)
+  const allowedRoles = ["buyer", "seller", "admin"];
+  if (!allowedRoles.includes(userType)) {
     return res.json({ success: false, message: "Invalid role" });
   }
 
@@ -54,17 +55,11 @@ export const register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: role || "buyer",
-
-    await user.save();
-
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
+      role: userType,
     });
 
     await user.save();
 
-    // Include role in JWT
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -76,7 +71,6 @@ export const register = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // Send welcome email
     await transporter.sendMail({
       from: process.env.SENDER_EMAIL,
       to: email,
@@ -89,7 +83,7 @@ export const register = async (req, res) => {
       user: { id: user._id, name, email, role: user.role },
     });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    return res.json({ success: false, message: error.message });
   }
 };
 
@@ -113,9 +107,13 @@ export const login = async (req, res) => {
     if (!isMatch)
       return res.json({ success: false, message: "Invalid password" });
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: "15m",
-    });
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "15m",
+      }
+    );
 
     res.cookie("token", token, {
       ...cookieOptions,
@@ -132,7 +130,6 @@ export const login = async (req, res) => {
         role: user.role,
       },
     });
-
   } catch (error) {
     console.error(error);
     return res.json({ success: false, message: error.message });
