@@ -11,7 +11,6 @@ import AdminPaymentStatus from "./pages/adminPaymentStatus";
 //import NoteDetailPage from "./pages/NoteDetailPage";
 //import toast from "react-hot-toast";
 
-
 //import { BrowserRouter, Routes, Route } from "react-router-dom";
 //import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
@@ -23,6 +22,9 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import UserManagement from "./pages/user/manageUsers";
 import ProtectedRoute from "./components/ProtectedRoute";
 import BidderDashboard from "./pages/user/bidderDashboard";
+import SellerDashboard from "./pages/seller/SellerDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+
 import VerifyEmail from "./pages/auth/VerifyEmail";
 import GetOTP from "./pages/auth/getOTP";
 import ResetPassword from "./pages/auth/ResetPassword";
@@ -48,6 +50,7 @@ const App = () => {
         <Route path="/admin-payment-status" element={<AdminPaymentStatus />} />
       </Route>
 
+
        <Route path="/" element={<Home />} />
        <Route path="/login" element={<Login />} />
        <Route path="/signup" element={<Signup />} />
@@ -65,7 +68,8 @@ const App = () => {
        />
        <Route path="/forgot-password" element={<ForgotPassword />} />
        <Route path="/manage-users" element={<UserManagement />} />
-       
+        <Route path="/seller-dashboard" element={<SellerDashboard />} />
+      <Route path="/admin-dashboard" element={<AdminDashboard />} />
        <Route path="/seller-dashboard" element={<SellerDashboard />} />
        <Route path="/account-settings" element={<AccountSettings />} />
        <Route path="/display-users" element={<DisplayUsers />} />

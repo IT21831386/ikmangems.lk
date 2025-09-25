@@ -1,9 +1,8 @@
-
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
 import transporter from "../config/nodemailer.js";
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
 const cookieOptions = {
@@ -11,7 +10,6 @@ const cookieOptions = {
   secure: process.env.NODE_ENV === "production" ? true : false,
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
 };
-
 
 export const verifyToken = (req, res, next) => {
   const token = req.cookies.token;
@@ -32,14 +30,16 @@ export const verifyToken = (req, res, next) => {
   }
 };
 
-
 export const register = async (req, res) => {
+  const { name, email, password, role } = req.body; // add role
 
-  const { role } = req.body;
-  const { name, email, password } = req.body;
 
   if (!name || !email || !password) {
-    return res.json({ success: false, message: "Missing Details" });
+    return res.json({ success: false, message: "Missing details" });
+  }
+
+  if (role && !["buyer", "seller", "admin"].includes(role)) {
+    return res.json({ success: false, message: "Invalid role" });
   }
 
   try {
@@ -49,32 +49,49 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new userModel({ name, email, password: hashedPassword, role: role || "user" });
+
+    const user = new userModel({
+      name,
+      email,
+      password: hashedPassword,
+      role: role || "buyer",
+
     await user.save();
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
+    await user.save();
+
+    // Include role in JWT
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
     res.cookie("token", token, {
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    const mailOptions = {
+    // Send welcome email
+    await transporter.sendMail({
       from: process.env.SENDER_EMAIL,
       to: email,
       subject: "Welcome!",
-      text: `Welcome, Your account has been created with email id: ${email}`,
-    };
-    await transporter.sendMail(mailOptions);
+      text: `Welcome ${name}! Your account has been created as ${user.role}.`,
+    });
 
-    return res.json({ success: true });
+    return res.json({
+      success: true,
+      user: { id: user._id, name, email, role: user.role },
+    });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
 };
-
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
@@ -89,6 +106,9 @@ export const login = async (req, res) => {
     const user = await userModel.findOne({ email });
     if (!user) return res.json({ success: false, message: "Invalid email" });
 
+    if (!user.password)
+      return res.json({ success: false, message: "Password not set for user" });
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
       return res.json({ success: false, message: "Invalid password" });
@@ -99,16 +119,25 @@ export const login = async (req, res) => {
 
     res.cookie("token", token, {
       ...cookieOptions,
-      maxAge: 15 * 60 * 1000, // 15 minutes
+      maxAge: 15 * 60 * 1000,
+      httpOnly: true,
     });
 
-    return res.json({ success: true, role: user.role });
+    return res.json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+
   } catch (error) {
+    console.error(error);
     return res.json({ success: false, message: error.message });
   }
 };
-
-
 
 export const logout = (req, res) => {
   res.clearCookie("token", {
@@ -118,8 +147,6 @@ export const logout = (req, res) => {
   });
   return res.json({ success: true, message: "Logged Out" });
 };
-
-
 
 export const isAuthenticated = (req, res) => {
   const token = req.cookies.token;
@@ -138,7 +165,6 @@ export const isAuthenticated = (req, res) => {
       .json({ success: false, message: "Token invalid or expired" });
   }
 };
-
 
 export const sendVerifyOtp = async (req, res) => {
   try {
@@ -167,7 +193,6 @@ export const sendVerifyOtp = async (req, res) => {
   }
 };
 
-
 export const verifyEmail = async (req, res) => {
   const { userId, otp } = req.body;
   if (!userId || !otp)
@@ -193,7 +218,6 @@ export const verifyEmail = async (req, res) => {
     return res.json({ success: false, message: error.message });
   }
 };
-
 
 export const sendResetOtp = async (req, res) => {
   const { email } = req.body;
@@ -221,7 +245,6 @@ export const sendResetOtp = async (req, res) => {
     return res.json({ success: false, message: error.message });
   }
 };
-
 
 export const resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;

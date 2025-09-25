@@ -25,7 +25,7 @@ const signupSchema = z
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(6, "Confirm Password is required"),
-    userType: z.enum(["seller", "bidder"], "Select a user type"),
+    role: z.enum(["seller", "bidder"], "Select a user type"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -36,14 +36,19 @@ export default function Signup() {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState("");
 
-  const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm({
     resolver: zodResolver(signupSchema),
     defaultValues: {
       name: "",
       email: "",
       password: "",
       confirmPassword: "",
-      userType: "bidder",
+      role: "bidder",
     },
   });
 
@@ -51,17 +56,17 @@ export default function Signup() {
     setServerError("");
     try {
       const response = await axios.post(
-        "http://localhost:5001/api/auth/register", 
+        "http://localhost:5001/api/auth/register",
         {
           name: data.name,
           email: data.email,
           password: data.password,
-          userType: data.userType,
+          role: data.role,
         }
       );
 
       if (response.data.success) {
-        navigate("/login"); 
+        navigate("/login");
       } else {
         setServerError(response.data.message || "Signup failed");
       }
@@ -86,38 +91,61 @@ export default function Signup() {
           <div className="grid gap-2">
             <Label htmlFor="name">Name</Label>
             <Input id="name" {...register("name")} placeholder="Your name" />
-            {errors.name && <p className="text-red-500 text-sm">{errors.name.message}</p>}
+            {errors.name && (
+              <p className="text-red-500 text-sm">{errors.name.message}</p>
+            )}
           </div>
 
           {/* Email */}
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register("email")} placeholder="you@example.com" />
-            {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
+            <Input
+              id="email"
+              type="email"
+              {...register("email")}
+              placeholder="you@example.com"
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm">{errors.email.message}</p>
+            )}
           </div>
 
           {/* Password */}
           <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" {...register("password")} />
-            {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
+            {errors.password && (
+              <p className="text-red-500 text-sm">{errors.password.message}</p>
+            )}
           </div>
 
           {/* Confirm Password */}
           <div className="grid gap-2">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input id="confirmPassword" type="password" {...register("confirmPassword")} />
-            {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword.message}</p>}
+            <Input
+              id="confirmPassword"
+              type="password"
+              {...register("confirmPassword")}
+            />
+            {errors.confirmPassword && (
+              <p className="text-red-500 text-sm">
+                {errors.confirmPassword.message}
+              </p>
+            )}
           </div>
 
           {/* User Type */}
           <div className="grid gap-2">
             <Label>Register As</Label>
             <Controller
+              name="role"
               control={control}
-              name="userType"
               render={({ field }) => (
-                <RadioGroup {...field} className="flex gap-4">
+                <RadioGroup
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  className="flex gap-4"
+                >
                   <div className="flex items-center gap-2">
                     <RadioGroupItem value="bidder" id="bidder" />
                     <Label htmlFor="bidder">Bidder</Label>
@@ -129,13 +157,20 @@ export default function Signup() {
                 </RadioGroup>
               )}
             />
-            {errors.userType && <p className="text-red-500 text-sm">{errors.userType.message}</p>}
+
+            {errors.role && (
+              <p className="text-red-500 text-sm">{errors.role.message}</p>
+            )}
           </div>
 
           {serverError && <p className="text-red-500 text-sm">{serverError}</p>}
 
           <CardFooter className="flex flex-col gap-2">
-            <Button type="submit" disabled={isSubmitting} className="w-full  hover:bg-blue-800 bg-blue-600">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full  hover:bg-blue-800 bg-blue-600"
+            >
               {isSubmitting ? "Signing up..." : "Sign Up"}
             </Button>
 
