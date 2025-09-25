@@ -42,13 +42,19 @@ export default function Signup() {
   const [serverError, setServerError] = useState("");
   const navigate = useNavigate();
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm({
     resolver: zodResolver(signupSchema),
     defaultValues: {
       name: "",
       email: "",
       password: "",
       confirmPassword: "",
+      role: "bidder",
     },
   });
 
@@ -61,7 +67,7 @@ export default function Signup() {
           name: data.name,
           email: data.email,
           password: data.password,
-          role, // role comes from step 1
+          role: data.role,
         }
       );
 
@@ -94,25 +100,44 @@ export default function Signup() {
           <div className="grid gap-2">
             <Label htmlFor="name">Name</Label>
             <Input id="name" {...register("name")} placeholder="Your name" />
-            {errors.name && <p className="text-red-500 text-sm">{errors.name.message}</p>}
+            {errors.name && (
+              <p className="text-red-500 text-sm">{errors.name.message}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register("email")} placeholder="you@example.com" />
-            {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
+            <Input
+              id="email"
+              type="email"
+              {...register("email")}
+              placeholder="you@example.com"
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm">{errors.email.message}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" {...register("password")} />
-            {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
+            {errors.password && (
+              <p className="text-red-500 text-sm">{errors.password.message}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input id="confirmPassword" type="password" {...register("confirmPassword")} />
-            {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword.message}</p>}
+            <Input
+              id="confirmPassword"
+              type="password"
+              {...register("confirmPassword")}
+            />
+            {errors.confirmPassword && (
+              <p className="text-red-500 text-sm">
+                {errors.confirmPassword.message}
+              </p>
+            )}
           </div>
 
           {serverError && <p className="text-red-500 text-sm">{serverError}</p>}
