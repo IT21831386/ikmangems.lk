@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import jsPDF from 'jspdf';
 
 const PaymentHistory = () => {
   const [allPayments, setAllPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchPaymentHistory();
@@ -41,39 +43,45 @@ const PaymentHistory = () => {
 
       console.log("Processed online data:", onlinePaymentsData);
       console.log("Processed bank data:", bankPaymentsData);
+      console.log("Bank payments with deleted field:", bankPaymentsData.map(p => ({ id: p._id, deleted: p.deleted, status: p.status })));
 
       // Format bank payments
       const formattedBankPayments = bankPaymentsData.map(payment => ({
-        id: payment._id,
-        paymentId: `BNK_${payment._id.slice(-8).toUpperCase()}`,
-        auctionId: payment.auctionId,
-        amount: payment.amount,
+          id: payment._id,
+          paymentId: `BNK_${payment._id.slice(-8).toUpperCase()}`,
+          auctionId: payment.auctionId,
+          amount: payment.amount,
         bank: payment.bank,
         branch: payment.branch,
         date: new Date(payment.paiddate).toLocaleDateString('en-CA'),
         status: payment.status || "pending",
         slip: payment.slip,
-        remark: payment.remark || "Bank deposit",
+          remark: payment.remark || "Bank deposit",
         paymentType: "Bank Deposit",
         // Bidder details
-        fullName: payment.fullName,
+          fullName: payment.fullName,
         contactNumber: payment.contactNumber,
         billingAddress: payment.billingAddress,
         emailAddress: payment.emailAddress,
-        createdAt: new Date(payment.createdAt)
+        createdAt: new Date(payment.createdAt),
+        // Add deleted fields for filtering
+        deleted: payment.deleted || false,
+        deleteReason: payment.deleteReason,
+        deletedBy: payment.deletedBy,
+        deletedAt: payment.deletedAt
       }));
 
       // Format online payments
       const formattedOnlinePayments = onlinePaymentsData.map(payment => ({
         id: payment._id,
-        paymentId: `ONL_${payment._id.slice(-8).toUpperCase()}`, // Payment Number for online payments
-        transactionId: payment.transactionId || `TXN_${payment._id.slice(-8).toUpperCase()}`, // Keep transaction ID separate
+        paymentId: `ONL_${payment._id.slice(-8).toUpperCase()}`,
+        transactionId: payment.transactionId || `TXN_${payment._id.slice(-8).toUpperCase()}`,
         auctionId: payment.auctionId,
         amount: payment.amount,
-        bank: "IPG", // Internet Payment Gateway
-        branch: "IPG", // Internet Payment Gateway
+        bank: "IPG",
+        branch: "IPG",
         date: new Date(payment.createdAt).toLocaleDateString('en-CA'),
-        status: 'complete', // Online payments are always complete (no admin approval needed)
+        status: 'complete',
         remark: payment.remark || "Online payment",
         paymentType: "Online Payment",
         cardNumber: payment.cardNumber,
@@ -83,7 +91,12 @@ const PaymentHistory = () => {
         contactNumber: payment.contactNumber,
         billingAddress: payment.billingAddress,
         emailAddress: payment.emailAddress,
-        createdAt: new Date(payment.createdAt)
+        createdAt: new Date(payment.createdAt),
+        // Add deleted fields for filtering
+        deleted: payment.deleted || false,
+        deleteReason: payment.deleteReason,
+        deletedBy: payment.deletedBy,
+        deletedAt: payment.deletedAt
       }));
 
       // Combine both payment types
@@ -92,7 +105,12 @@ const PaymentHistory = () => {
       // Sort by creation date (newest first)
       combinedPayments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       
-      setAllPayments(combinedPayments);
+      // Filter out deleted payments for user view
+      console.log('All payments before filtering:', combinedPayments.map(p => ({ id: p.id, deleted: p.deleted, status: p.status })));
+      const nonDeletedPayments = combinedPayments.filter(payment => !payment.deleted);
+      console.log('Non-deleted payments after filtering:', nonDeletedPayments.map(p => ({ id: p.id, deleted: p.deleted, status: p.status })));
+      
+      setAllPayments(nonDeletedPayments);
 
       // If no data, show sample data for testing
       if (combinedPayments.length === 0) {
@@ -213,17 +231,17 @@ const PaymentHistory = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'complete':
-        return 'text-green-600 bg-green-100';
+        return 'text-blue-700';
       case 'success':
-        return 'text-green-600 bg-green-100';
+        return 'text-blue-700';
       case 'pending':
-        return 'text-yellow-600 bg-yellow-100';
+        return 'text-yellow-700';
       case 'failed':
-        return 'text-red-600 bg-red-100';
+        return 'text-red-700';
       case 'failure':
-        return 'text-red-600 bg-red-100';
+        return 'text-red-700';
       default:
-        return 'text-gray-600 bg-gray-100';
+        return 'text-gray-700';
     }
   };
 
@@ -244,6 +262,27 @@ const PaymentHistory = () => {
     }
   };
 
+  // Filter payments based on search term
+  const filteredPayments = allPayments.filter(payment => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      payment.paymentId?.toLowerCase().includes(searchLower) ||
+      payment.auctionId?.toLowerCase().includes(searchLower) ||
+      payment.amount?.toString().includes(searchLower) ||
+      payment.paymentType?.toLowerCase().includes(searchLower) ||
+      payment.status?.toLowerCase().includes(searchLower) ||
+      payment.fullName?.toLowerCase().includes(searchLower) ||
+      payment.emailAddress?.toLowerCase().includes(searchLower) ||
+      payment.contactNumber?.includes(searchLower) ||
+      payment.billingAddress?.toLowerCase().includes(searchLower) ||
+      payment.bank?.toLowerCase().includes(searchLower) ||
+      payment.branch?.toLowerCase().includes(searchLower) ||
+      payment.remark?.toLowerCase().includes(searchLower) ||
+      payment.transactionId?.toLowerCase().includes(searchLower) ||
+      payment.cardType?.toLowerCase().includes(searchLower)
+    );
+  });
+
   const formatAmount = (amount) => {
     return new Intl.NumberFormat('en-LK', {
       style: 'currency',
@@ -252,14 +291,8 @@ const PaymentHistory = () => {
     }).format(amount);
   };
 
-  const downloadInvoice = (payment) => {
-    // Mask card number (show only last 4 digits)
-    const maskCardNumber = (cardNumber) => {
-      if (!cardNumber) return '****';
-      const last4 = cardNumber.slice(-4);
-      return `****${last4}`;
-    };
 
+  const downloadInvoice = (payment) => {
     // Format date like the example (DD/MM/YYYY HH:MM AM/PM)
     const formatReceiptDate = (dateString) => {
       const date = new Date(dateString);
@@ -274,462 +307,346 @@ const PaymentHistory = () => {
       return `${day}/${month}/${year} ${displayHours}:${minutes} ${ampm}`;
     };
 
-    // Create professional invoice content
-    const invoiceContent = `
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                                                                              ║
-║                              ikmangems.lk                                   ║
-║                                INVOICE                                      ║
-║                           [Company Logo]                                    ║
-║                                                                              ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+    // Generate invoice reference
+    const referenceCode = `${payment.paymentId.slice(-4)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
 
-BIDDER DETAILS
-════════════════════════════════════════════════════════════════════════════════
-Name:                     ${payment.fullName || 'N/A'}
-Contact Number:           ${payment.contactNumber || 'N/A'}
-Address:                  ${payment.billingAddress || 'N/A'}
-Email:                    ${payment.emailAddress || 'N/A'}
-
-PAYMENT DETAILS
-════════════════════════════════════════════════════════════════════════════════
-Payment Number:           ${payment.paymentId}
-${payment.paymentType === 'Online Payment' ? `
-Transaction ID:           ${payment.transactionId}
-` : ''}
-Auction ID:               ${payment.auctionId}
-Payment Method:           ${payment.paymentType === 'Bank Deposit' ? 'Bank Deposit' : 'Online Payment'}
-${payment.paymentType === 'Bank Deposit' ? `
-Bank:                     ${payment.bank}
-Branch:                   ${payment.branch}
-` : `
-Payment Type:             ${payment.cardType === 'visa' ? 'Visa Card' : payment.cardType === 'mastercard' ? 'Master Card' : 'Card Payment'}
-`}
-Deposited Amount:         ${formatAmount(payment.amount)}
-Currency:                 LKR
-Payment Date:             ${formatReceiptDate(payment.date)}
-Remarks:                  ${payment.remark}
-Status:                   ${getStatusText(payment.status).toUpperCase()}
-
-════════════════════════════════════════════════════════════════════════════════
-
-Invoice Reference:         ${payment.paymentId.slice(-4)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}
-
-Generated at:             ${formatReceiptDate(new Date())}
-Page:                     1 of 1
-
-════════════════════════════════════════════════════════════════════════════════
-
-                    IKMAN GEMS AUCTION PLATFORM
-                    Colombo, Sri Lanka
-                    Tel: +94 11 234 5678
-                    Email: support@ikmangems.lk
-                    Website: www.ikmangems.lk
-                    
-                    Thank you for choosing Ikman Gems!
-                    Your trusted partner in precious gemstones.
-                    
-                    All rights reserved © 2024 Ikman Gems
-
-════════════════════════════════════════════════════════════════════════════════
-    `.trim();
-
-    // Create HTML content for better formatting
-    const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Payment Invoice - ${payment.paymentId}</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .receipt-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            border: 2px solid #333;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .header {
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .header h2 {
-            margin: 10px 0 0 0;
-            font-size: 16px;
-            opacity: 0.9;
-        }
-        .logo-placeholder {
-            font-size: 12px;
-            opacity: 0.7;
-            margin-top: 5px;
-        }
-        .section {
-            margin: 20px 0;
-        }
-        .section h3 {
-            color: #495057;
-            font-size: 16px;
-            margin-bottom: 15px;
-            padding-bottom: 5px;
-            border-bottom: 2px solid #dee2e6;
-        }
-        .content {
-            padding: 30px;
-        }
-        .payment-details {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            padding: 8px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-        .detail-row:last-child {
-            border-bottom: none;
-        }
-        .label {
-            font-weight: bold;
-            color: #495057;
-        }
-        .value {
-            color: #212529;
-            font-family: 'Courier New', monospace;
-        }
-        .status-complete {
-            color: #28a745;
-            font-weight: bold;
-        }
-        .status-failed {
-            color: #dc3545;
-            font-weight: bold;
-        }
-        .footer {
-            background: #343a40;
-            color: white;
-            text-align: center;
-            padding: 15px;
-            font-size: 12px;
-        }
-        .reference {
-            background: #e9ecef;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
-            text-align: center;
-        }
-        .reference-code {
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            color: #495057;
-        }
-        @media print {
-            body { background: white; }
-            .receipt-container { box-shadow: none; border: 1px solid #000; }
-        }
-    </style>
-</head>
-<body>
-    <div class="receipt-container">
-        <div class="header">
-            <h1>ikmangems.lk</h1>
-            <h2>INVOICE</h2>
-            <div class="logo-placeholder">[Company Logo]</div>
-        </div>
-        
-        <div class="content">
-            <div class="section">
-                <h3>BIDDER DETAILS</h3>
-                <div class="payment-details">
-                    <div class="detail-row">
-                        <span class="label">Name:</span>
-                        <span class="value">${payment.fullName || 'N/A'}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="label">Contact Number:</span>
-                        <span class="value">${payment.contactNumber || 'N/A'}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="label">Address:</span>
-                        <span class="value">${payment.billingAddress || 'N/A'}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="label">Email:</span>
-                        <span class="value">${payment.emailAddress || 'N/A'}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h3>PAYMENT DETAILS</h3>
-                <div class="payment-details">
-                    <div class="detail-row">
-                        <span class="label">Payment Number:</span>
-                        <span class="value">${payment.paymentId}</span>
-                    </div>
-                    ${payment.paymentType === 'Online Payment' ? `
-                    <div class="detail-row">
-                        <span class="label">Transaction ID:</span>
-                        <span class="value">${payment.transactionId}</span>
-                    </div>
-                    ` : ''}
-                    <div class="detail-row">
-                        <span class="label">Auction ID:</span>
-                        <span class="value">${payment.auctionId}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="label">Payment Method:</span>
-                        <span class="value">${payment.paymentType === 'Bank Deposit' ? 'Bank Deposit' : 'Online Payment'}</span>
-                    </div>
-                    ${payment.paymentType === 'Bank Deposit' ? `
-                    <div class="detail-row">
-                        <span class="label">Bank:</span>
-                        <span class="value">${payment.bank}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="label">Branch:</span>
-                        <span class="value">${payment.branch}</span>
-                    </div>
-                    ` : `
-                    <div class="detail-row">
-                        <span class="label">Payment Type:</span>
-                        <span class="value">${payment.cardType === 'visa' ? 'Visa Card' : payment.cardType === 'mastercard' ? 'Master Card' : 'Card Payment'}</span>
-                    </div>
-                    `}
-                    <div class="detail-row">
-                        <span class="label">Deposited Amount:</span>
-                        <span class="value">${formatAmount(payment.amount)}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="label">Currency:</span>
-                        <span class="value">LKR</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="label">Payment Date:</span>
-                        <span class="value">${formatReceiptDate(payment.date)}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="label">Remarks:</span>
-                        <span class="value">${payment.remark}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="label">Status:</span>
-                        <span class="value ${payment.status === 'success' || payment.status === 'complete' ? 'status-complete' : 'status-failed'}">${getStatusText(payment.status).toUpperCase()}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="reference">
-                <div>Invoice Reference:</div>
-                <div class="reference-code">${payment.paymentId.slice(-4)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}</div>
-            </div>
-            
-            <div style="text-align: center; margin: 20px 0; color: #6c757d;">
-                <div>Generated at: ${formatReceiptDate(new Date())}</div>
-                <div>Page: 1 of 1</div>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <div><strong>IKMAN GEMS AUCTION PLATFORM</strong></div>
-            <div>Colombo, Sri Lanka</div>
-            <div>Tel: +94 11 234 5678</div>
-            <div>Email: support@ikmangems.lk</div>
-            <div>Website: www.ikmangems.lk</div>
-            <div style="margin-top: 10px;">
-                <div>Thank you for choosing Ikman Gems!</div>
-                <div>Your trusted partner in precious gemstones.</div>
-            </div>
-            <div style="margin-top: 10px; font-size: 10px;">
-                All rights reserved © 2024 Ikman Gems
-            </div>
-        </div>
-    </div>
-</body>
-</html>`;
-
-    // Create and download as HTML file (opens in browser, can be saved as PDF)
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `invoice_${payment.paymentId}.html`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    // Create PDF using jsPDF
+    const doc = new jsPDF();
     
-    toast.success("Invoice downloaded successfully!");
+    // Set font
+    doc.setFont('helvetica');
+    
+    // Header with same color as cyber receipt
+    doc.setFillColor(61, 82, 109); // Dark blue-gray color from cyber receipt
+    doc.rect(0, 0, 210, 35, 'F');
+    
+    // Header text
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ikmangems.lk', 105, 12, { align: 'center' });
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text("Sri Lanka's premier platform for authentic gem auctions", 105, 20, { align: 'center' });
+    
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('INVOICE', 105, 28, { align: 'center' });
+    
+    // Reset text color
+    doc.setTextColor(0, 0, 0);
+    
+    let yPosition = 50;
+    
+    // Decorative line under header
+    doc.setDrawColor(61, 82, 109);
+    doc.setLineWidth(0.5);
+    doc.line(20, 42, 190, 42);
+    
+    // Bidder Details Section - Center Right (moved down)
+    const bidderStartY = 60;
+    const centerX = 105; // Center of A4 page (210mm / 2)
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(61, 82, 109);
+    doc.text('BIDDER DETAILS', centerX + 40, bidderStartY);
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    doc.text(`${payment.fullName || 'N/A'}`, centerX + 40, bidderStartY + 10);
+    doc.text(`${payment.contactNumber || 'N/A'}`, centerX + 40, bidderStartY + 16);
+    doc.text(`${payment.billingAddress || 'N/A'}`, centerX + 40, bidderStartY + 22);
+    doc.text(`${payment.emailAddress || 'N/A'}`, centerX + 40, bidderStartY + 28);
+    
+    // Payment Details Section - Center (exactly in middle)
+    const paymentStartY = bidderStartY + 50;
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(61, 82, 109);
+    doc.text('PAYMENT DETAILS', centerX, paymentStartY, { align: 'center' });
+    yPosition = paymentStartY + 15;
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    
+    // Payment details with proper spacing like in the image
+    const labelX = centerX - 50;
+    const valueX = centerX + 20;
+    
+    doc.text('Payment Number:', labelX, yPosition);
+    doc.text(payment.paymentId, valueX, yPosition);
+    yPosition += 10;
+    
+    if (payment.paymentType === 'Online Payment') {
+      doc.text('Transaction ID:', labelX, yPosition);
+      doc.text(payment.transactionId, valueX, yPosition);
+      yPosition += 10;
+    }
+    
+    doc.text('Auction ID:', labelX, yPosition);
+    doc.text(payment.auctionId, valueX, yPosition);
+    yPosition += 10;
+    
+    doc.text('Payment Method:', labelX, yPosition);
+    doc.text(payment.paymentType === 'Bank Deposit' ? 'Bank Deposit' : 'Online Payment', valueX, yPosition);
+    yPosition += 10;
+    
+    if (payment.paymentType === 'Bank Deposit') {
+      doc.text('Bank:', labelX, yPosition);
+      doc.text(payment.bank, valueX, yPosition);
+      yPosition += 10;
+      doc.text('Branch:', labelX, yPosition);
+      doc.text(payment.branch, valueX, yPosition);
+      yPosition += 10;
+    } else {
+      const cardTypeText = payment.cardType === 'visa' ? 'Visa Card' : 
+                          payment.cardType === 'mastercard' ? 'Master Card' : 'Card Payment';
+      doc.text('Payment Type:', labelX, yPosition);
+      doc.text(cardTypeText, valueX, yPosition);
+      yPosition += 10;
+    }
+    
+    doc.text('Deposited Amount:', labelX, yPosition);
+    doc.text(formatAmount(payment.amount), valueX, yPosition);
+    yPosition += 10;
+    
+    doc.text('Currency:', labelX, yPosition);
+    doc.text('LKR', valueX, yPosition);
+    yPosition += 10;
+    
+    doc.text('Payment Date:', labelX, yPosition);
+    doc.text(formatReceiptDate(payment.date), valueX, yPosition);
+    yPosition += 10;
+    
+    doc.text('Remarks:', labelX, yPosition);
+    doc.text(payment.remark || 'N/A', valueX, yPosition);
+    yPosition += 10;
+    
+    // Status as regular text like other items
+    const statusText = getStatusText(payment.status).toUpperCase();
+    doc.text('Status:', labelX, yPosition);
+    doc.text(statusText, valueX, yPosition);
+    yPosition += 15;
+    
+    // Horizontal bar below payment details
+    doc.setDrawColor(61, 82, 109);
+    doc.setLineWidth(0.5);
+    doc.line(20, yPosition, 190, yPosition);
+    yPosition += 10;
+    
+    // Reset text color
+    doc.setTextColor(0, 0, 0);
+    
+    // Position footer at bottom of page (A4 height is 297mm, footer height is 35mm)
+    const footerY = 262; // 297 - 35 = 262mm from top
+    
+    // Invoice Reference without container (plain text)
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(61, 82, 109);
+    doc.text('Invoice Reference:', centerX, yPosition, { align: 'center' });
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    doc.text(referenceCode, centerX, yPosition + 8, { align: 'center' });
+    yPosition += 20;
+    
+    // Generated info with darker text
+    doc.setTextColor(50, 50, 50); // Much darker than before
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated at: ${formatReceiptDate(new Date())}`, 20, yPosition);
+    doc.text('Page: 1 of 1', 170, yPosition);
+    
+    // Footer with same color as header
+    doc.setFillColor(61, 82, 109); // Same dark blue-gray color
+    doc.rect(0, footerY, 210, 35, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ikmangems.lk', 105, footerY + 8, { align: 'center' });
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Colombo, Sri Lanka', 105, footerY + 15, { align: 'center' });
+    doc.text('info@ikmangems.lk | +94 11 123 4567', 105, footerY + 21, { align: 'center' });
+    doc.text('© 2025 ikmangems.lk. All rights reserved.', 105, footerY + 27, { align: 'center' });
+    
+    // Download the PDF
+    doc.save(`invoice_${payment.paymentId}.pdf`);
+    
+    toast.success("Invoice downloaded as PDF!");
   };
+
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ fontFamily: 'Poppins' }}>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50" style={{ fontFamily: 'Poppins' }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading payment history...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-6"></div>
+          <p className="text-gray-600 text-lg font-medium">Loading payment history...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4" style={{ fontFamily: 'Poppins' }}>
+    <div className="min-h-screen bg-gray-50 py-8 px-6" style={{ fontFamily: 'Poppins' }}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-[20px] p-6 mb-6 shadow-sm">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Payment History</h1>
-          <p className="text-gray-600">View all your transaction history and payment status</p>
+
+
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              id="search"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+            </div>
+          {searchTerm && (
+            <div className="mt-2 text-sm text-gray-600">
+              Found {filteredPayments.length} payment{filteredPayments.length !== 1 ? 's' : ''} matching "{searchTerm}"
+            </div>
+          )}
+          </div>
+
+        {/* Payment Information Table */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
+          <div style={{ backgroundColor: '#2C3E50' }} className="text-white px-8 py-6 rounded-t-3xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Payment Information</h2>
+              <div className="flex space-x-2">
+                <button
+                  onClick={fetchPaymentHistory}
+                  className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 text-sm font-semibold shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                  style={{ borderRadius: '30px' }}
+                >
+                  🔄 Refresh
+                </button>
+              </div>
+            </div>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-[20px] p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">📋 Total Payments</h3>
-                <p className="text-3xl font-bold text-blue-600">{allPayments.length}</p>
-                <p className="text-sm text-gray-500">All transactions</p>
-              </div>
-              <div className="text-4xl">📋</div>
-            </div>
-          </div>
-          <div className="bg-white rounded-[20px] p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">🏦 Bank Deposits</h3>
-                <p className="text-3xl font-bold text-blue-600">{allPayments.filter(p => p.paymentType === 'Bank Deposit').length}</p>
-                <p className="text-sm text-gray-500">
-                  {allPayments.filter(p => p.paymentType === 'Bank Deposit' && p.status === 'pending').length} Pending
-                </p>
-              </div>
-              <div className="text-4xl">🏦</div>
-            </div>
-          </div>
-          <div className="bg-white rounded-[20px] p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">💳 Online Payments</h3>
-                <p className="text-3xl font-bold text-green-600">{allPayments.filter(p => p.paymentType === 'Online Payment').length}</p>
-                <p className="text-sm text-gray-500">
-                  {allPayments.filter(p => p.paymentType === 'Online Payment' && p.status === 'complete').length} Complete
-                </p>
-              </div>
-              <div className="text-4xl">💳</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Combined Payment Table */}
-        <div className="bg-white rounded-[20px] shadow-sm overflow-hidden">
-          {allPayments.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📋</div>
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">No Payments Found</h3>
-              <p className="text-gray-500">You haven't made any payments yet.</p>
+          {filteredPayments.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="text-8xl mb-6 opacity-30">🔍</div>
+              <h3 className="text-2xl font-semibold text-gray-600 mb-4">
+                {searchTerm ? 'No Matching Payments Found' : 'No Payments Found'}
+              </h3>
+              <p className="text-gray-500 text-lg">
+                {searchTerm 
+                  ? `No payments match your search "${searchTerm}". Try a different search term.`
+                  : "You haven't made any payments yet."
+                }
+              </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-blue-600 text-white">
+            <div className="w-full">
+              <table className="w-full table-fixed">
+                <thead className="bg-gray-200 border-b border-gray-300">
                   <tr>
-                    <th className="px-6 py-4 text-left font-semibold">Payment Number</th>
-                    <th className="px-6 py-4 text-left font-semibold">Auction ID</th>
-                    <th className="px-6 py-4 text-left font-semibold">Payment Type</th>
-                    <th className="px-6 py-4 text-left font-semibold">Deposited Amount</th>
-                    <th className="px-6 py-4 text-left font-semibold">Bank</th>
-                    <th className="px-6 py-4 text-left font-semibold">Branch</th>
-                    <th className="px-6 py-4 text-left font-semibold">Payment Date</th>
-                    <th className="px-6 py-4 text-left font-semibold">Payment Status</th>
-                    <th className="px-6 py-4 text-left font-semibold">Invoice</th>
+                    <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Payment Type</th>
+                    <th className="w-[13%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Payment Number</th>
+                    <th className="w-[10%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Auction ID</th>
+                    <th className="w-[13%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Deposited Amount</th>
+                    <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Bank</th>
+                    <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Branch</th>
+                    <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Payment Date</th>
+                    <th className="w-[11%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Payment Status</th>
+                    <th className="w-[15%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Invoice</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {allPayments.map((payment) => (
-                    <tr key={payment.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <span className={`font-mono text-sm ${payment.paymentType === 'Bank Deposit' ? 'text-blue-600' : 'text-green-600'}`}>
+                  {filteredPayments.map((payment, index) => (
+                    <tr key={payment.id} className={`hover:bg-gray-50 transition-colors duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
+                      <td className="w-[12%] px-4 py-5">
+                        <span className="text-sm font-bold text-gray-800">
+                          {payment.paymentType === 'Bank Deposit' ? 'Bank Deposit' : 'Online Payment'}
+                        </span>
+                      </td>
+                      <td className="w-[13%] px-4 py-5">
+                        <span className="font-mono text-xs font-bold truncate block text-gray-800">
                           {payment.paymentId}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="font-semibold text-gray-800">
+                      <td className="w-[10%] px-4 py-5">
+                        <span className="text-gray-800 text-sm">
                           {payment.auctionId}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
-                          payment.paymentType === 'Bank Deposit' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {payment.paymentType === 'Bank Deposit' ? '🏦' : '💳'} {payment.paymentType}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="font-semibold text-gray-800">
+                      <td className="w-[13%] px-4 py-5">
+                        <span className="font-bold text-gray-800 text-sm">
                           {formatAmount(payment.amount)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-gray-600">
+                      <td className="w-[12%] px-4 py-5 text-gray-700 font-medium text-sm truncate">
                         {payment.bank}
                       </td>
-                      <td className="px-6 py-4 text-gray-600">
-                        {payment.branch}
+                      <td className="w-[12%] px-4 py-5 text-gray-700 font-medium text-sm truncate">
+                        {payment.branch || 'Not Available'}
                       </td>
-                      <td className="px-6 py-4 text-gray-600">
+                      <td className="w-[12%] px-4 py-5 text-gray-700 font-medium text-sm">
                         {payment.date}
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(payment.status)}`}>
+                      <td className="w-[11%] px-4 py-5">
+                        <span 
+                          className="text-xs font-semibold"
+                          style={{ 
+                            color: payment.status === 'pending' ? '#EA580C' : (payment.status === 'complete' || payment.status === 'success' ? '#4ECDC4' : '#FF6B6B')
+                          }}
+                        >
                           {getStatusText(payment.status)}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="w-[15%] px-4 py-5">
                         {/* Download logic: All payments can download invoice (including failed ones) */}
                         {payment.paymentType === 'Bank Deposit' ? (
                           payment.status === 'pending' ? (
-                            <span className="px-3 py-1 bg-gray-300 text-gray-600 rounded-[8px] text-sm font-medium cursor-not-allowed">
+                            <span className="inline-flex items-center px-3 py-1.5 bg-gray-200 text-gray-600 rounded-lg text-xs font-semibold cursor-not-allowed border border-gray-300 w-24 justify-center">
                               ⏳ Pending
                             </span>
                           ) : (
                             <button
                               onClick={() => downloadInvoice(payment)}
-                              className={`px-3 py-1 text-white rounded-[8px] transition-colors text-sm font-medium ${
-                                payment.status === 'success' || payment.status === 'complete' 
-                                  ? 'bg-blue-500 hover:bg-blue-600' 
-                                  : 'bg-red-500 hover:bg-red-600'
-                              }`}
+                              className="flex items-center justify-center px-3 py-1.5 text-white rounded-lg hover:opacity-90 transition-all duration-200 text-xs font-semibold shadow-sm hover:shadow-md transform hover:-translate-y-0.5 w-24"
+                              style={{ backgroundColor: '#000000', borderRadius: '30px' }}
                             >
-                              📄 Download Invoice
+                              📄 Download
                             </button>
                           )
                         ) : (
                           <button
                             onClick={() => downloadInvoice(payment)}
-                            className="px-3 py-1 bg-green-500 text-white rounded-[8px] hover:bg-green-600 transition-colors text-sm font-medium"
+                            className="flex items-center justify-center px-3 py-1.5 text-white rounded-lg hover:opacity-90 transition-all duration-200 text-xs font-semibold shadow-sm hover:shadow-md transform hover:-translate-y-0.5 w-24"
+                            style={{ backgroundColor: '#000000', borderRadius: '30px' }}
                           >
-                            📄 Download Invoice
+                            📄 Download
                           </button>
                         )}
                       </td>
@@ -742,7 +659,29 @@ Page:                     1 of 1
         </div>
 
       </div>
-      <Toaster position="top-right" />
+      <Toaster 
+        position="top-right" 
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+            borderRadius: '12px',
+            fontSize: '14px',
+            fontFamily: 'Poppins',
+          },
+          success: {
+            style: {
+              background: '#10B981',
+            },
+          },
+          error: {
+            style: {
+              background: '#EF4444',
+            },
+          },
+        }}
+      />
     </div>
   );
 };

@@ -770,3 +770,58 @@ export const testEmail = async (req, res) => {
     });
   }
 };
+
+// Soft delete online payment (for user deletion)
+export const softDeleteOnlinePayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { deleted, deleteReason, deletedBy, deletedAt } = req.body;
+
+    const payment = await OnlinePayment.findById(id);
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment not found"
+      });
+    }
+
+    console.log('Updating online payment with soft delete:', { id, deleted, deleteReason, deletedBy, deletedAt });
+    
+    const updatedPayment = await OnlinePayment.findByIdAndUpdate(
+      id,
+      {
+        deleted: deleted || true,
+        deleteReason: deleteReason || 'Deleted by user',
+        deletedBy: deletedBy || 'user',
+        deletedAt: deletedAt || new Date().toISOString()
+      },
+      { new: true, runValidators: false }
+    );
+
+    console.log('Updated online payment:', { 
+      id: updatedPayment._id, 
+      deleted: updatedPayment.deleted, 
+      deleteReason: updatedPayment.deleteReason,
+      deletedBy: updatedPayment.deletedBy 
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Payment deleted successfully",
+      data: {
+        id: updatedPayment._id,
+        deleted: updatedPayment.deleted,
+        deleteReason: updatedPayment.deleteReason,
+        deletedBy: updatedPayment.deletedBy,
+        deletedAt: updatedPayment.deletedAt
+      }
+    });
+  } catch (error) {
+    console.error("Error in softDeleteOnlinePayment controller", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
