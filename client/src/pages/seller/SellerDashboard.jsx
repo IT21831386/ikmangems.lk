@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import OrderHistoryPage from "../user/OrderHistoryPage";
 import AccountSettings from "../user/AccountSettings";
+import Gems from "../gem-listing/GemDisplay";
+import GemCreate from "../gem-listing/Gemstone";
 
 // Mock data for demonstration
 const mockGems = [
@@ -626,15 +628,9 @@ export default function SellerDashboard() {
       case "dashboard":
         return <DashboardOverview revenue={mockRevenue} gems={gems} />;
       case "listings":
-        return (
-          <GemListings
-            gems={gems}
-            onEdit={handleEditGem}
-            onDelete={handleDeleteGem}
-          />
-        );
+        return <Gems />;
       case "add-gem":
-        return <H1>Abisheka</H1>;
+        return <GemCreate />;
       case "revenue":
         return <OrderHistoryPage />;
 

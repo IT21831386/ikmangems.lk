@@ -74,8 +74,8 @@ const App = () => {
       <Route path="/account-settings" element={<AccountSettings />} />
       <Route path="/display-users" element={<DisplayUsers />} />
       <Route path="/order-history" element={<OrderHistoryPage />} />
-      <Route path="/gemsdetails" element={<GemDisplay />} />
-      <Route path="/gem-add" element={<Gemstone />} />
+      {/* <Route path="/gemsdetails" element={<GemDisplay />} />
+      <Route path="/gem-add" element={<Gemstone />} /> */}
     </Routes>
   );
 };

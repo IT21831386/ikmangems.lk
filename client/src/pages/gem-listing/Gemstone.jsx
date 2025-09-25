@@ -478,7 +478,6 @@ const CreateGemstoneForm = () => {
 
         // Toast success and navigate
         toast.success("Gemstone added successfully!");
-        window.location.href = "/gemsdetails";
       } else {
         throw new Error(response.message || "Failed to create gemstone");
       }
