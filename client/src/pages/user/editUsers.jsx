@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from "react";
+//should be removed
+//Added by dana
+
+
+/*import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -90,7 +94,7 @@ export default function UpdateUser({ userId }) {
     <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md space-y-6">
       <h1 className="text-2xl font-bold">Update User Details</h1>
 
-      {/* Personal Info */}
+   
       <section className="space-y-4 border-b border-gray-200 pb-4">
         <h2 className="text-lg font-semibold">Personal Info</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -105,7 +109,7 @@ export default function UpdateUser({ userId }) {
         </div>
       </section>
 
-      {/* Account Details */}
+ 
       <section className="space-y-4 border-b border-gray-200 pb-4">
         <h2 className="text-lg font-semibold">Account Details</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -137,7 +141,7 @@ export default function UpdateUser({ userId }) {
         </div>
       </section>
 
-      {/* Security */}
+   
       <section className="space-y-4 border-b border-gray-200 pb-4">
         <h2 className="text-lg font-semibold">Security</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -158,7 +162,7 @@ export default function UpdateUser({ userId }) {
         </div>
       </section>
 
-      {/* Actions */}
+
       <div className="flex flex-col md:flex-row md:justify-between items-start gap-4 pt-4">
         <div className="flex gap-4">
           <Button onClick={handleSave} className="bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2">
@@ -181,3 +185,5 @@ export default function UpdateUser({ userId }) {
     </div>
   );
 }
+
+*/

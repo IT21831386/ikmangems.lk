@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PaymentHistory from "../paymentHistory";
-import UsersList from "./manageUsers";
+import UsersList from "../admin-um/DisplayUsers";
 import AccountSettings from "./AccountSettings"; 
 
 import {

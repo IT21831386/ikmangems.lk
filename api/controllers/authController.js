@@ -102,7 +102,7 @@ export const login = async (req, res) => {
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
-    return res.json({ success: true });
+    return res.json({ success: true, role: user.role });
   } catch (error) {
     return res.json({ success: false, message: error.message });
   }

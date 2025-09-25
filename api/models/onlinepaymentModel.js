@@ -73,6 +73,24 @@ const onlinePaymentSchema = new mongoose.Schema({
     // Payment completion timestamp
     completedAt: {
         type: Date,
+    },
+    
+    // Soft delete fields
+    deleted: {
+        type: Boolean,
+        default: false
+    },
+    deleteReason: {
+        type: String,
+        default: null
+    },
+    deletedBy: {
+        type: String,
+        default: null
+    },
+    deletedAt: {
+        type: Date,
+        default: null
     }
 }, 
 { 

@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import Layout from "./Layout";
 
 import Home from "./pages/home";
+import PaymentForm from "./pages/payment_home";
 import Online from "./pages/onlinepayment";
 import PaymentHistory from "./pages/PaymentHistory";
 import Auction from "./pages/Auction/auction_page";
@@ -28,8 +29,9 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import AccountSettings from "./pages/user/AccountSettings";
 
 import SellerDashboard from "./pages/user/sellerDashboard";
-import EditUserByAdmin from "./pages/demo/EditUserByAdmin";
+import DisplayUsers from "./pages/admin-um/DisplayUsers";
 import OrderHistoryPage from "./pages/user/OrderHistoryPage";
+//import EditUsers from "./pages/admin-um/EditUsers";
 
 
 const App = () => {
@@ -38,6 +40,7 @@ const App = () => {
       {/* Wrap all routes inside Layout */}
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/payment-form" element={<PaymentForm />} />
         <Route path="/online" element={<Online />} />
         <Route path="/payment-history" element={<PaymentHistory />} />
         <Route path="/auction" element={<Auction />} />
@@ -65,7 +68,7 @@ const App = () => {
        
        <Route path="/seller-dashboard" element={<SellerDashboard />} />
        <Route path="/account-settings" element={<AccountSettings />} />
-       <Route path="/users-demo-admin" element={<EditUserByAdmin />} />
+       <Route path="/display-users" element={<DisplayUsers />} />
        <Route path="/order-history" element={<OrderHistoryPage />} />
 
     </Routes>
