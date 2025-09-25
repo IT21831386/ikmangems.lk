@@ -22,19 +22,18 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import UserManagement from "./pages/user/manageUsers";
 import ProtectedRoute from "./components/ProtectedRoute";
 import BidderDashboard from "./pages/user/bidderDashboard";
-import SellerDashboard from "./pages/seller/SellerDashboard";
-import AdminDashboard from "./pages/admin/AdminDashboard";
 
+// ✅ keep only ONE SellerDashboard import:
+import SellerDashboard from "./pages/seller/SellerDashboard";
+
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import VerifyEmail from "./pages/auth/VerifyEmail";
 import GetOTP from "./pages/auth/getOTP";
 import ResetPassword from "./pages/auth/ResetPassword";
 import AccountSettings from "./pages/user/AccountSettings";
-
-import SellerDashboard from "./pages/user/sellerDashboard";
 import DisplayUsers from "./pages/admin-um/DisplayUsers";
 import OrderHistoryPage from "./pages/user/OrderHistoryPage";
 //import EditUsers from "./pages/admin-um/EditUsers";
-
 
 const App = () => {
   return (
@@ -50,31 +49,31 @@ const App = () => {
         <Route path="/admin-payment-status" element={<AdminPaymentStatus />} />
       </Route>
 
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/get-otp" element={<GetOTP />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
-       <Route path="/" element={<Home />} />
-       <Route path="/login" element={<Login />} />
-       <Route path="/signup" element={<Signup />} />
-       <Route path="/get-otp" element={<GetOTP />} />
-       <Route path="/verify-email" element={<VerifyEmail />} />
-       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route
+        path="/bidder-dashboard"
+        element={
+          <ProtectedRoute>
+            <BidderDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/manage-users" element={<UserManagement />} />
 
-       <Route
-          path="/bidder-dashboard"
-          element={
-            <ProtectedRoute>
-              <BidderDashboard />
-            </ProtectedRoute>
-          }
-       />
-       <Route path="/forgot-password" element={<ForgotPassword />} />
-       <Route path="/manage-users" element={<UserManagement />} />
-        <Route path="/seller-dashboard" element={<SellerDashboard />} />
+      {/* ✅ one seller-dashboard route */}
+      <Route path="/seller-dashboard" element={<SellerDashboard />} />
+
       <Route path="/admin-dashboard" element={<AdminDashboard />} />
-       <Route path="/seller-dashboard" element={<SellerDashboard />} />
-       <Route path="/account-settings" element={<AccountSettings />} />
-       <Route path="/display-users" element={<DisplayUsers />} />
-       <Route path="/order-history" element={<OrderHistoryPage />} />
-
+      <Route path="/account-settings" element={<AccountSettings />} />
+      <Route path="/display-users" element={<DisplayUsers />} />
+      <Route path="/order-history" element={<OrderHistoryPage />} />
     </Routes>
   );
 };

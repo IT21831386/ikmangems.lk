@@ -1,26 +1,36 @@
-import mongoose, { mongo } from "mongoose";
+// models/userModel.js
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    username: { type: String }, // optional
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    verifyOtp: { type: String, default: "" },
-    verifyOtpExpireAt: { type: Number, default: 0 },
-    isAccountVerified: { type: Boolean, default: false },
-    resetOtp: { type: String, default: "" },
-    resetOtpExpireAt: { type: Number, default: 0 },
     role: {
       type: String,
-      enum: ["buyer", "seller", "admin"],
-      default: "buyer",
+      enum: ["user", "seller", "admin"], // match frontend roles
+      default: "user",
+    },
+    phone: { type: String },
+    country: { type: String },
+    city: { type: String },
+    address: { type: String },
+
+    status: {
+      type: String,
+      enum: ["active", "deleted", "suspended"],
+      default: "active",
     },
 
-    favoriteGems: [{ type: mongoose.Schema.Types.ObjectId, ref: "Gem" }],
+    isAccountVerified: { type: Boolean, default: false },
+    verifyOtp: String,
+    verifyOtpExpireAt: Number,
+    resetOtp: String,
+    resetOtpExpireAt: Number,
   },
   { timestamps: true }
 );
 
-const userModel = mongoose.models.user || mongoose.model("user", userSchema);
-
-export default userModel;
+export default mongoose.model("User", userSchema);
