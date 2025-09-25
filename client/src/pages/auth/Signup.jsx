@@ -1,49 +1,54 @@
 import React, { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-// Zod schema for signup
-const signupSchema = z
-  .object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string().min(6, "Confirm Password is required"),
-    userType: z.enum(["seller", "bidder"], "Select a user type"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+// Step 1: Ask question
+function RoleSelector({ onSelectRole }) {
+  return (
+    <Card className="w-full max-w-md mx-auto mt-20">
+      <CardHeader>
+        <CardTitle>Welcome!</CardTitle>
+        <CardDescription>Do you want to sell or buy?</CardDescription>
+      </CardHeader>
+      <CardContent className="flex gap-4 justify-center">
+        <Button onClick={() => onSelectRole("seller")} className="bg-green-600 hover:bg-green-800">I want to sell</Button>
+        <Button onClick={() => onSelectRole("user")} className="bg-blue-600 hover:bg-blue-800">I want to buy</Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Step 2: Signup form
+const signupSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string().min(6, "Confirm Password is required"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
 
 export default function Signup() {
-  const navigate = useNavigate();
+  const [role, setRole] = useState(null); // seller or user
   const [serverError, setServerError] = useState("");
+  const navigate = useNavigate();
 
-  const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(signupSchema),
     defaultValues: {
       name: "",
       email: "",
       password: "",
       confirmPassword: "",
-      userType: "bidder",
     },
   });
 
@@ -51,100 +56,71 @@ export default function Signup() {
     setServerError("");
     try {
       const response = await axios.post(
-        "http://localhost:5001/api/auth/register", 
+        "http://localhost:5001/api/auth/register",
         {
           name: data.name,
           email: data.email,
           password: data.password,
-          userType: data.userType,
+          role, // role comes from step 1
         }
       );
 
       if (response.data.success) {
-        navigate("/login"); 
+        navigate("/login");
       } else {
         setServerError(response.data.message || "Signup failed");
       }
     } catch (error) {
       console.error(error);
-      setServerError(
-        error.response?.data?.message || "Network error, please try again."
-      );
+      setServerError(error.response?.data?.message || "Network error, please try again.");
     }
   };
 
+  if (!role) {
+    // Step 1
+    return <RoleSelector onSelectRole={setRole} />;
+  }
+
+  // Step 2
   return (
     <Card className="w-full max-w-md mx-auto mt-10 mb-10">
       <CardHeader>
         <CardTitle>Sign Up</CardTitle>
-        <CardDescription>Create your account</CardDescription>
+        <CardDescription>Create your account as a {role}</CardDescription>
       </CardHeader>
 
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          {/* Name */}
           <div className="grid gap-2">
             <Label htmlFor="name">Name</Label>
             <Input id="name" {...register("name")} placeholder="Your name" />
             {errors.name && <p className="text-red-500 text-sm">{errors.name.message}</p>}
           </div>
 
-          {/* Email */}
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" {...register("email")} placeholder="you@example.com" />
             {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
           </div>
 
-          {/* Password */}
           <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" {...register("password")} />
             {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
           </div>
 
-          {/* Confirm Password */}
           <div className="grid gap-2">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
             <Input id="confirmPassword" type="password" {...register("confirmPassword")} />
             {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword.message}</p>}
           </div>
 
-          {/* User Type */}
-          <div className="grid gap-2">
-            <Label>Register As</Label>
-            <Controller
-              control={control}
-              name="userType"
-              render={({ field }) => (
-                <RadioGroup {...field} className="flex gap-4">
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="bidder" id="bidder" />
-                    <Label htmlFor="bidder">Bidder</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="seller" id="seller" />
-                    <Label htmlFor="seller">Seller</Label>
-                  </div>
-                </RadioGroup>
-              )}
-            />
-            {errors.userType && <p className="text-red-500 text-sm">{errors.userType.message}</p>}
-          </div>
-
           {serverError && <p className="text-red-500 text-sm">{serverError}</p>}
 
           <CardFooter className="flex flex-col gap-2">
-            <Button type="submit" disabled={isSubmitting} className="w-full  hover:bg-blue-800 bg-blue-600">
+            <Button type="submit" disabled={isSubmitting} className="w-full hover:bg-blue-800 bg-blue-600">
               {isSubmitting ? "Signing up..." : "Sign Up"}
             </Button>
-
-            <div className="text-center text-sm mt-2">
-              Already have an account?{" "}
-              <Link to="/login" className="text-blue-500 hover:text-blue-800">
-                Login
-              </Link>
-            </div>
           </CardFooter>
         </form>
       </CardContent>

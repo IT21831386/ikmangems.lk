@@ -130,7 +130,7 @@ export default function ManageUsers() {
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="top">
-                  <DropdownMenuItem onClick={handleLogout}>
+                  <DropdownMenuItem onClick={handleLogout} className="bg-red-500 text-white hover:bg-red-600">
                     Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>

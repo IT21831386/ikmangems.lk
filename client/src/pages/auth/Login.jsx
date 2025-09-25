@@ -41,7 +41,12 @@ export default function Signin() {
       );
 
       if (response.data.success) {
-        navigate("/bidder-dashboard", { replace: true });
+        const userRole = response.data.role; // <-- get role from backend
+
+        // Navigate based on role
+        if (userRole === "admin") navigate("/display-users", { replace: true });
+        else if (userRole === "seller") navigate("/seller-dashboard", { replace: true });
+        else navigate("/bidder-dashboard", { replace: true });
       } else {
         setServerError(response.data.message || "Login failed");
       }
@@ -56,7 +61,7 @@ export default function Signin() {
       <CardHeader>
         <CardTitle>Login to your account</CardTitle>
         <CardDescription className="mb-2">
-        Enter your email and password below to login
+          Enter your email and password below to login
         </CardDescription>
       </CardHeader>
 
@@ -101,14 +106,12 @@ export default function Signin() {
               Login with Google
             </Button>
 
-
             <div className="text-center text-sm mt-2">
-            Dont have a accont?{" "}
-            <Link to="/signup" className="text-blue-500 hover:text-blue-800">
-            Sign Up
-            </Link>
+              Don't have an account?{" "}
+              <Link to="/signup" className="text-blue-500 hover:text-blue-800">
+                Sign Up
+              </Link>
             </div>
-
           </CardFooter>
         </form>
       </CardContent>
