@@ -25,7 +25,7 @@ const signupSchema = z
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(6, "Confirm Password is required"),
-    role: z.enum(["seller", "bidder"], "Select a user type"),
+    role: z.enum(["seller", "buyer"], "Select a user type"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -48,7 +48,7 @@ export default function Signup() {
       email: "",
       password: "",
       confirmPassword: "",
-      role: "bidder",
+      role: "",
     },
   });
 
@@ -147,8 +147,8 @@ export default function Signup() {
                   className="flex gap-4"
                 >
                   <div className="flex items-center gap-2">
-                    <RadioGroupItem value="bidder" id="bidder" />
-                    <Label htmlFor="bidder">Bidder</Label>
+                    <RadioGroupItem value="buyer" id="buyer" />
+                    <Label htmlFor="buyer">Buyer</Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <RadioGroupItem value="seller" id="seller" />

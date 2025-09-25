@@ -31,15 +31,15 @@ export const verifyToken = (req, res, next) => {
 };
 
 export const register = async (req, res) => {
-  const { name, email, password, userType } = req.body;
+  const { name, email, password, role } = req.body;
 
-  if (!name || !email || !password || !userType) {
+  if (!name || !email || !password || !role) {
     return res.json({ success: false, message: "Missing details" });
   }
 
   // Optional: Validate role (you can remove this if not needed)
   const allowedRoles = ["buyer", "seller", "admin"];
-  if (!allowedRoles.includes(userType)) {
+  if (!allowedRoles.includes(role)) {
     return res.json({ success: false, message: "Invalid role" });
   }
 
@@ -55,7 +55,7 @@ export const register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: userType,
+      role: role,
     });
 
     await user.save();
