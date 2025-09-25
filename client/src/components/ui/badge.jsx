@@ -1,7 +1,7 @@
 import React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva } from "class-variance-authority";
-import { Select } from "@/components/ui/select";
+import { Select } from "client/src/components/ui/select";
 
 import { cn } from "@/lib/utils";
 
