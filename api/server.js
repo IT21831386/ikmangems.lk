@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import cookieParser from "cookie-parser";
+import { join } from "path";
 
 import otpRoutes from "./routes/otpRoutes.js";
 import authRouter from "./routes/authRoutes.js";
@@ -12,16 +13,26 @@ import onlinePaymentRoutes from "./routes/onlinepaymentRoutes.js";
 import { connectDB } from "./config/db.js";
 import gemRoutes from "./routes/gemRoutes.js";
 import bidRoutes from "./routes/bidRoutes.js";
+import gemstoneRoutes from "./routes/listingRoutes.js";
 
 // Load .env file from root directory (one level up from api folder)
 const rootPath = path.resolve();
 const envPath = path.join(rootPath, "..", ".env");
 dotenv.config();
 
+const corsOptions = {
+  origin: "http://localhost:5173", // your frontend origin
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "x-user-type"], // allow your custom header here
+  credentials: true, // if you use cookies or auth headers
+};
+
 console.log("Loading env from:", envPath);
 console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
 const app = express();
+
+app.use(cors(corsOptions));
 const PORT = process.env.PORT || 5001;
 const __dirname = path.resolve();
 
@@ -49,6 +60,9 @@ app.use("/api/user", userRouter);
 app.use("/api/otp", otpRoutes);
 app.use("/api/gems", gemRoutes);
 app.use("/api/bids", bidRoutes);
+app.use("/uploads", express.static(join(process.cwd(), "uploads")));
+app.use("/gemstone", gemstoneRoutes);
+
 // Simple API check route
 app.get("/", (req, res) => res.send("API working"));
 
