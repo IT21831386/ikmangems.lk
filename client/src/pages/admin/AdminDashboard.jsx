@@ -1,46 +1,86 @@
+//Dana
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import PaymentHistory from "../paymentHistory";
+import AccountSettings from "../user/AccountSettings"; 
 import DisplayUsers from "../admin-um/DisplayUsers";
+
 import {
-  Home,
+  Inbox,
   User2,
   ChevronUp,
   LogOut,
+  Home,
+  Wallet,
   UserCog,
-  Users,
-  CreditCard,
+  Gavel,
 } from "lucide-react";
+import axios from "axios";
+
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 
-export default function AdminDashboard() {
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+export default function ManageUsers() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        "http://localhost:5001/api/auth/logout",
+        {},
+        { withCredentials: true }
+      );
+      localStorage.removeItem("token");
+      navigate("/login");
+    } catch (err) {
+      console.error("Logout error", err);
+    }
   };
+
+  const sidebarItems = [
+    { title: "Dashboard", key: "dashboard", icon: Home },
+    { title: "Users", key: "users", icon: Inbox },
+    { title: "Transactions", key: "transactions", icon: Wallet },
+    { title: "My Bids", key: "mybids", icon: Gavel },
+    { title: "Profile", key: "profile", icon: UserCog },
+  ];
 
   const renderContent = () => {
     switch (activeSection) {
       case "dashboard":
         return <div></div>;
-      case "manageusers":
+
+      case "users":
         return <DisplayUsers />;
+
       case "transactions":
+        return ;
+
+      case "mybids":
         return <div></div>;
+
       case "profile":
-        return <div></div>;
+        return ;
+
       default:
         return <div></div>;
     }
@@ -48,54 +88,62 @@ export default function AdminDashboard() {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen">
-        <Sidebar>
-          <SidebarContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setActiveSection("dashboard")}
-                >
-                  <Home className="mr-2" /> Dashboard
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setActiveSection("manageusers")}
-                >
-                  <Users className="mr-2" /> Manage Users
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setActiveSection("transactions")}
-                >
-                  <CreditCard className="mr-2" /> Transactions
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => setActiveSection("profile")}>
-                  <UserCog className="mr-2" /> Profile
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarContent>
-          <SidebarFooter>
-            <Button
-              variant="outline"
-              className="w-full bg-red-800 text-white hover:bg-red-600"
-              onClick={handleLogout}
-            >
-              <LogOut className="mr-2" /> Logout
-            </Button>
-          </SidebarFooter>
-        </Sidebar>
+      <Sidebar collapsible="icon">
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel></SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {sidebarItems.map((item) => (
+                  <SidebarMenuItem key={item.key}>
+                    <SidebarMenuButton
+                      onClick={() => setActiveSection(item.key)}
+                      className={
+                        activeSection === item.key ? "bg-gray-200" : ""
+                      }
+                    >
+                      {/* Colored icon based on active state */}
+                      <item.icon
+                        className={`mr-2 ${
+                          activeSection === item.key
+                            ? "text-blue-600"
+                            : "text-gray-400"
+                        }`}
+                      />
+                      {item.title}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
 
-        <div className="flex-1 p-6 overflow-auto">
-          <SidebarTrigger className="mb-4 w-full" />
-          {renderContent()}
-        </div>
-      </div>
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton>
+                    <User2 className="mr-2 text-gray-400" /> User
+                    <ChevronUp className="ml-auto text-gray-400" />
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="top">
+                  <DropdownMenuItem onClick={handleLogout} className="bg-red-500 text-white hover:bg-red-600">
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      </Sidebar>
+
+      <main className="flex-1 p-6">
+        <SidebarTrigger />
+        {renderContent()}
+      </main>
     </SidebarProvider>
   );
 }
