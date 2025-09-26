@@ -15,7 +15,9 @@ export default function AdminUserManagement() {
   const [roleFilter, setRoleFilter] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Fetch users from backend
+  const [phoneError, setPhoneError] = useState('');
+  const [emailError, setEmailError] = useState('');
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -113,11 +115,40 @@ export default function AdminUserManagement() {
     }
   };
 
+  // phone val
+
+  const validatePhone = (phone) => {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 9 || digits.length > 12) {
+    return 'Phone number must be between 9 and 12 digits';
+  }
+  return '';
+};
+
+const validateEmail = (email) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!re.test(email)) {
+    return 'Please enter a valid email address';
+  }
+  return '';
+};
+
+//phone / email val
+
   const handleInputChange = (field, value) => {
-    if (editingUser) {
-      setEditingUser({ ...editingUser, [field]: value });
+  if (editingUser) {
+    setEditingUser({ ...editingUser, [field]: value });
+    if (field === 'phone') {
+      setPhoneError(validatePhone(value));
     }
-  };
+
+     if (field === 'email') {
+      setEmailError(validateEmail(value));
+    }
+    
+  }
+};
+// ...existing code...
 
   const getRoleBadge = role => {
     const roleConfig = {
@@ -374,18 +405,22 @@ export default function AdminUserManagement() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <input
-                          type="email"
-                          value={editingUser.email || ''}
-                          onChange={e => handleInputChange('email', e.target.value)}
-                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      </div>
+                      
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type="email"
+                        value={editingUser.email || ''}
+                        onChange={e => handleInputChange('email', e.target.value)}
+                        className={`w-full pl-10 pr-3 py-2 border ${emailError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                      />
                     </div>
-                    <div>
+                    {emailError && (
+                      <div className="text-red-500 text-xs mt-1">{emailError}</div>
+                    )}
+                  </div>
+                                      <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
                       <input
                         type="text"
@@ -394,19 +429,23 @@ export default function AdminUserManagement() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <input
-                          type="tel"
-                          value={editingUser.phone || ''}
-                          onChange={e => handleInputChange('phone', e.target.value)}
-                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
+                    
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                          <input
+                            type="tel"
+                            value={editingUser.phone || ''}
+                            onChange={e => handleInputChange('phone', e.target.value)}
+                            className={`w-full pl-10 pr-3 py-2 border ${phoneError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                          />
+                        </div>
+                        {phoneError && (
+                          <div className="text-red-500 text-xs mt-1">{phoneError}</div>
+                        )}
                       </div>
-                    </div>
-                    <div>
+                                          <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
                       <input
                         type="text"
@@ -496,7 +535,7 @@ export default function AdminUserManagement() {
                   <div className="flex space-x-3">
                     <button
                       onClick={handleUpdateUser}
-                      disabled={!hasChanges() || saving}
+                      disabled={!hasChanges() || saving || phoneError}
                       className="inline-flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {saving ? (
