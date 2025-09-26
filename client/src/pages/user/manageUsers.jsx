@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+/*import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Trash2, Eye, Edit, UserCog, Search } from "lucide-react";
 
@@ -51,7 +51,7 @@ export default function UsersList() {
     
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1>Added for Testing, will be replaces</h1>
-      {/* Header and Search */}
+     
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
         <div className="relative">
@@ -66,7 +66,7 @@ export default function UsersList() {
         </div>
       </div>
 
-      {/* Users Table */}
+      
       <div className="rounded-lg bg-white shadow-sm overflow-hidden border border-gray-200">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
@@ -82,7 +82,7 @@ export default function UsersList() {
           <tbody className="divide-y divide-gray-200">
             {filteredUsers.map((user) => (
               <React.Fragment key={user._id || user.id}>
-                {/* User Data Row */}
+                
                 <tr
                   className="hover:bg-gray-50 transition-colors cursor-pointer"
                   onMouseEnter={() => setHoveredUserId(user._id)}
@@ -114,7 +114,7 @@ export default function UsersList() {
                   </td>
                 </tr>
 
-                {/* Action Buttons Row - Conditionally rendered based on hover state */}
+                
                 {hoveredUserId === user._id && (
                   <tr
                     className="bg-gray-50 border-t border-gray-100"
@@ -165,7 +165,7 @@ export default function UsersList() {
         </table>
       </div>
 
-      {/* Modal for User Details */}
+      
       {selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-md w-full p-6">

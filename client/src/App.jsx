@@ -19,7 +19,7 @@ import Signup from "./pages/auth/Signup";
 //import DashboardPage from "./pages/sellerDashboard";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 //import { Routes } from "react-router-dom";
-import UserManagement from "./pages/user/manageUsers";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 import BidderDashboard from "./pages/user/bidderDashboard";
 
@@ -33,7 +33,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import AccountSettings from "./pages/user/AccountSettings";
 import DisplayUsers from "./pages/admin-um/DisplayUsers";
 import OrderHistoryPage from "./pages/user/OrderHistoryPage";
-//import EditUsers from "./pages/admin-um/EditUsers";
+import EditUsers from "./pages/admin-um/EditUsers";
 
 const App = () => {
   return (
@@ -65,7 +65,7 @@ const App = () => {
         }
       />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/manage-users" element={<UserManagement />} />
+
 
       {/* ✅ one seller-dashboard route */}
       <Route path="/seller-dashboard" element={<SellerDashboard />} />
@@ -74,6 +74,7 @@ const App = () => {
       <Route path="/account-settings" element={<AccountSettings />} />
       <Route path="/display-users" element={<DisplayUsers />} />
       <Route path="/order-history" element={<OrderHistoryPage />} />
+      <Route path="/edit-users" element={<EditUsers />} />
     </Routes>
   );
 };

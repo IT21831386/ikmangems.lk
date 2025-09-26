@@ -27,7 +27,7 @@ export async function createUser (req, res) {
     }
 }
 
-export async function updateUser(req, res) {
+/*export async function updateUser(req, res) {
   try {
     
     const { id } = req.params; 
@@ -55,7 +55,34 @@ export async function updateUser(req, res) {
     console.error(error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
+}*/
+
+export async function updateUser(req, res) {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
+    const { name, email, password } = req.body;
+
+    const updatedUser = await userModel.findByIdAndUpdate(
+      id,
+      { name, email, password },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
 }
+
 
 export async function deleteUser (req, res) {
     try {
