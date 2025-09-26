@@ -20,23 +20,23 @@ import { Label } from "@/components/ui/label";
 // Step 1: Ask question
 function RoleSelector({ onSelectRole }) {
   return (
-    <Card className="w-full max-w-md mx-auto mt-20">
+    <Card className="w-full max-w-md mx-auto mt-40">
       <CardHeader>
-        <CardTitle>Welcome!</CardTitle>
-        <CardDescription>Do you want to sell or buy?</CardDescription>
+        <CardTitle>Select Registration type</CardTitle>
+        <CardDescription></CardDescription>
       </CardHeader>
       <CardContent className="flex gap-4 justify-center">
         <Button
           onClick={() => onSelectRole("seller")}
-          className="bg-green-600 hover:bg-green-800"
+          className="bg-transparent border text-black hover:text-white border-blue-500 hover:bg-blue-800"
         >
-          I want to sell
+          Register as a seller
         </Button>
         <Button
           onClick={() => onSelectRole("user")}
           className="bg-blue-600 hover:bg-blue-800"
         >
-          I want to buy
+          Register as a Bidder
         </Button>
       </CardContent>
     </Card>
