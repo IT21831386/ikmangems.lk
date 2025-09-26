@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import DisplayUsers from "../admin-um/DisplayUsers";
 import {
   Home,
   User2,
@@ -33,15 +34,15 @@ export default function AdminDashboard() {
   const renderContent = () => {
     switch (activeSection) {
       case "dashboard":
-        return <div>Welcome to Admin Dashboard</div>;
+        return <div></div>;
       case "manageusers":
-        return <div>Manage users and roles</div>;
+        return <DisplayUsers />;
       case "transactions":
-        return <div>View all transactions</div>;
+        return <div></div>;
       case "profile":
-        return <div>Edit your profile</div>;
+        return <div></div>;
       default:
-        return <div>Welcome!</div>;
+        return <div></div>;
     }
   };
 

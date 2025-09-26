@@ -1,5 +1,5 @@
 // models/userModel.js
-import mongoose from "mongoose";
+/*import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
@@ -34,3 +34,41 @@ const userSchema = new mongoose.Schema(
 );
 
 export default mongoose.model("User", userSchema);
+*/
+
+// models/userModel.js
+import mongoose from "mongoose";
+
+const userSchema = new mongoose.Schema(
+  {
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    username: { type: String },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    role: {
+      type: String,
+      enum: ["user", "seller", "admin"],
+      default: "user",
+    },
+    phone: { type: String },
+    country: { type: String },
+    city: { type: String },
+    address: { type: String },
+    bio: { type: String },
+    status: {
+      type: String,
+      enum: ["active", "deleted", "suspended"],
+      default: "active",
+    },
+    isAccountVerified: { type: Boolean, default: false },
+    verifyOtp: String,
+    verifyOtpExpireAt: Number,
+    resetOtp: String,
+    resetOtpExpireAt: Number,
+  },
+  { timestamps: true }
+);
+
+const userModel = mongoose.model("User", userSchema);
+export default userModel;

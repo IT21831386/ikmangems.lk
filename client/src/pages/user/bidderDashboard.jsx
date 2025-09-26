@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PaymentHistory from "../paymentHistory";
-import UsersList from "../admin-um/DisplayUsers";
 import AccountSettings from "./AccountSettings"; 
 
 import {
@@ -70,7 +69,7 @@ export default function ManageUsers() {
         return <div>Welcome to the dashboard</div>;
 
       case "users":
-        return <UsersList />; // <-- use the separate UsersList component here
+        return <UsersList />;
 
       case "transactions":
         return <PaymentHistory />;
