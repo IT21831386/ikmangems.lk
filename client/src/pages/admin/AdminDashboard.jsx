@@ -18,6 +18,7 @@ import PaymentHistory from "./payments/paymentHistory";
 import AccountSettings from "../user/AccountSettings";
 import ListingApprovals from "./listing/listing-approval";
 import Ticket from "../help-center/SupportDashboard";
+import BidManagement from "./BidManagement";
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -75,6 +76,9 @@ export default function AdminDashboard() {
 
       case "transactions":
         return <PaymentHistory />;
+
+      case "bids":
+        return <BidManagement />;
 
       case "ticket":
         return <Ticket />;
@@ -143,6 +147,15 @@ export default function AdminDashboard() {
                   }
                 >
                   <CreditCard className="mr-2" /> Transactions
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setActiveSection("bids")}
+                  className={activeSection === "bids" ? "bg-gray-200" : ""}
+                >
+                  <CreditCard className="mr-2" /> Bid Management
                 </SidebarMenuButton>
               </SidebarMenuItem>
 

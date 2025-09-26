@@ -15,6 +15,7 @@ import {
   placeBid,
   getBidsByGem,
   getBidsByUser,
+  getAllBids,
 } from "../controllers/bidController.js";
 
 import multer, { diskStorage } from "multer";
@@ -332,7 +333,6 @@ router.get("/search/suggestions", (req, res) => {
 /* ====================== Bid Place ====================== */
 router.post("/bids", placeBid);
 router.get("/bids/:gemId", getBidsByGem);
-router.get("/my-bids", getBidsByUser);
 
 /* ====================== ERROR HANDLING ====================== */
 // Catch-all 404 for this router
@@ -353,6 +353,7 @@ router.use((req, res) => {
       "POST /bids",
       "GET /bids/:id",
       "GET /my-bids",
+      "GET /all-bids",
     ],
   });
 });
