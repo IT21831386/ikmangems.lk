@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import {
   ArrowLeft,
@@ -30,11 +31,13 @@ import {
   BookOpen,
   Maximize2,
 } from "lucide-react";
+import { gemstoneAPI } from "../../services/api";
 
 // eslint-disable-next-line no-unused-vars
 const GemDetailPage = ({ gemId = 1, onBack }) => {
   const navigate = useNavigate();
-
+  const { id } = useParams();
+  console.log(id);
   // State management
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [bidAmount, setBidAmount] = useState("");
@@ -43,115 +46,239 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
   const [activeTab, setActiveTab] = useState("overview");
   const [timeLeft, setTimeLeft] = useState({});
   const [showImageModal, setShowImageModal] = useState(false);
+  const [gemData, setGemData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [bids, setBids] = useState([]);
 
-  // Mock gem data (in real app, this would come from API based on gemId)
-  const gemData = {
-    id: 1,
-    title: "Exceptional Ceylon Blue Sapphire",
-    category: "Sapphire",
-    currentBid: 15750,
-    startingBid: 8500,
-    reservePrice: 18000,
-    nextBidIncrement: 500,
-    endTime: new Date(Date.now() + 2 * 60 * 60 * 1000 + 45 * 60 * 1000),
-    bidCount: 23,
-    views: 456,
-    watchers: 89,
-    location: "Colombo",
-    seller: {
-      name: "Merit Gems Lanka",
-      rating: 4.9,
-      totalSales: "1.2M",
-      yearsActive: 8,
-      verified: true,
-      avatar: "MGL",
-    },
-    certification: {
-      lab: "GIA",
-      number: "GIA-2118234567",
-      date: "2024-01-15",
-    },
-    specifications: {
-      weight: "5.42 ct",
-      dimensions: "11.2 x 9.8 x 6.4 mm",
-      shape: "Oval",
-      cut: "Excellent",
-      color: "Royal Blue",
-      clarity: "VVS1",
-      origin: "Ceylon (Sri Lanka)",
-      treatment: "No Heat",
-    },
-    features: [
-      "Natural",
-      "Unheated",
-      "Eye Clean",
-      "Cornflower Blue",
-      "Excellent Cut",
-    ],
-    description:
-      "This exceptional Ceylon blue sapphire exhibits the coveted cornflower blue color that has made Sri Lankan sapphires world-renowned. The stone displays excellent transparency with remarkable brilliance and fire. Sourced from the famous Ratnapura mines, this unheated natural sapphire represents the pinnacle of Ceylon's gem heritage.",
-    image: "/images/auction-gems/1.jpg",
-    images: [
-      "/images/auction-gems/1.jpg",
-      "/images/auction-gems/2.png",
-      "/images/auction-gems/3.jpg",
-      "/images/auction-gems/4.jpg",
-    ],
-    bidHistory: [
-      {
-        bidder: "B****r",
-        amount: 15750,
-        time: "2 minutes ago",
-        isWinning: true,
-      },
-      {
-        bidder: "G****s",
-        amount: 15250,
-        time: "5 minutes ago",
-        isWinning: false,
-      },
-      {
-        bidder: "S****e",
-        amount: 14800,
-        time: "12 minutes ago",
-        isWinning: false,
-      },
-      {
-        bidder: "B****r",
-        amount: 14300,
-        time: "18 minutes ago",
-        isWinning: false,
-      },
-      {
-        bidder: "C****l",
-        amount: 13750,
-        time: "25 minutes ago",
-        isWinning: false,
-      },
-    ],
-    relatedGems: [
-      {
-        id: 2,
-        title: "Blue Sapphire 4.2ct",
-        price: 12500,
-        image:
-          "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzM2NjZGMSIvPjwvc3ZnPg==",
-      },
-      {
-        id: 3,
-        title: "Ceylon Sapphire 3.8ct",
-        price: 18900,
-        image:
-          "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzYzNjZGMSIvPjwvc3ZnPg==",
-      },
-    ],
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userType = user.role || "seller";
+  console.log("User type from localStorage:", userType);
+
+  useEffect(() => {
+    const fetchGem = async () => {
+      try {
+        const response = await gemstoneAPI.getGemstone(id);
+        const apiData = response?.data?.gemstone;
+
+        if (!apiData) throw new Error("Invalid response structure");
+
+        const mappedGemData = {
+          id: apiData.id || apiData._id,
+          title: apiData.name || "Untitled",
+          category: apiData.category,
+          currentBid: apiData.minimumBid,
+          startingBid: apiData.minimumBid,
+          reservePrice: apiData.minimumBid + 1000, // You can adjust this logic
+          nextBidIncrement: 500,
+          endTime: new Date(Date.now() + 2 * 60 * 60 * 1000),
+          bidCount: 0, // No bid history in API
+          views: apiData.views || 0,
+          watchers: 0, // Not provided in API
+          location: "Unknown", // Not provided
+          seller: {
+            name: apiData.sellerInfo?.name || "Unknown Seller",
+            rating: 0,
+            totalSales: "0",
+            yearsActive: 0,
+            verified: apiData.verificationStatus === "verified",
+            avatar: apiData.sellerInfo?.name?.[0] || "S",
+          },
+          certification: {
+            lab: apiData.certificateDetails?.certifyingBody || "None",
+            number: "N/A",
+            date: "N/A",
+          },
+          specifications: {
+            weight: `${apiData.weight} ${apiData.weightUnit}`,
+            dimensions: apiData.dimensions?.value
+              ? `${apiData.dimensions.value} ${apiData.dimensions.unit}`
+              : "N/A",
+            shape: "Unknown",
+            cut: "Unknown",
+            color: apiData.color || "Unknown",
+            clarity: "Unknown",
+            origin: "Unknown",
+            treatment: "Unknown",
+          },
+          features: apiData.tags || [],
+          description: apiData.description || "",
+          image: apiData.primaryImage,
+          images:
+            apiData.images?.map(
+              (img) => `http://localhost:5001/${img.url.replace(/\\/g, "/")}`
+            ) || [],
+
+          bidHistory: [], // Not provided in API
+          relatedGems: [], // Use 'related' if you want
+        };
+
+        setGemData(mappedGemData);
+      } catch (err) {
+        console.error("Error fetching gem:", err);
+        setError("Failed to fetch gemstone details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGem();
+  }, [id]);
+
+  // Fetch bids
+  useEffect(() => {
+    const fetchBids = async () => {
+      try {
+        if (!gemData?.id) return;
+
+        const data = await gemstoneAPI.getBidsByGem(gemData.id);
+        setBids(data);
+      } catch (err) {
+        console.error("Failed to fetch bids:", err);
+      }
+    };
+
+    fetchBids();
+  }, [gemData?.id]);
+
+  // Place bid
+  const placeBid = async (amount) => {
+    if (!amount || isNaN(amount)) {
+      alert("Please enter a valid bid amount");
+      return;
+    }
+
+    if (amount <= gemData.currentBid) {
+      alert("Bid must be higher than current bid");
+      return;
+    }
+
+    try {
+      await gemstoneAPI.placeBid(gemData.id, amount);
+
+      alert("Bid placed successfully!");
+      setShowBidModal(false);
+      setBidAmount("");
+
+      // Refresh bids
+    } catch (err) {
+      console.error("Bid failed:", err);
+      alert(err.message || "Failed to place bid");
+    }
   };
 
+  // Mock gem data (in real app, this would come from API based on gemId)
+  // const gemData = {
+  //   id: 1,
+  //   title: "Exceptional Ceylon Blue Sapphire",
+  //   category: "Sapphire",
+  //   currentBid: 15750,
+  //   startingBid: 8500,
+  //   reservePrice: 18000,
+  //   nextBidIncrement: 500,
+  //   endTime: new Date(Date.now() + 2 * 60 * 60 * 1000 + 45 * 60 * 1000),
+  //   bidCount: 23,
+  //   views: 456,
+  //   watchers: 89,
+  //   location: "Colombo",
+  //   seller: {
+  //     name: "Merit Gems Lanka",
+  //     rating: 4.9,
+  //     totalSales: "1.2M",
+  //     yearsActive: 8,
+  //     verified: true,
+  //     avatar: "MGL",
+  //   },
+  //   certification: {
+  //     lab: "GIA",
+  //     number: "GIA-2118234567",
+  //     date: "2024-01-15",
+  //   },
+  //   specifications: {
+  //     weight: "5.42 ct",
+  //     dimensions: "11.2 x 9.8 x 6.4 mm",
+  //     shape: "Oval",
+  //     cut: "Excellent",
+  //     color: "Royal Blue",
+  //     clarity: "VVS1",
+  //     origin: "Ceylon (Sri Lanka)",
+  //     treatment: "No Heat",
+  //   },
+  //   features: [
+  //     "Natural",
+  //     "Unheated",
+  //     "Eye Clean",
+  //     "Cornflower Blue",
+  //     "Excellent Cut",
+  //   ],
+  //   description:
+  //     "This exceptional Ceylon blue sapphire exhibits the coveted cornflower blue color that has made Sri Lankan sapphires world-renowned. The stone displays excellent transparency with remarkable brilliance and fire. Sourced from the famous Ratnapura mines, this unheated natural sapphire represents the pinnacle of Ceylon's gem heritage.",
+  //   image: "/images/auction-gems/1.jpg",
+  //   images: [
+  //     "/images/auction-gems/1.jpg",
+  //     "/images/auction-gems/2.png",
+  //     "/images/auction-gems/3.jpg",
+  //     "/images/auction-gems/4.jpg",
+  //   ],
+  //   bidHistory: [
+  //     {
+  //       bidder: "B****r",
+  //       amount: 15750,
+  //       time: "2 minutes ago",
+  //       isWinning: true,
+  //     },
+  //     {
+  //       bidder: "G****s",
+  //       amount: 15250,
+  //       time: "5 minutes ago",
+  //       isWinning: false,
+  //     },
+  //     {
+  //       bidder: "S****e",
+  //       amount: 14800,
+  //       time: "12 minutes ago",
+  //       isWinning: false,
+  //     },
+  //     {
+  //       bidder: "B****r",
+  //       amount: 14300,
+  //       time: "18 minutes ago",
+  //       isWinning: false,
+  //     },
+  //     {
+  //       bidder: "C****l",
+  //       amount: 13750,
+  //       time: "25 minutes ago",
+  //       isWinning: false,
+  //     },
+  //   ],
+  //   relatedGems: [
+  //     {
+  //       id: 2,
+  //       title: "Blue Sapphire 4.2ct",
+  //       price: 12500,
+  //       image:
+  //         "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzM2NjZGMSIvPjwvc3ZnPg==",
+  //     },
+  //     {
+  //       id: 3,
+  //       title: "Ceylon Sapphire 3.8ct",
+  //       price: 18900,
+  //       image:
+  //         "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzYzNjZGMSIvPjwvc3ZnPg==",
+  //     },
+  //   ],
+  // };
+
   // Timer effect
+
   useEffect(() => {
+    if (!gemData?.endTime) return; // Wait until gemData is available
+
     const timer = setInterval(() => {
       const now = new Date().getTime();
-      const distance = gemData.endTime.getTime() - now;
+      const end = new Date(gemData.endTime).getTime(); // Ensure it's a Date object
+      const distance = end - now;
 
       if (distance > 0) {
         setTimeLeft({
@@ -166,7 +293,11 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gemData.endTime]);
+  }, [gemData?.endTime]);
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p className="text-red-600">{error}</p>;
+  if (!gemData) return <p>No gem data found</p>;
 
   // Handle bid submission
   const handleBidSubmission = () => {
@@ -194,104 +325,106 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
   };
 
   // Bid Modal Component
-  const BidModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-gray-900">Place Your Bid</h3>
-          <button
-            onClick={() => setShowBidModal(false)}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <ArrowLeft size={20} />
-          </button>
-        </div>
+  const BidModal = ({
+    gemData,
+    bidAmount,
+    setBidAmount,
+    onClose,
+    onSubmitBid,
+  }) => {
+    if (!gemData) return null;
 
-        <div className="space-y-4">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-gray-600">Current Bid</span>
-              <span className="text-lg font-bold text-gray-900">
-                ${gemData.currentBid.toLocaleString()}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Minimum Next Bid</span>
-              <span className="text-sm font-medium text-blue-600">
-                $
-                {(
-                  gemData.currentBid + gemData.nextBidIncrement
-                ).toLocaleString()}
-              </span>
-            </div>
+    const minNextBid = gemData.currentBid + gemData.nextBidIncrement;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl max-w-md w-full p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-900">Place Your Bid</h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <ArrowLeft size={20} />
+            </button>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Your Bid Amount
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                LKR
-              </span>
-              <input
-                type="number"
-                value={bidAmount}
-                onChange={(e) => setBidAmount(e.target.value)}
-                placeholder={(
-                  gemData.currentBid + gemData.nextBidIncrement
-                ).toString()}
-                className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-              />
-            </div>
-            {bidAmount &&
-              parseFloat(bidAmount) <
-                gemData.currentBid + gemData.nextBidIncrement && (
-                <p className="text-red-500 text-sm mt-2">
-                  Bid must be at least $
-                  {(
-                    gemData.currentBid + gemData.nextBidIncrement
-                  ).toLocaleString()}
-                </p>
-              )}
-          </div>
-
-          <div className="bg-yellow-50 p-3 rounded-lg">
-            <div className="flex items-start space-x-2">
-              <AlertCircle size={16} className="text-yellow-600 mt-0.5" />
-              <div className="text-sm text-yellow-800">
-                <p className="font-medium">Bidding Agreement</p>
-                <p>
-                  By placing this bid, you agree to purchase this item if you
-                  win.
-                </p>
+          <div className="space-y-4">
+            {/* Current Bid Info */}
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-gray-600">Current Bid</span>
+                <span className="text-lg font-bold text-gray-900">
+                  LKR {gemData.currentBid.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Minimum Next Bid</span>
+                <span className="text-sm font-medium text-blue-600">
+                  LKR {minNextBid.toLocaleString()}
+                </span>
               </div>
             </div>
-          </div>
 
-          <div className="flex space-x-3">
-            <button
-              onClick={() => setShowBidModal(false)}
-              className="flex-1 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleBidSubmission}
-              disabled={
-                !bidAmount ||
-                parseFloat(bidAmount) <
-                  gemData.currentBid + gemData.nextBidIncrement
-              }
-              className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-            >
-              Place Bid
-            </button>
+            {/* Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Your Bid Amount
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                  LKR
+                </span>
+                <input
+                  type="number"
+                  value={bidAmount}
+                  onChange={(e) => setBidAmount(e.target.value)}
+                  placeholder={minNextBid.toString()}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                />
+              </div>
+              {bidAmount && parseFloat(bidAmount) < minNextBid && (
+                <p className="text-red-500 text-sm mt-2">
+                  Bid must be at least LKR {minNextBid.toLocaleString()}
+                </p>
+              )}
+            </div>
+
+            {/* Agreement */}
+            <div className="bg-yellow-50 p-3 rounded-lg">
+              <div className="flex items-start space-x-2">
+                <AlertCircle size={16} className="text-yellow-600 mt-0.5" />
+                <div className="text-sm text-yellow-800">
+                  <p className="font-medium">Bidding Agreement</p>
+                  <p>
+                    By placing this bid, you agree to purchase this item if you
+                    win.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex space-x-3">
+              <button
+                onClick={onClose}
+                className="flex-1 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onSubmitBid}
+                disabled={!bidAmount || parseFloat(bidAmount) < minNextBid}
+                className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                Place Bid
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Image Modal Component
   const ImageModal = () => (
@@ -372,7 +505,6 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
           </div>
         </div>
       </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Images */}
@@ -380,19 +512,22 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
               {/* Main Image */}
               <div className="relative aspect-w-4 aspect-h-3">
-                <img
-                  src={gemData.images[currentImageIndex]}
-                  alt={`${gemData.title} - Image ${currentImageIndex + 1}`}
-                  className="w-full h-96 object-cover cursor-pointer"
-                  onClick={() => setShowImageModal(true)}
-                />
+                {gemData?.images?.length > 0 && (
+                  <img
+                    src={gemData.images[currentImageIndex]}
+                    alt={`${gemData.title} - Image ${currentImageIndex + 1}`}
+                    className="w-full h-96 object-cover cursor-pointer"
+                    onClick={() => setShowImageModal(true)}
+                  />
+                )}
+
                 <button
                   onClick={() => setShowImageModal(true)}
                   className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded-lg hover:bg-opacity-70"
                 >
                   <Maximize2 size={16} />
                 </button>
-                {gemData.images.length > 1 && (
+                {gemData?.images?.length > 1 && (
                   <>
                     <button
                       onClick={prevImage}
@@ -411,7 +546,7 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
               </div>
 
               {/* Thumbnail Images */}
-              {gemData.images.length > 1 && (
+              {gemData?.images?.length > 1 && (
                 <div className="p-4 flex space-x-2 overflow-x-auto">
                   {gemData.images.map((image, index) => (
                     <button
@@ -479,7 +614,7 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
                         Features
                       </h3>
                       <div className="flex flex-wrap gap-2">
-                        {gemData.features.map((feature) => (
+                        {gemData?.features?.map((feature) => (
                           <span
                             key={feature}
                             className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium"
@@ -544,40 +679,44 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
                       Recent Bid Activity
                     </h3>
                     <div className="space-y-3">
-                      {gemData.bidHistory.map((bid, index) => (
-                        <div
-                          key={index}
-                          className={`flex justify-between items-center py-3 px-4 rounded-lg ${
-                            bid.isWinning
-                              ? "bg-green-50 border border-green-200"
-                              : "bg-gray-50"
-                          }`}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <User size={14} className="text-blue-600" />
+                      {bids.length === 0 ? (
+                        <p className="text-gray-500">No bids placed yet.</p>
+                      ) : (
+                        bids.map((bid) => (
+                          <div
+                            key={bid._id}
+                            className={`flex justify-between items-center py-3 px-4 rounded-lg ${
+                              bid.status === "accepted"
+                                ? "bg-green-50 border border-green-200"
+                                : "bg-gray-50"
+                            }`}
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <User size={14} className="text-blue-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {bid.buyer?.name || "Unknown bidder"}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {new Date(bid.createdAt).toLocaleString()}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                {bid.bidder}
+                            <div className="text-right">
+                              <p className="font-bold text-gray-900">
+                                LKR {bid.amount.toLocaleString()}
                               </p>
-                              <p className="text-sm text-gray-500">
-                                {bid.time}
-                              </p>
+                              {bid.status === "accepted" && (
+                                <p className="text-xs text-green-600 font-medium">
+                                  Winning Bid
+                                </p>
+                              )}
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-bold text-gray-900">
-                              ${bid.amount.toLocaleString()}
-                            </p>
-                            {bid.isWinning && (
-                              <p className="text-xs text-green-600 font-medium">
-                                Winning Bid
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                   </div>
                 )}
@@ -707,7 +846,7 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
                   </div>
 
                   <div className="text-xs text-gray-500">
-                    Reserve Price: ${gemData.reservePrice.toLocaleString()}
+                    Reserve Price: LKR {gemData.reservePrice.toLocaleString()}
                   </div>
                 </div>
 
@@ -739,13 +878,13 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
                     <div className="flex items-center space-x-2">
                       <Gem size={14} className="text-blue-600" />
                       <span className="text-gray-600">
-                        {gemData.specifications.weight}
+                        {gemData?.specifications?.weight}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Award size={14} className="text-green-600" />
                       <span className="text-gray-600">
-                        {gemData.certification.lab}
+                        {gemData?.certification?.lab}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -755,7 +894,7 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
                     <div className="flex items-center space-x-2">
                       <TrendingUp size={14} className="text-purple-600" />
                       <span className="text-gray-600">
-                        {gemData.specifications.treatment}
+                        {gemData?.specifications?.treatment}
                       </span>
                     </div>
                   </div>
@@ -769,20 +908,20 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
                 </h3>
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                    {gemData.seller.avatar}
+                    {gemData?.seller?.avatar}
                   </div>
                   <div>
                     <div className="flex items-center space-x-2">
                       <p className="font-medium text-gray-900">
-                        {gemData.seller.name}
+                        {gemData?.seller?.name}
                       </p>
-                      {gemData.seller.verified && (
+                      {gemData?.seller?.verified && (
                         <Shield size={14} className="text-green-600" />
                       )}
                     </div>
                     <div className="flex items-center space-x-1 text-sm text-gray-600">
                       <Star size={12} className="text-yellow-400" />
-                      <span>{gemData.seller.rating}/5</span>
+                      <span>{gemData?.seller?.rating}/5</span>
                     </div>
                   </div>
                 </div>
@@ -790,53 +929,31 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
                   <div className="flex justify-between">
                     <span>Total Sales:</span>
                     <span className="font-medium">
-                      ${gemData.seller.totalSales}
+                      ${gemData?.seller?.totalSales}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Years Active:</span>
                     <span className="font-medium">
-                      {gemData.seller.yearsActive} years
+                      {gemData?.seller?.yearsActive} years
                     </span>
                   </div>
-                </div>
-              </div>
-
-              {/* Related Gems */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Similar Gems
-                </h3>
-                <div className="space-y-4">
-                  {gemData.relatedGems.map((gem) => (
-                    <div
-                      key={gem.id}
-                      className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                    >
-                      <img
-                        src={gem.image}
-                        alt={gem.title}
-                        className="w-16 h-12 object-cover rounded"
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900 text-sm">
-                          {gem.title}
-                        </p>
-                        <p className="text-green-600 font-semibold">
-                          ${gem.price.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
       {/* Modals */}
-      {showBidModal && <BidModal />}
+      {showBidModal && gemData && (
+        <BidModal
+          gemData={gemData}
+          bidAmount={bidAmount}
+          setBidAmount={setBidAmount}
+          onClose={() => setShowBidModal(false)}
+          onSubmitBid={() => placeBid(parseFloat(bidAmount))}
+        />
+      )}
       {showImageModal && <ImageModal />}
     </div>
   );

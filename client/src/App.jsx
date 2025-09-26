@@ -48,7 +48,7 @@ const App = () => {
         <Route path="/online" element={<Online />} />
         <Route path="/payment-history" element={<PaymentHistory />} />
         <Route path="/auction" element={<Auction />} />
-        <Route path="/auction-details" element={<AuctionDetails />} />
+        <Route path="/auction-details/:id" element={<AuctionDetails />} />
         <Route path="/admin-payment-status" element={<AdminPaymentStatus />} />
       </Route>
 

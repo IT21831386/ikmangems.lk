@@ -215,6 +215,25 @@ export const gemstoneAPI = {
       );
     }
   },
+
+  // --- Bidding Functions ---
+  placeBid: async (gemId, amount) => {
+    try {
+      const response = await api.post("/bids", { gemId, amount });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Failed to place bid" };
+    }
+  },
+
+  getBidsByGem: async (gemId) => {
+    try {
+      const response = await api.get(`/bids/${gemId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Failed to fetch bids" };
+    }
+  },
 };
 
 // Utility functions
