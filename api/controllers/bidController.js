@@ -5,7 +5,7 @@ import User from "../models/userModel.js";
 export const placeBid = async (req, res) => {
   try {
     const { gemId, amount } = req.body;
-    const gem = await Gem.findById(gemId);
+    const gem = await Gemstone.findById(gemId);
     if (!gem) return res.status(404).json({ message: "Gem not found" });
 
     // Update current bid
