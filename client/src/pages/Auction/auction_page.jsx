@@ -35,7 +35,7 @@ const GemsAuctionPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   // eslint-disable-next-line no-unused-vars
   const [selectedGems, setSelectedGems] = useState([]);
-  const [priceRange, setPriceRange] = useState([0, 100000]);
+  const [priceRange, setPriceRange] = useState([0, 20000000]);
   const [selectedCertifications, setSelectedCertifications] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);

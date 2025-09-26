@@ -11,7 +11,11 @@ import {
   rejectGemstone,
   bulkUpdateGemstones,
 } from "../controllers/listingController.js";
-import { placeBid, getBidsByGem } from "../controllers/bidController.js";
+import {
+  placeBid,
+  getBidsByGem,
+  getBidsByUser,
+} from "../controllers/bidController.js";
 
 import multer, { diskStorage } from "multer";
 import { extname } from "path";
@@ -328,6 +332,8 @@ router.get("/search/suggestions", (req, res) => {
 /* ====================== Bid Place ====================== */
 router.post("/bids", placeBid);
 router.get("/bids/:gemId", getBidsByGem);
+router.get("/my-bids", getBidsByUser);
+
 /* ====================== ERROR HANDLING ====================== */
 // Catch-all 404 for this router
 router.use((req, res) => {
@@ -346,6 +352,7 @@ router.use((req, res) => {
       "GET /search/advanced",
       "POST /bids",
       "GET /bids/:id",
+      "GET /my-bids",
     ],
   });
 });

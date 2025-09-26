@@ -44,3 +44,19 @@ export const getBidsByGem = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Get bids by user
+export const getBidsByUser = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const bids = await Bid.find({ buyer: userId })
+      .populate("gem", "name currentBid")
+      .select("amount createdAt status")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(bids);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

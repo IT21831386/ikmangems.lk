@@ -234,6 +234,15 @@ export const gemstoneAPI = {
       throw error.response?.data || { message: "Failed to fetch bids" };
     }
   },
+
+  getBidsByUser: async () => {
+    try {
+      const response = await api.get("/my-bids");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Failed to fetch user bids" };
+    }
+  },
 };
 
 // Utility functions
