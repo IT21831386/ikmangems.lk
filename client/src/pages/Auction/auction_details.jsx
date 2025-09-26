@@ -466,6 +466,12 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
     navigate(`/auction`);
   };
 
+  const handleProceed = (bidId) => {
+    console.log("Proceed clicked for bid:", bidId);
+    // Navigate to payment, auction details, or other actions
+    navigate(`/payment-form`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -713,6 +719,14 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
                                   Winning Bid
                                 </p>
                               )}
+
+                              {/* Proceed Button */}
+                              <button
+                                onClick={() => handleProceed(bid._id)}
+                                className="mt-1 w-full bg-blue-600 text-white py-1 px-3 rounded-lg text-sm hover:bg-blue-700 transition-colors"
+                              >
+                                Proceed
+                              </button>
                             </div>
                           </div>
                         ))
