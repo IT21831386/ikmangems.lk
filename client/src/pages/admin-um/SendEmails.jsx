@@ -1,112 +1,163 @@
-// Add this to your authController.js
 
-export const sendCustomEmail = async (req, res) => {
-  try {
-    const { to, subject, message, userName } = req.body;
+import React, { useState } from "react";
+import axios from "axios";
 
+export default function EmailManager() {
+  const [activeTab, setActiveTab] = useState("single");
+
+  // Single email state
+  const [to, setTo] = useState("");
+  const [userName, setUserName] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+
+  // Bulk email state
+  const [recipients, setRecipients] = useState([{ email: "", name: "" }]);
+  const [bulkSubject, setBulkSubject] = useState("");
+  const [bulkMessage, setBulkMessage] = useState("");
+
+  const [loading, setLoading] = useState(false);
+
+  // Single email handler
+  const handleSendSingle = async () => {
     if (!to || !subject || !message) {
-      return res.json({ 
-        success: false, 
-        message: "Email, subject, and message are required" 
-      });
+      alert("Please fill in email, subject, and message");
+      return;
     }
 
-    // Personalize the message if userName is provided
-    const personalizedMessage = userName 
-      ? `Dear ${userName},\n\n${message}\n\nBest regards,\nAdmin Team`
-      : message;
+    setLoading(true);
+    try {
+      const res = await axios.post(
+        "http://localhost:5001/api/auth/send-email",
+        { to, userName, subject, message },
+        { withCredentials: true }
+      );
+      alert(res.data.message);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send email");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    await transporter.sendMail({
-      from: process.env.SENDER_EMAIL,
-      to: to,
-      subject: subject,
-      text: personalizedMessage,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          ${userName ? `<p>Dear <strong>${userName}</strong>,</p>` : ''}
-          <div style="margin: 20px 0; line-height: 1.6;">
-            ${message.replace(/\n/g, '<br>')}
-          </div>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-          <p style="color: #666; font-size: 14px;">
-            Best regards,<br>
-            <strong>Admin Team</strong>
-          </p>
+  // Bulk email handlers
+  const handleRecipientChange = (index, field, value) => {
+    const newRecipients = [...recipients];
+    newRecipients[index][field] = value;
+    setRecipients(newRecipients);
+  };
+
+  const addRecipient = () => setRecipients([...recipients, { email: "", name: "" }]);
+  const removeRecipient = (index) => setRecipients(recipients.filter((_, i) => i !== index));
+
+  const handleSendBulk = async () => {
+    const validRecipients = recipients.filter(r => r.email);
+    if (!validRecipients.length || !bulkSubject || !bulkMessage) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await axios.post(
+        "http://localhost:5001/api/auth/send-bulk-email",
+        { recipients: validRecipients, subject: bulkSubject, message: bulkMessage },
+        { withCredentials: true }
+      );
+      alert(res.data.message);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send bulk email");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 700, margin: "20px auto" }}>
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+        <button
+          onClick={() => setActiveTab("single")}
+          style={{ flex: 1, padding: 10, backgroundColor: activeTab === "single" ? "#007bff" : "#f0f0f0", color: activeTab === "single" ? "white" : "black" }}
+        >
+          Single Email
+        </button>
+        <button
+          onClick={() => setActiveTab("bulk")}
+          style={{ flex: 1, padding: 10, backgroundColor: activeTab === "bulk" ? "#007bff" : "#f0f0f0", color: activeTab === "bulk" ? "white" : "black" }}
+        >
+          Bulk Email
+        </button>
+      </div>
+
+      {/* Single Email Form */}
+      {activeTab === "single" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <input type="email" placeholder="Email" value={to} onChange={e => setTo(e.target.value)} />
+          <input placeholder="Name (optional)" value={userName} onChange={e => setUserName(e.target.value)} />
+          <input placeholder="Subject" value={subject} onChange={e => setSubject(e.target.value)} />
+          <textarea placeholder="Message" value={message} onChange={e => setMessage(e.target.value)} rows={5} />
+          <button onClick={handleSendSingle} disabled={loading}>
+            {loading ? "Sending..." : "Send Email"}
+          </button>
         </div>
-      `
-    });
+      )}
 
-    res.json({ 
-      success: true, 
-      message: "Email sent successfully" 
-    });
-    
-  } catch (error) {
-    console.error('Email sending error:', error);
-    res.json({ 
-      success: false, 
-      message: "Failed to send email: " + error.message 
-    });
-  }
-};
-
-// Add this endpoint for bulk email sending (more efficient)
-export const sendBulkEmail = async (req, res) => {
-  try {
-    const { recipients, subject, message } = req.body;
-
-    if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
-      return res.json({ 
-        success: false, 
-        message: "Recipients array is required" 
-      });
-    }
-
-    if (!subject || !message) {
-      return res.json({ 
-        success: false, 
-        message: "Subject and message are required" 
-      });
-    }
-
-    const emailPromises = recipients.map(recipient => {
-      const personalizedMessage = recipient.name 
-        ? `Dear ${recipient.name},\n\n${message}\n\nBest regards,\nAdmin Team`
-        : message;
-
-      return transporter.sendMail({
-        from: process.env.SENDER_EMAIL,
-        to: recipient.email,
-        subject: subject,
-        text: personalizedMessage,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            ${recipient.name ? `<p>Dear <strong>${recipient.name}</strong>,</p>` : ''}
-            <div style="margin: 20px 0; line-height: 1.6;">
-              ${message.replace(/\n/g, '<br>')}
+      {/* Bulk Email Form */}
+      {activeTab === "bulk" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {recipients.map((r, i) => (
+            <div key={i} style={{ display: "flex", gap: 5 }}>
+              <input type="email" placeholder="Email" value={r.email} onChange={e => handleRecipientChange(i, "email", e.target.value)} />
+              <input placeholder="Name (optional)" value={r.name} onChange={e => handleRecipientChange(i, "name", e.target.value)} />
+              <button onClick={() => removeRecipient(i)}>Remove</button>
             </div>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-            <p style="color: #666; font-size: 14px;">
-              Best regards,<br>
-              <strong>Admin Team</strong>
-            </p>
-          </div>
-        `
-      });
-    });
+          ))}
+          <button onClick={addRecipient}>Add Recipient</button>
+          <input placeholder="Subject" value={bulkSubject} onChange={e => setBulkSubject(e.target.value)} />
+          <textarea placeholder="Message" value={bulkMessage} onChange={e => setBulkMessage(e.target.value)} rows={5} />
+          <button onClick={handleSendBulk} disabled={loading}>
+            {loading ? "Sending..." : "Send Bulk Email"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
-    await Promise.all(emailPromises);
 
-    res.json({ 
-      success: true, 
-      message: `Bulk email sent successfully to ${recipients.length} recipients` 
-    });
-    
-  } catch (error) {
-    console.error('Bulk email sending error:', error);
-    res.json({ 
-      success: false, 
-      message: "Failed to send bulk email: " + error.message 
-    });
-  }
-};
+/*import React, { useState } from "react";
+import axios from "axios";
+
+export default function SendEmails() {
+  const [to, setTo] = useState("");
+  const [userName, setUserName] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleSend = async () => {
+    try {
+      const res = await axios.post(
+        "http://localhost:5001/api/auth/send-email",
+        { to, userName, subject, message },
+        { withCredentials: true }
+      );
+      alert(res.data.message);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send email");
+    }
+  };
+
+  return (
+    <div>
+      <input placeholder="Email" value={to} onChange={e => setTo(e.target.value)} />
+      <input placeholder="Name (optional)" value={userName} onChange={e => setUserName(e.target.value)} />
+      <input placeholder="Subject" value={subject} onChange={e => setSubject(e.target.value)} />
+      <textarea placeholder="Message" value={message} onChange={e => setMessage(e.target.value)} />
+      <button onClick={handleSend}>Send Email</button>
+    </div>
+  );
+}*/

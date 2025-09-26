@@ -304,3 +304,75 @@ export const verifyResetOtp = async (req, res) => {
     return res.json({ success: false, message: error.message });
   }
 };
+
+
+
+export const sendCustomEmail = async (req, res) => {
+  try {
+    const { to, subject, message, userName } = req.body;
+
+    if (!to || !subject || !message) {
+      return res.json({ success: false, message: "Email, subject, and message are required" });
+    }
+
+    const personalizedMessage = userName 
+      ? `Dear ${userName},\n\n${message}\n\nBest regards,\nAdmin Team`
+      : message;
+
+    await transporter.sendMail({
+      from: process.env.SENDER_EMAIL,
+      to: to,
+      subject: subject,
+      text: personalizedMessage,
+      html: `<div style="font-family: Arial, sans-serif; max-width:600px;">
+              ${userName ? `<p>Dear <strong>${userName}</strong>,</p>` : ""}
+              <div>${message.replace(/\n/g, "<br>")}</div>
+              <hr>
+              <p>Best regards,<br><strong>Admin Team</strong></p>
+            </div>`,
+    });
+
+    res.json({ success: true, message: "Email sent successfully" });
+  } catch (error) {
+    console.error("Email sending error:", error);
+    res.json({ success: false, message: "Failed to send email: " + error.message });
+  }
+};
+
+
+
+
+export const sendBulkEmail = async (req, res) => {
+  try {
+    const { recipients, subject, message } = req.body;
+
+    if (!recipients || !Array.isArray(recipients) || recipients.length === 0)
+      return res.json({ success: false, message: "Recipients array is required" });
+
+    const emailPromises = recipients.map((recipient) => {
+      const personalizedMessage = recipient.name
+        ? `Dear ${recipient.name},\n\n${message}\n\nBest regards,\nAdmin Team`
+        : message;
+
+      return transporter.sendMail({
+        from: process.env.SENDER_EMAIL,
+        to: recipient.email,
+        subject: subject,
+        text: personalizedMessage,
+        html: `<div style="font-family: Arial, sans-serif; max-width:600px;">
+                ${recipient.name ? `<p>Dear <strong>${recipient.name}</strong>,</p>` : ""}
+                <div>${message.replace(/\n/g, "<br>")}</div>
+                <hr>
+                <p>Best regards,<br><strong>Admin Team</strong></p>
+              </div>`,
+      });
+    });
+
+    await Promise.all(emailPromises);
+    res.json({ success: true, message: `Bulk email sent to ${recipients.length} recipients` });
+  } catch (error) {
+    console.error("Bulk email error:", error);
+    res.json({ success: false, message: "Failed to send bulk email: " + error.message });
+  }
+};
+

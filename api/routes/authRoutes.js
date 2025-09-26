@@ -6,8 +6,11 @@ import {
   sendResetOtp,
   sendVerifyOtp,
   verifyEmail,
-  verifyResetOtp, // ✅ new import
+  verifyResetOtp, 
 } from '../controllers/authController.js';
+
+import { sendCustomEmail, sendBulkEmail, verifyToken } from "../controllers/authController.js";
+
 import { login } from '../controllers/authController.js';
 import { logout } from '../controllers/authController.js';
 import userAuth from '../middleware/userAuth.js';
@@ -27,4 +30,16 @@ authRouter.post('/send-verify-otp', userAuth, sendVerifyOtp);
 authRouter.post('/verify-account', userAuth, verifyEmail);
 authRouter.get('/is-auth', isAuthenticated);
 
+authRouter.post("/send-email", verifyToken, sendCustomEmail);
+authRouter.post("/send-bulk-email", verifyToken, sendBulkEmail);
+
 export default authRouter;
+
+
+
+
+
+
+
+
+

@@ -34,6 +34,7 @@ import AccountSettings from "./pages/user/AccountSettings";
 import DisplayUsers from "./pages/admin-um/DisplayUsers";
 import OrderHistoryPage from "./pages/user/OrderHistoryPage";
 import EditUsers from "./pages/admin-um/EditUsers";
+import SendEmails from "./pages/admin-um/SendEmails";
 
 const App = () => {
   return (
@@ -75,6 +76,7 @@ const App = () => {
       <Route path="/display-users" element={<DisplayUsers />} />
       <Route path="/order-history" element={<OrderHistoryPage />} />
       <Route path="/edit-users" element={<EditUsers />} />
+      <Route path="/sende-mails" element={<SendEmails />} />
     </Routes>
   );
 };
