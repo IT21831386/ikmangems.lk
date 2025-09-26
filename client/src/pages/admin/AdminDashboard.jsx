@@ -17,6 +17,7 @@ import UsersList from "./admin-um/DisplayUsers";
 import PaymentHistory from "./payments/paymentHistory";
 import AccountSettings from "../user/AccountSettings";
 import ListingApprovals from "./listing/listing-approval";
+import Ticket from "../help-center/SupportDashboard";
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -74,6 +75,9 @@ export default function AdminDashboard() {
 
       case "transactions":
         return <PaymentHistory />;
+
+      case "ticket":
+        return <Ticket />;
 
       case "profile":
         return <AccountSettings />;
@@ -139,6 +143,15 @@ export default function AdminDashboard() {
                   }
                 >
                   <CreditCard className="mr-2" /> Transactions
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setActiveSection("ticket")}
+                  className={activeSection === "ticket" ? "bg-gray-200" : ""}
+                >
+                  <CreditCard className="mr-2" /> Ticket Management
                 </SidebarMenuButton>
               </SidebarMenuItem>
 

@@ -13,6 +13,10 @@ import onlinePaymentRoutes from "./routes/onlinepaymentRoutes.js";
 import { connectDB } from "./config/db.js";
 import bidRoutes from "./routes/bidRoutes.js";
 import gemstoneRoutes from "./routes/listingRoutes.js";
+import TicketRoute from "./routes/TicketRoute.js";
+import FeedbackRoute from "./routes/feedbackRoute.js";
+// import AdminTicketRoutes from "./routes/ticketAdminRoutes.js";
+import SupportTicketRoutes from "./routes/supportTicketRoutes.js";
 
 // Load .env file from root directory (one level up from api folder)
 const rootPath = path.resolve();
@@ -60,6 +64,11 @@ app.use("/api/otp", otpRoutes);
 app.use("/api/bids", bidRoutes);
 app.use("/uploads", express.static(join(process.cwd(), "uploads")));
 app.use("/gemstone", gemstoneRoutes);
+
+app.use("/api/tickets", TicketRoute);
+app.use("/api/feedbacks", FeedbackRoute);
+// app.use("/api/admin/tickets", AdminTicketRoutes);
+app.use("/api/support", SupportTicketRoutes);
 
 // Simple API check route
 app.get("/", (req, res) => res.send("API working"));
