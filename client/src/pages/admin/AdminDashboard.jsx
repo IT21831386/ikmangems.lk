@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import PaymentHistory from "../paymentHistory";
 import AccountSettings from "../user/AccountSettings"; 
 import DisplayUsers from "../admin-um/DisplayUsers";
+//import AddUser from '../admin-um/AddUser'
 
 import {
   Inbox,
@@ -37,6 +38,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import AddUser from "../admin-um/AddUser";
 
 export default function ManageUsers() {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -58,8 +60,8 @@ export default function ManageUsers() {
 
   const sidebarItems = [
     { title: "Dashboard", key: "dashboard", icon: Home },
-    { title: "Users", key: "users", icon: Inbox },
-    { title: "Transactions", key: "transactions", icon: Wallet },
+    { title: "Users", key: "users", icon: UserCog},
+    { title: "Add User", key: "transactions", icon: UserCog},
     { title: "My Bids", key: "mybids", icon: Gavel },
     { title: "Profile", key: "profile", icon: UserCog },
   ];
@@ -73,7 +75,7 @@ export default function ManageUsers() {
         return <DisplayUsers />;
 
       case "transactions":
-        return ;
+        return <AddUser />;
 
       case "mybids":
         return <div></div>;

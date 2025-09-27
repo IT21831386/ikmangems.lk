@@ -10,6 +10,7 @@ import AuctionDetails from "./pages/Auction/auction_details";
 import AdminPaymentStatus from "./pages/adminPaymentStatus";
 //import NoteDetailPage from "./pages/NoteDetailPage";
 //import toast from "react-hot-toast";
+import AddUser from "./pages/admin-um/AddUser";
 
 //import { BrowserRouter, Routes, Route } from "react-router-dom";
 //import Home from "./pages/Home";
@@ -77,6 +78,7 @@ const App = () => {
       <Route path="/order-history" element={<OrderHistoryPage />} />
       <Route path="/edit-users" element={<EditUsers />} />
       <Route path="/sende-mails" element={<SendEmails />} />
+      <Route path="/add-user" element={<AddUser />} />
     </Routes>
   );
 };
