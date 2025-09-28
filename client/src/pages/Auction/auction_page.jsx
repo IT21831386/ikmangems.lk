@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+/* eslint-disable no-unused-vars */
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -23,6 +24,7 @@ import {
   Zap,
   TrendingUp,
 } from "lucide-react";
+import { gemstoneAPI } from "../../services/api";
 
 const GemsAuctionPage = () => {
   // State Management
@@ -33,7 +35,7 @@ const GemsAuctionPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   // eslint-disable-next-line no-unused-vars
   const [selectedGems, setSelectedGems] = useState([]);
-  const [priceRange, setPriceRange] = useState([0, 100000]);
+  const [priceRange, setPriceRange] = useState([0, 20000000]);
   const [selectedCertifications, setSelectedCertifications] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -48,122 +50,122 @@ const GemsAuctionPage = () => {
 
   // Mock auction data
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const auctions = [
-    {
-      id: 1,
-      title: "Exceptional Ceylon Blue Sapphire",
-      category: "Sapphire",
-      currentBid: 15750,
-      startingBid: 8500,
-      timeLeft: "2h 45m",
-      endTime: new Date(Date.now() + 2 * 60 * 60 * 1000),
-      bidCount: 23,
-      views: 456,
-      location: "Colombo",
-      seller: "Merit Gems Lanka",
-      sellerRating: 4.9,
-      certification: "GIA",
-      weight: "5.42 ct",
-      image: "/images/auction-gems/1.jpg",
-      features: ["Natural", "Unheated", "Eye Clean"],
-      status: "active",
-    },
-    {
-      id: 2,
-      title: "Rare Padparadscha Sapphire",
-      category: "Sapphire",
-      currentBid: 28900,
-      startingBid: 12000,
-      timeLeft: "1d 3h",
-      endTime: new Date(Date.now() + 27 * 60 * 60 * 1000),
-      bidCount: 41,
-      views: 789,
-      location: "Ratnapura",
-      seller: "Ceylon Gem Palace",
-      sellerRating: 4.8,
-      certification: "SSEF",
-      weight: "3.85 ct",
-      image: "/images/auction-gems/2.png",
-      features: ["Natural", "Heated", "Premium Cut"],
-      status: "hot",
-    },
-    {
-      id: 3,
-      title: "Vivid Red Ruby - Burma Origin",
-      category: "Ruby",
-      currentBid: 45200,
-      startingBid: 25000,
-      timeLeft: "5h 12m",
-      endTime: new Date(Date.now() + 5 * 60 * 60 * 1000),
-      bidCount: 67,
-      views: 1234,
-      location: "Kandy",
-      seller: "Royal Gems Collection",
-      sellerRating: 5.0,
-      certification: "Gübelin",
-      weight: "2.14 ct",
-      image: "/images/auction-gems/3.jpg",
-      features: ["Natural", "Unheated", "Pigeon Blood"],
-      status: "ending_soon",
-    },
-    {
-      id: 4,
-      title: "Alexandrite Color-Change Gem",
-      category: "Alexandrite",
-      currentBid: 18650,
-      startingBid: 9500,
-      timeLeft: "3d 8h",
-      endTime: new Date(Date.now() + 80 * 60 * 60 * 1000),
-      bidCount: 19,
-      views: 332,
-      location: "Galle",
-      seller: "Tropical Gems Ltd",
-      sellerRating: 4.7,
-      certification: "AGL",
-      weight: "1.95 ct",
-      image: "/images/auction-gems/4.jpg",
-      features: ["Natural", "Color Change", "Russian Origin"],
-      status: "active",
-    },
-    {
-      id: 5,
-      title: "Cat's Eye Chrysoberyl",
-      category: "Chrysoberyl",
-      currentBid: 12300,
-      startingBid: 6800,
-      timeLeft: "6h 30m",
-      endTime: new Date(Date.now() + 6.5 * 60 * 60 * 1000),
-      bidCount: 15,
-      views: 267,
-      location: "Ratnapura",
-      seller: "Heritage Gems",
-      sellerRating: 4.6,
-      certification: "GRS",
-      weight: "4.12 ct",
-      image: "/images/auction-gems/5.jpg",
-      features: ["Natural", "Sharp Eye", "Honey Color"],
-      status: "active",
-    },
-    {
-      id: 6,
-      title: "Pink Spinel Octagonal Cut",
-      category: "Spinel",
-      currentBid: 8950,
-      startingBid: 4200,
-      timeLeft: "12h 15m",
-      endTime: new Date(Date.now() + 12.25 * 60 * 60 * 1000),
-      bidCount: 28,
-      views: 423,
-      location: "Colombo",
-      seller: "Island Treasures",
-      sellerRating: 4.5,
-      certification: "LOTUS",
-      weight: "3.67 ct",
-      image: "/images/auction-gems/6.jpg",
-      features: ["Natural", "No Heat", "Vivid Pink"],
-      status: "active",
-    },
-  ];
+  // const auctions = [
+  //   {
+  //     id: 1,
+  //     title: "Exceptional Ceylon Blue Sapphire",
+  //     category: "Sapphire",
+  //     currentBid: 15750,
+  //     startingBid: 8500,
+  //     timeLeft: "2h 45m",
+  //     endTime: new Date(Date.now() + 2 * 60 * 60 * 1000),
+  //     bidCount: 23,
+  //     views: 456,
+  //     location: "Colombo",
+  //     seller: "Merit Gems Lanka",
+  //     sellerRating: 4.9,
+  //     certification: "GIA",
+  //     weight: "5.42 ct",
+  //     image: "/images/auction-gems/1.jpg",
+  //     features: ["Natural", "Unheated", "Eye Clean"],
+  //     status: "active",
+  //   },
+  //   {
+  //     id: 2,
+  //     title: "Rare Padparadscha Sapphire",
+  //     category: "Sapphire",
+  //     currentBid: 28900,
+  //     startingBid: 12000,
+  //     timeLeft: "1d 3h",
+  //     endTime: new Date(Date.now() + 27 * 60 * 60 * 1000),
+  //     bidCount: 41,
+  //     views: 789,
+  //     location: "Ratnapura",
+  //     seller: "Ceylon Gem Palace",
+  //     sellerRating: 4.8,
+  //     certification: "SSEF",
+  //     weight: "3.85 ct",
+  //     image: "/images/auction-gems/2.png",
+  //     features: ["Natural", "Heated", "Premium Cut"],
+  //     status: "hot",
+  //   },
+  //   {
+  //     id: 3,
+  //     title: "Vivid Red Ruby - Burma Origin",
+  //     category: "Ruby",
+  //     currentBid: 45200,
+  //     startingBid: 25000,
+  //     timeLeft: "5h 12m",
+  //     endTime: new Date(Date.now() + 5 * 60 * 60 * 1000),
+  //     bidCount: 67,
+  //     views: 1234,
+  //     location: "Kandy",
+  //     seller: "Royal Gems Collection",
+  //     sellerRating: 5.0,
+  //     certification: "Gübelin",
+  //     weight: "2.14 ct",
+  //     image: "/images/auction-gems/3.jpg",
+  //     features: ["Natural", "Unheated", "Pigeon Blood"],
+  //     status: "ending_soon",
+  //   },
+  //   {
+  //     id: 4,
+  //     title: "Alexandrite Color-Change Gem",
+  //     category: "Alexandrite",
+  //     currentBid: 18650,
+  //     startingBid: 9500,
+  //     timeLeft: "3d 8h",
+  //     endTime: new Date(Date.now() + 80 * 60 * 60 * 1000),
+  //     bidCount: 19,
+  //     views: 332,
+  //     location: "Galle",
+  //     seller: "Tropical Gems Ltd",
+  //     sellerRating: 4.7,
+  //     certification: "AGL",
+  //     weight: "1.95 ct",
+  //     image: "/images/auction-gems/4.jpg",
+  //     features: ["Natural", "Color Change", "Russian Origin"],
+  //     status: "active",
+  //   },
+  //   {
+  //     id: 5,
+  //     title: "Cat's Eye Chrysoberyl",
+  //     category: "Chrysoberyl",
+  //     currentBid: 12300,
+  //     startingBid: 6800,
+  //     timeLeft: "6h 30m",
+  //     endTime: new Date(Date.now() + 6.5 * 60 * 60 * 1000),
+  //     bidCount: 15,
+  //     views: 267,
+  //     location: "Ratnapura",
+  //     seller: "Heritage Gems",
+  //     sellerRating: 4.6,
+  //     certification: "GRS",
+  //     weight: "4.12 ct",
+  //     image: "/images/auction-gems/5.jpg",
+  //     features: ["Natural", "Sharp Eye", "Honey Color"],
+  //     status: "active",
+  //   },
+  //   {
+  //     id: 6,
+  //     title: "Pink Spinel Octagonal Cut",
+  //     category: "Spinel",
+  //     currentBid: 8950,
+  //     startingBid: 4200,
+  //     timeLeft: "12h 15m",
+  //     endTime: new Date(Date.now() + 12.25 * 60 * 60 * 1000),
+  //     bidCount: 28,
+  //     views: 423,
+  //     location: "Colombo",
+  //     seller: "Island Treasures",
+  //     sellerRating: 4.5,
+  //     certification: "LOTUS",
+  //     weight: "3.67 ct",
+  //     image: "/images/auction-gems/6.jpg",
+  //     features: ["Natural", "No Heat", "Vivid Pink"],
+  //     status: "active",
+  //   },
+  // ];
 
   // Filter options
   const categories = [
@@ -205,6 +207,51 @@ const GemsAuctionPage = () => {
     "Cat's Eye",
   ];
 
+  const [auctions, setAuctions] = useState([]);
+  // eslint-disable-next-line no-unused-vars
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Fetch auctions from API
+  useEffect(() => {
+    async function fetchGems() {
+      try {
+        const response = await gemstoneAPI.getGemstones();
+        const gemstones = response.data.gemstones;
+
+        // Map gemstones to auction-like objects expected by AuctionCard
+        const mappedAuctions = gemstones.map((gem) => ({
+          id: gem._id,
+          title: gem.name,
+          description: gem.description,
+          currentBid: gem.minimumBid,
+          startingBid: gem.minimumBid, // assuming startingBid same as minimumBid
+          weight: `${gem.weight} ${gem.weightUnit}`, // e.g., "23 carats"
+          certification: gem.certificateDetails.hasCertificate
+            ? gem.certificateDetails.certifyingBody
+            : "No Certificate",
+          location: "Unknown", // no location in API, replace or leave default
+          views: gem.views || 0,
+          features: gem.tags || [],
+          seller: gem.sellerInfo.name,
+          sellerRating: 0, // no rating info, default 0
+          image:
+            "http://localhost:5001/" + gem.primaryImage.replace(/\\/g, "/"),
+          status: "active", // or set based on your logic
+          bidCount: 0, // no bids info, default 0
+          timeLeft: 0, // no time info, default 0
+          // eslint-disable-next-line no-dupe-keys
+        }));
+
+        setAuctions(mappedAuctions);
+      } catch (error) {
+        console.error("Failed to fetch gemstones:", error);
+      }
+    }
+
+    fetchGems();
+  }, []);
+
   // Toggle filter sections
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({
@@ -215,32 +262,37 @@ const GemsAuctionPage = () => {
 
   // Filter and sort auctions
   const filteredAuctions = useMemo(() => {
+    // Defensive check: if auctions is not an array, return empty array to avoid errors
+    if (!Array.isArray(auctions)) return [];
+
+    // Filter auctions based on various criteria
     let filtered = auctions.filter((auction) => {
-      // Search filter
+      // Search filter: match title or seller with search query (case insensitive)
       const matchesSearch =
         auction.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         auction.seller.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Category filter
+      // Category filter: if no categories selected, include all; otherwise match selected categories
       const matchesCategory =
         selectedCategories.length === 0 ||
         selectedCategories.includes(auction.category);
 
-      // Price filter
+      // Price filter: currentBid must be within selected price range
       const matchesPrice =
         auction.currentBid >= priceRange[0] &&
         auction.currentBid <= priceRange[1];
 
-      // Certification filter
+      // Certification filter: if none selected, include all; otherwise match selected certifications
       const matchesCertification =
         selectedCertifications.length === 0 ||
         selectedCertifications.includes(auction.certification);
 
-      // Location filter
+      // Location filter: if none selected, include all; otherwise match selected locations
       const matchesLocation =
         selectedLocations.length === 0 ||
         selectedLocations.includes(auction.location);
 
+      // Return true only if all filters pass
       return (
         matchesSearch &&
         matchesCategory &&
@@ -250,11 +302,11 @@ const GemsAuctionPage = () => {
       );
     });
 
-    // Sort auctions
+    // Sort filtered auctions according to selected sort criteria
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "ending_soon":
-          return a.endTime - b.endTime;
+          return new Date(a.endTime) - new Date(b.endTime);
         case "price_low":
           return a.currentBid - b.currentBid;
         case "price_high":
@@ -264,7 +316,7 @@ const GemsAuctionPage = () => {
         case "most_viewed":
           return b.views - a.views;
         default:
-          return 0;
+          return 0; // No sorting or unrecognized sort option
       }
     });
 
@@ -294,9 +346,8 @@ const GemsAuctionPage = () => {
     return timeLeft;
   };
 
-  const handlePlaceBid = () => {
-    // Navigate to the bid page for this gem
-    navigate(`/auction-details`);
+  const handlePlaceBid = (gemId) => {
+    navigate(`/auction-details/${gemId}`);
   };
 
   // Filters Component
@@ -515,7 +566,7 @@ const GemsAuctionPage = () => {
   );
 
   // Auction Card Component
-  const AuctionCard = ({ auction, isListView = false }) => (
+  const AuctionCard = ({ auction, isListView = false, onPlaceBid }) => (
     <div
       className={`bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group ${
         isListView ? "flex" : ""
@@ -672,7 +723,7 @@ const GemsAuctionPage = () => {
               }`}
             >
               <button
-                onClick={handlePlaceBid}
+                onClick={onPlaceBid}
                 className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
               >
                 Place Bid
@@ -890,6 +941,7 @@ const GemsAuctionPage = () => {
                     key={auction.id}
                     auction={auction}
                     isListView={viewMode === "list"}
+                    onPlaceBid={() => handlePlaceBid(auction.id)}
                   />
                 ))}
               </div>

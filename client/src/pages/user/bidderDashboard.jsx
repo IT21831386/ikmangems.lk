@@ -57,8 +57,6 @@ export default function ManageUsers() {
 
   const sidebarItems = [
     { title: "Dashboard", key: "dashboard", icon: Home },
-    { title: "Users", key: "users", icon: Inbox },
-    { title: "Transactions", key: "transactions", icon: Wallet },
     { title: "My Bids", key: "mybids", icon: Gavel },
     { title: "Profile", key: "profile", icon: UserCog },
   ];
