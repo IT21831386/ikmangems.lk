@@ -1,7 +1,7 @@
 //Dana
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import PaymentHistory from "../paymentHistory";
+import PaymentHistory from "./paymentHistory";
 import AccountSettings from "./AccountSettings"; 
 
 import {

@@ -1,9 +1,9 @@
 //Dana
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import PaymentHistory from "../paymentHistory";
+//import PaymentHistory from "../paymentHistory";
 import AccountSettings from "../user/AccountSettings"; 
-import DisplayUsers from "../admin-um/DisplayUsers";
+import DisplayUsers from "./admin-um/DisplayUsers";
 //import AddUser from '../admin-um/AddUser'
 
 import {
@@ -34,9 +34,9 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import UsersList from "./admin-um/DisplayUsers";
+//import UsersList from "./admin-um/DisplayUsers";
 import PaymentHistory from "./payments/paymentHistory";
-import AccountSettings from "../user/AccountSettings";
+//import AccountSettings from "../user/AccountSettings";
 import ListingApprovals from "./listing/listing-approval";
 import Ticket from "../help-center/SupportDashboard";
 import BidManagement from "./BidManagement";
@@ -47,7 +47,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import AddUser from "../admin-um/AddUser";
+import AddUser from "./admin-um/AddUser";
 
 export default function ManageUsers() {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -118,7 +118,7 @@ export default function ManageUsers() {
         return <ListingApprovals />;
 
       case "manageusers":
-        return <UsersList />;
+        return <DisplayUsers />;
 
       case "transactions":
         return <PaymentHistory />;

@@ -10,7 +10,7 @@ import AuctionDetails from "./pages/Auction/auction_details";
 import AdminPaymentStatus from "./pages/admin/payments/adminPaymentStatus";
 //import NoteDetailPage from "./pages/NoteDetailPage";
 //import toast from "react-hot-toast";
-import AddUser from "./pages/admin-um/AddUser";
+import AddUser from "./pages/admin/admin-um/AddUser";
 
 //import { BrowserRouter, Routes, Route } from "react-router-dom";
 //import Home from "./pages/Home";
@@ -32,10 +32,10 @@ import VerifyEmail from "./pages/auth/VerifyEmail";
 import GetOTP from "./pages/auth/getOTP";
 import ResetPassword from "./pages/auth/ResetPassword";
 import AccountSettings from "./pages/user/AccountSettings";
-import DisplayUsers from "./pages/admin-um/DisplayUsers";
+import DisplayUsers from "./pages/admin/admin-um/DisplayUsers";
 import OrderHistoryPage from "./pages/user/OrderHistoryPage";
-import EditUsers from "./pages/admin-um/EditUsers";
-import SendEmails from "./pages/admin-um/SendEmails";
+import EditUsers from "./pages/admin/admin-um/EditUsers";
+import SendEmails from "./pages/admin/admin-um/SendEmails";
 
 //import DisplayUsers from "./pages/admin/admin-um/DisplayUsers";
 //import OrderHistoryPage from "./pages/user/OrderHistoryPage";

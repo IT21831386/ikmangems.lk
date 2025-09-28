@@ -38,7 +38,7 @@ const createUserSchema = z
     path: ["confirmPassword"],
   });
 
-export default function CreateUserForm() {
+export default function AddUser() {
   const [serverError, setServerError] = useState("");
   const [serverSuccess, setServerSuccess] = useState("");
 
