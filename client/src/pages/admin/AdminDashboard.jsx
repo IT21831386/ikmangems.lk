@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import UsersList from "./admin-um/DisplayUsers";
-import PaymentHistory from "./payments/paymentHistory";
+import AdminPaymentStatus from "./payments/adminPaymentStatus";
 import AccountSettings from "../user/AccountSettings";
 import ListingApprovals from "./listing/listing-approval";
 import Ticket from "../help-center/SupportDashboard";
@@ -75,7 +75,7 @@ export default function AdminDashboard() {
         return <UsersList />;
 
       case "transactions":
-        return <PaymentHistory />;
+        return <AdminPaymentStatus />;
 
       case "bids":
         return <BidManagement />;
