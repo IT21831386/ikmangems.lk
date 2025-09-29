@@ -1,31 +1,50 @@
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 
-const userAuth = async(req, res, next) => {
-    const {token} = req.cookies
+// Main authentication middleware
+const userAuth = (req, res, next) => {
+  const { token } = req.cookies;
 
-    if(!token){
-        return res.json({success: false, message: 'Not authorized login again'})
+  if (!token) {
+    return res
+      .status(401)
+      .json({ success: false, message: "Not authorized. Please log in." });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (!decoded.id) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token. Please log in again.",
+      });
     }
 
-    try {
+    req.user = {
+      id: decoded.id,
+      role: decoded.role, // make sure to include role in JWT when signing
+    };
 
-        //decode the token
-        const tokenDecode = jwt.verify(token, process.env.JWT_SECRET)
+    next();
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      message: "Token expired or invalid. Please log in again.",
+    });
+  }
+};
 
-        if(tokenDecode.id){
-            
-            req.user = { id: tokenDecode.id, role: tokenDecode.role }
-            req.body.userId = tokenDecode.id
-
-        }else{
-            return res.json({success: false, message: 'Not authorized. login again'})
-        }
-
-        next()
-        
-    } catch (error) {
-        res.json({success: false, message: error.message})
+// Role-based authorization middleware
+export const authorizeRoles =
+  (...roles) =>
+  (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Insufficient permissions.",
+      });
     }
-}
+    next();
+  };
 
-export default userAuth
+export default userAuth;

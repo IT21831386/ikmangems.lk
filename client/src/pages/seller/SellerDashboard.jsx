@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import OrderHistoryPage from "./OrderHistoryPage";
-import AccountSettings from "./AccountSettings";
+import OrderHistoryPage from "../user/OrderHistoryPage";
+import AccountSettings from "../user/AccountSettings";
+import Gems from "../gem-listing/GemDisplay";
+import GemCreate from "../gem-listing/Gemstone";
 
 // Mock data for demonstration
 const mockGems = [
@@ -16,7 +18,7 @@ const mockGems = [
     currentBid: 2300,
     bidsCount: 12,
     endTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-    image: "https://via.placeholder.com/200x200/3B82F6/FFFFFF?text=Sapphire"
+    image: "https://via.placeholder.com/200x200/3B82F6/FFFFFF?text=Sapphire",
   },
   {
     id: 2,
@@ -30,7 +32,7 @@ const mockGems = [
     finalPrice: 3500,
     bidsCount: 18,
     soldDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    image: "https://via.placeholder.com/200x200/EF4444/FFFFFF?text=Ruby"
+    image: "https://via.placeholder.com/200x200/EF4444/FFFFFF?text=Ruby",
   },
   {
     id: 3,
@@ -41,7 +43,7 @@ const mockGems = [
     clarity: "VS2",
     status: "pending",
     startingPrice: 2800,
-    image: "https://via.placeholder.com/200x200/10B981/FFFFFF?text=Emerald"
+    image: "https://via.placeholder.com/200x200/10B981/FFFFFF?text=Emerald",
   },
   {
     id: 4,
@@ -55,8 +57,8 @@ const mockGems = [
     highestBid: 4200,
     bidsCount: 8,
     endTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    image: "https://via.placeholder.com/200x200/F59E0B/FFFFFF?text=Diamond"
-  }
+    image: "https://via.placeholder.com/200x200/F59E0B/FFFFFF?text=Diamond",
+  },
 ];
 
 const mockRevenue = {
@@ -65,18 +67,22 @@ const mockRevenue = {
   activeAuctions: 1,
   soldGems: 3,
   averagePrice: 5250,
-  topBid: 3500
+  topBid: 3500,
 };
 
 // Custom Sidebar Components
 function Sidebar({ children, isCollapsed, onToggle }) {
   return (
-    <div className={`bg-white border-r border-gray-200 h-screen transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
-      <button 
+    <div
+      className={`bg-white border-r border-gray-200 h-screen transition-all duration-300 ${
+        isCollapsed ? "w-16" : "w-64"
+      }`}
+    >
+      <button
         onClick={onToggle}
         className="w-full p-4 text-left hover:bg-gray-50 border-b border-gray-200"
       >
-        {isCollapsed ? '☰' : 'Seller Dashboard'}
+        {isCollapsed ? "" : "Seller Dashboard"}
       </button>
       {children}
     </div>
@@ -87,7 +93,11 @@ function SidebarItem({ icon, title, isActive, onClick, isCollapsed }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full p-4 text-left hover:bg-gray-50 flex items-center ${isActive ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : 'text-gray-700'}`}
+      className={`w-full p-4 text-left hover:bg-gray-50 flex items-center ${
+        isActive
+          ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
+          : "text-gray-700"
+      }`}
     >
       <span className="text-xl mr-3">{icon}</span>
       {!isCollapsed && <span>{title}</span>}
@@ -98,37 +108,47 @@ function SidebarItem({ icon, title, isActive, onClick, isCollapsed }) {
 // Add Gem Component
 function AddGem({ onAdd, onCancel }) {
   const [gemData, setGemData] = useState({
-    name: '',
-    type: '',
-    weight: '',
-    color: '',
-    clarity: '',
-    startingPrice: '',
-    description: '',
-    auctionDuration: '7'
+    name: "",
+    type: "",
+    weight: "",
+    color: "",
+    clarity: "",
+    startingPrice: "",
+    description: "",
+    auctionDuration: "7",
   });
 
-
-  
-
   const handleSubmit = () => {
-    if (!gemData.name || !gemData.type || !gemData.weight || !gemData.startingPrice) {
-      alert('Please fill in all required fields');
+    if (
+      !gemData.name ||
+      !gemData.type ||
+      !gemData.weight ||
+      !gemData.startingPrice
+    ) {
+      alert("Please fill in all required fields");
       return;
     }
-    
+
     const newGem = {
       ...gemData,
       id: Date.now(),
-      status: 'pending',
+      status: "pending",
       weight: parseFloat(gemData.weight),
       startingPrice: parseFloat(gemData.startingPrice),
-      image: `https://via.placeholder.com/200x200/6366F1/FFFFFF?text=${encodeURIComponent(gemData.type)}`
+      image: `https://via.placeholder.com/200x200/6366F1/FFFFFF?text=${encodeURIComponent(
+        gemData.type
+      )}`,
     };
     onAdd(newGem);
     setGemData({
-      name: '', type: '', weight: '', color: '', clarity: '', 
-      startingPrice: '', description: '', auctionDuration: '7'
+      name: "",
+      type: "",
+      weight: "",
+      color: "",
+      clarity: "",
+      startingPrice: "",
+      description: "",
+      auctionDuration: "7",
     });
   };
 
@@ -142,7 +162,7 @@ function AddGem({ onAdd, onCancel }) {
             <input
               type="text"
               value={gemData.name}
-              onChange={(e) => setGemData({...gemData, name: e.target.value})}
+              onChange={(e) => setGemData({ ...gemData, name: e.target.value })}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter gem name"
             />
@@ -151,7 +171,7 @@ function AddGem({ onAdd, onCancel }) {
             <label className="block text-sm font-medium mb-2">Type *</label>
             <select
               value={gemData.type}
-              onChange={(e) => setGemData({...gemData, type: e.target.value})}
+              onChange={(e) => setGemData({ ...gemData, type: e.target.value })}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Select Type</option>
@@ -163,12 +183,16 @@ function AddGem({ onAdd, onCancel }) {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Weight (carats) *</label>
+            <label className="block text-sm font-medium mb-2">
+              Weight (carats) *
+            </label>
             <input
               type="number"
               step="0.1"
               value={gemData.weight}
-              onChange={(e) => setGemData({...gemData, weight: e.target.value})}
+              onChange={(e) =>
+                setGemData({ ...gemData, weight: e.target.value })
+              }
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="0.0"
             />
@@ -178,7 +202,9 @@ function AddGem({ onAdd, onCancel }) {
             <input
               type="text"
               value={gemData.color}
-              onChange={(e) => setGemData({...gemData, color: e.target.value})}
+              onChange={(e) =>
+                setGemData({ ...gemData, color: e.target.value })
+              }
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter color"
             />
@@ -187,7 +213,9 @@ function AddGem({ onAdd, onCancel }) {
             <label className="block text-sm font-medium mb-2">Clarity</label>
             <select
               value={gemData.clarity}
-              onChange={(e) => setGemData({...gemData, clarity: e.target.value})}
+              onChange={(e) =>
+                setGemData({ ...gemData, clarity: e.target.value })
+              }
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Select Clarity</option>
@@ -202,22 +230,30 @@ function AddGem({ onAdd, onCancel }) {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Starting Price ($) *</label>
+            <label className="block text-sm font-medium mb-2">
+              Starting Price ($) *
+            </label>
             <input
               type="number"
               value={gemData.startingPrice}
-              onChange={(e) => setGemData({...gemData, startingPrice: e.target.value})}
+              onChange={(e) =>
+                setGemData({ ...gemData, startingPrice: e.target.value })
+              }
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="0"
             />
           </div>
         </div>
-        
+
         <div>
-          <label className="block text-sm font-medium mb-2">Auction Duration (days)</label>
+          <label className="block text-sm font-medium mb-2">
+            Auction Duration (days)
+          </label>
           <select
             value={gemData.auctionDuration}
-            onChange={(e) => setGemData({...gemData, auctionDuration: e.target.value})}
+            onChange={(e) =>
+              setGemData({ ...gemData, auctionDuration: e.target.value })
+            }
             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="3">3 days</option>
@@ -231,7 +267,9 @@ function AddGem({ onAdd, onCancel }) {
           <label className="block text-sm font-medium mb-2">Description</label>
           <textarea
             value={gemData.description}
-            onChange={(e) => setGemData({...gemData, description: e.target.value})}
+            onChange={(e) =>
+              setGemData({ ...gemData, description: e.target.value })
+            }
             className="w-full border border-gray-300 rounded-md px-3 py-2 h-24 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             placeholder="Detailed description of the gem..."
           />
@@ -262,16 +300,18 @@ function GemListings({ gems, onEdit, onDelete }) {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      active: { bg: 'bg-green-100', text: 'text-green-800', symbol: '⏰' },
-      sold: { bg: 'bg-blue-100', text: 'text-blue-800', symbol: '✅' },
-      pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', symbol: '⏳' },
-      expired: { bg: 'bg-red-100', text: 'text-red-800', symbol: '❌' }
+      active: { bg: "bg-green-100", text: "text-green-800", symbol: "" },
+      sold: { bg: "bg-blue-100", text: "text-blue-800", symbol: "" },
+      pending: { bg: "bg-yellow-100", text: "text-yellow-800", symbol: "" },
+      expired: { bg: "bg-red-100", text: "text-red-800", symbol: "" },
     };
-    
+
     const config = statusConfig[status] || statusConfig.pending;
-    
+
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.text}`}
+      >
         <span className="mr-1">{config.symbol}</span>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
@@ -279,57 +319,72 @@ function GemListings({ gems, onEdit, onDelete }) {
   };
 
   const formatTimeLeft = (endTime) => {
-    if (!endTime) return 'N/A';
+    if (!endTime) return "N/A";
     const now = new Date();
     const diff = endTime.getTime() - now.getTime();
-    
-    if (diff <= 0) return 'Ended';
-    
+
+    if (diff <= 0) return "Ended";
+
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
+
     return `${days}d ${hours}h`;
   };
 
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">My Gem Listings</h2>
-      
+
       <div className="grid gap-4">
         {gems.map((gem) => (
-          <div key={gem.id} className="bg-white rounded-lg shadow p-6 border hover:shadow-md transition-shadow">
+          <div
+            key={gem.id}
+            className="bg-white rounded-lg shadow p-6 border hover:shadow-md transition-shadow"
+          >
             <div className="flex items-start gap-4">
-              <img 
-                src={gem.image} 
+              <img
+                src={gem.image}
                 alt={gem.name}
                 className="w-20 h-20 object-cover rounded-md"
               />
-              
+
               <div className="flex-1">
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <h3 className="text-xl font-semibold">{gem.name}</h3>
-                    <p className="text-gray-600">{gem.type} • {gem.weight}ct • {gem.color} • {gem.clarity}</p>
+                    <p className="text-gray-600">
+                      {gem.type} • {gem.weight}ct • {gem.color} • {gem.clarity}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     {getStatusBadge(gem.status)}
                     <div className="relative">
-                      <button 
-                        onClick={() => setShowDropdown(showDropdown === gem.id ? null : gem.id)}
+                      <button
+                        onClick={() =>
+                          setShowDropdown(
+                            showDropdown === gem.id ? null : gem.id
+                          )
+                        }
                         className="p-2 hover:bg-gray-100 rounded"
                       >
                         ⋮
                       </button>
                       {showDropdown === gem.id && (
                         <div className="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                          <button 
-                            onClick={() => { onEdit(gem.id); setShowDropdown(null); }}
+                          <button
+                            onClick={() => {
+                              onEdit(gem.id);
+                              setShowDropdown(null);
+                            }}
                             className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center"
                           >
                             ✏️ Edit
                           </button>
-                          <button 
-                            onClick={() => { onDelete(gem.id); setShowDropdown(null); }}
+                          <button
+                            onClick={() => {
+                              onDelete(gem.id);
+                              setShowDropdown(null);
+                            }}
                             className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center text-red-600"
                           >
                             🗑️ Delete
@@ -339,18 +394,22 @@ function GemListings({ gems, onEdit, onDelete }) {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                   <div>
                     <p className="text-sm text-gray-500">Starting Price</p>
-                    <p className="font-semibold">${gem.startingPrice?.toLocaleString()}</p>
+                    <p className="font-semibold">
+                      ${gem.startingPrice?.toLocaleString()}
+                    </p>
                   </div>
-                  
-                  {gem.status === 'active' && (
+
+                  {gem.status === "active" && (
                     <>
                       <div>
                         <p className="text-sm text-gray-500">Current Bid</p>
-                        <p className="font-semibold text-green-600">${gem.currentBid?.toLocaleString()}</p>
+                        <p className="font-semibold text-green-600">
+                          ${gem.currentBid?.toLocaleString()}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Bids</p>
@@ -358,16 +417,20 @@ function GemListings({ gems, onEdit, onDelete }) {
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Time Left</p>
-                        <p className="font-semibold">{formatTimeLeft(gem.endTime)}</p>
+                        <p className="font-semibold">
+                          {formatTimeLeft(gem.endTime)}
+                        </p>
                       </div>
                     </>
                   )}
-                  
-                  {gem.status === 'sold' && (
+
+                  {gem.status === "sold" && (
                     <>
                       <div>
                         <p className="text-sm text-gray-500">Final Price</p>
-                        <p className="font-semibold text-green-600">${gem.finalPrice?.toLocaleString()}</p>
+                        <p className="font-semibold text-green-600">
+                          ${gem.finalPrice?.toLocaleString()}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Total Bids</p>
@@ -375,16 +438,20 @@ function GemListings({ gems, onEdit, onDelete }) {
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Sold Date</p>
-                        <p className="font-semibold">{gem.soldDate?.toLocaleDateString()}</p>
+                        <p className="font-semibold">
+                          {gem.soldDate?.toLocaleDateString()}
+                        </p>
                       </div>
                     </>
                   )}
-                  
-                  {gem.status === 'expired' && (
+
+                  {gem.status === "expired" && (
                     <>
                       <div>
                         <p className="text-sm text-gray-500">Highest Bid</p>
-                        <p className="font-semibold">${gem.highestBid?.toLocaleString() || '0'}</p>
+                        <p className="font-semibold">
+                          ${gem.highestBid?.toLocaleString() || "0"}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Total Bids</p>
@@ -392,7 +459,9 @@ function GemListings({ gems, onEdit, onDelete }) {
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Ended</p>
-                        <p className="font-semibold">{gem.endTime?.toLocaleDateString()}</p>
+                        <p className="font-semibold">
+                          {gem.endTime?.toLocaleDateString()}
+                        </p>
                       </div>
                     </>
                   )}
@@ -408,62 +477,79 @@ function GemListings({ gems, onEdit, onDelete }) {
 
 // Dashboard Overview Component
 function DashboardOverview({ revenue, gems }) {
-  const activeAuctions = gems.filter(gem => gem.status === 'active');
-  const soldGems = gems.filter(gem => gem.status === 'sold');
-  
+  const activeAuctions = gems.filter((gem) => gem.status === "active");
+  const soldGems = gems.filter((gem) => gem.status === "sold");
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Seller Dashboard</h2>
-      
+
       {/* Revenue Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-lg shadow border">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Revenue</p>
-              <p className="text-3xl font-bold text-green-600">${revenue.totalRevenue.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-green-600">
+                ${revenue.totalRevenue.toLocaleString()}
+              </p>
             </div>
-            <div className="text-3xl">💰</div>
+            <div className="text-3xl"></div>
           </div>
         </div>
-        
+
         <div className="bg-white p-6 rounded-lg shadow border">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">This Month</p>
-              <p className="text-3xl font-bold text-blue-600">${revenue.monthlyRevenue.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-blue-600">
+                ${revenue.monthlyRevenue.toLocaleString()}
+              </p>
             </div>
-            <div className="text-3xl">📈</div>
+            <div className="text-3xl"></div>
           </div>
         </div>
-        
+
         <div className="bg-white p-6 rounded-lg shadow border">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Average Sale</p>
-              <p className="text-3xl font-bold text-purple-600">${revenue.averagePrice.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-purple-600">
+                ${revenue.averagePrice.toLocaleString()}
+              </p>
             </div>
-            <div className="text-3xl">💎</div>
+            <div className="text-3xl"></div>
           </div>
         </div>
       </div>
-      
+
       {/* Active Auctions */}
       <div className="bg-white rounded-lg shadow p-6 border">
         <h3 className="text-xl font-bold mb-4">Active Auctions</h3>
         {activeAuctions.length > 0 ? (
           <div className="space-y-4">
-            {activeAuctions.map(gem => (
-              <div key={gem.id} className="flex items-center justify-between p-4 border rounded hover:bg-gray-50">
+            {activeAuctions.map((gem) => (
+              <div
+                key={gem.id}
+                className="flex items-center justify-between p-4 border rounded hover:bg-gray-50"
+              >
                 <div className="flex items-center gap-4">
-                  <img src={gem.image} alt={gem.name} className="w-12 h-12 rounded object-cover" />
+                  <img
+                    src={gem.image}
+                    alt={gem.name}
+                    className="w-12 h-12 rounded object-cover"
+                  />
                   <div>
                     <h4 className="font-semibold">{gem.name}</h4>
-                    <p className="text-sm text-gray-600">{gem.type} • {gem.weight}ct</p>
+                    <p className="text-sm text-gray-600">
+                      {gem.type} • {gem.weight}ct
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-green-600">${gem.currentBid?.toLocaleString()}</p>
+                  <p className="font-semibold text-green-600">
+                    ${gem.currentBid?.toLocaleString()}
+                  </p>
                   <p className="text-sm text-gray-500">{gem.bidsCount} bids</p>
                 </div>
               </div>
@@ -473,7 +559,7 @@ function DashboardOverview({ revenue, gems }) {
           <p className="text-gray-500">No active auctions</p>
         )}
       </div>
-      
+
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg shadow text-center border">
@@ -489,7 +575,9 @@ function DashboardOverview({ revenue, gems }) {
           <p className="text-sm text-gray-500">Sold Gems</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow text-center border">
-          <p className="text-2xl font-bold">${revenue.topBid.toLocaleString()}</p>
+          <p className="text-2xl font-bold">
+            ${revenue.topBid.toLocaleString()}
+          </p>
           <p className="text-sm text-gray-500">Highest Sale</p>
         </div>
       </div>
@@ -503,9 +591,6 @@ export default function SellerDashboard() {
   const [gems, setGems] = useState(mockGems);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-
-
-
 
   const handleLogout = () => {
     alert("Logging out...");
@@ -525,17 +610,17 @@ export default function SellerDashboard() {
 
   const handleDeleteGem = (gemId) => {
     if (window.confirm("Are you sure you want to delete this gem listing?")) {
-      setGems(gems.filter(gem => gem.id !== gemId));
+      setGems(gems.filter((gem) => gem.id !== gemId));
       alert("Gem listing deleted successfully!");
     }
   };
 
   const sidebarItems = [
-    { title: "Dashboard", key: "dashboard", icon: "🏠" },
-    { title: "My Listings", key: "listings", icon: "📋" },
-    { title: "Add New Gem", key: "add-gem", icon: "➕" },
-    { title: "Revenue", key: "revenue", icon: "💳" },
-    { title: "Profile", key: "profile", icon: "👤" },
+    { title: "Dashboard", key: "dashboard", icon: "" },
+    { title: "My Listings", key: "listings", icon: "" },
+    { title: "Add New Gem", key: "add-gem", icon: "" },
+    { title: "Revenue", key: "revenue", icon: "" },
+    { title: "Profile", key: "profile", icon: "" },
   ];
 
   const renderContent = () => {
@@ -543,17 +628,14 @@ export default function SellerDashboard() {
       case "dashboard":
         return <DashboardOverview revenue={mockRevenue} gems={gems} />;
       case "listings":
-        return <GemListings gems={gems} onEdit={handleEditGem} onDelete={handleDeleteGem} />;
+        return <Gems />;
       case "add-gem":
-        return <H1>Abisheka</H1>;
+        return <GemCreate />;
       case "revenue":
-
         return <OrderHistoryPage />;
-        
+
       case "profile":
-        return (
-          <AccountSettings/>
-        );
+        return <AccountSettings />;
       default:
         return <div>Select an option</div>;
     }
@@ -561,7 +643,10 @@ export default function SellerDashboard() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar isCollapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}>
+      <Sidebar
+        isCollapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+      >
         <div className="py-2">
           {sidebarItems.map((item) => (
             <SidebarItem
@@ -574,7 +659,7 @@ export default function SellerDashboard() {
             />
           ))}
         </div>
-        
+
         {/* User Menu */}
         <div className="absolute bottom-0 w-full border-t border-gray-200">
           <div className="relative">
@@ -587,11 +672,11 @@ export default function SellerDashboard() {
             </button>
             {showUserMenu && (
               <div className="absolute bottom-full left-0 w-full bg-white border border-gray-200 rounded-t-md shadow-lg">
-                <button 
+                <button
                   onClick={handleLogout}
                   className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center text-red-600"
                 >
-                  🚪 Sign out
+                  Sign out
                 </button>
               </div>
             )}
@@ -600,7 +685,7 @@ export default function SellerDashboard() {
       </Sidebar>
 
       <main className="flex-1 p-6 overflow-auto">
-        <button 
+        <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           className="mb-4 p-2 bg-white border border-gray-200 rounded hover:bg-gray-50"
         >
