@@ -71,7 +71,7 @@ const App = () => {
         <ContactUs />
         </ProtectedRoute>
         } />
-        
+
         <Route path="/feedback" element={<FeedbackPage />} />
         <Route path="/feedback-list" element={<FeedbackList />} />
         <Route path="/ticketList" element={<TicketList />} />
@@ -96,7 +96,7 @@ const App = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
 
-      {/* ✅ one seller-dashboard route */}
+      {/*one seller-dashboard route */}
 
       <Route path="/seller-dashboard"
       element={
