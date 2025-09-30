@@ -637,7 +637,7 @@ export default function SellerDashboard() {
     { title: "Dashboard", key: "dashboard", icon: "" },
     { title: "My Listings", key: "listings", icon: "" },
     { title: "Add New Gem", key: "add-gem", icon: "" },
-    { title: "Revenue", key: "revenue", icon: "" },
+    { title: "Order History", key: "order-history", icon: "" },
     { title: "Profile", key: "profile", icon: "" },
     { title: "Verification Center", key: "verification", icon: "" },
   ];
@@ -650,7 +650,7 @@ export default function SellerDashboard() {
         return <Gems />;
       case "add-gem":
         return <GemCreate />;
-      case "revenue":
+      case "order-history":
         return <OrderHistoryPage />;
 
       case "profile":
