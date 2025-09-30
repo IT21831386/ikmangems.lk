@@ -5,6 +5,7 @@ import Gems from "../gem-listing/GemDisplay";
 import GemCreate from "../gem-listing/Gemstone";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import VerificationCenter from "./VerificationCenter"
 
 // Mock data for demonstration
 const mockGems = [
@@ -638,6 +639,7 @@ export default function SellerDashboard() {
     { title: "Add New Gem", key: "add-gem", icon: "" },
     { title: "Revenue", key: "revenue", icon: "" },
     { title: "Profile", key: "profile", icon: "" },
+    { title: "Verification Center", key: "verification", icon: "" },
   ];
 
   const renderContent = () => {
@@ -653,6 +655,10 @@ export default function SellerDashboard() {
 
       case "profile":
         return <AccountSettings />;
+
+      case "verification":
+        return <VerificationCenter />;
+
       default:
         return <div>Select an option</div>;
     }
