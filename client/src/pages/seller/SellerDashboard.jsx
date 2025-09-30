@@ -694,10 +694,10 @@ export default function SellerDashboard() {
               {!sidebarCollapsed && <span>Seller</span>}
             </button>
             {showUserMenu && (
-              <div className="absolute bottom-20 left-10 bg-white-600 border border-gray-200 rounded-md shadow-lg">
+              <div className="absolute bottom-10 left-10">
                 <button
                   onClick={handleLogout}
-                  className="w-full px-4 py-2 text-left hover:bg-red-500 hover:rounded-md flex items-center text-white"
+                  className="w-full px-4 py-2 text-left bg-white border rounded-md border-red-600 hover:bg-red-500 hover:text-white hover:rounded-md flex items-center text-red-600"
                 >
                   Sign out
                 </button>
