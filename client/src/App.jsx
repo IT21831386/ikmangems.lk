@@ -90,9 +90,22 @@ const App = () => {
 
 
       {/* ✅ one seller-dashboard route */}
-      <Route path="/seller-dashboard" element={<SellerDashboard />} />
 
-      <Route path="/admin-dashboard" element={<AdminDashboard />} />
+      <Route path="/seller-dashboard"
+      element={
+      <ProtectedRoute>
+      <SellerDashboard />
+      </ProtectedRoute>
+      } 
+      />
+
+      <Route path="/admin-dashboard"
+      element={
+      <ProtectedRoute>
+      <AdminDashboard />
+      </ProtectedRoute>
+      } />
+
       <Route path="/account-settings" element={<AccountSettings />} />
       <Route path="/display-users" element={<DisplayUsers />} />
     
