@@ -78,12 +78,14 @@ function Sidebar({ children, isCollapsed, onToggle }) {
         isCollapsed ? "w-16" : "w-64"
       }`}
     >
-      <button
+      {/*<button
         onClick={onToggle}
         className="w-full p-4 text-left hover:bg-gray-50 border-b border-gray-200"
       >
         {isCollapsed ? "" : "Seller Dashboard"}
-      </button>
+        ☰
+        
+      </button>*/}
       {children}
     </div>
   );
@@ -661,20 +663,20 @@ export default function SellerDashboard() {
         </div>
 
         {/* User Menu */}
-        <div className="absolute bottom-0 w-full border-t border-gray-200">
+        <div className="absolute bottom-0 w-50 border-t border-white">
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="w-full p-4 text-left hover:bg-gray-50 flex items-center"
+              className="w-full p-4 text-left flex items-center"
             >
               <span className="text-xl mr-3">👤</span>
               {!sidebarCollapsed && <span>Seller</span>}
             </button>
             {showUserMenu && (
-              <div className="absolute bottom-full left-0 w-full bg-white border border-gray-200 rounded-t-md shadow-lg">
+              <div className="absolute bottom-20 left-10 bg-white-600 border border-gray-200 rounded-md shadow-lg">
                 <button
                   onClick={handleLogout}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center text-red-600"
+                  className="w-full px-4 py-2 text-left hover:bg-red-500 hover:rounded-md flex items-center text-white-600"
                 >
                   Sign out
                 </button>
@@ -685,12 +687,6 @@ export default function SellerDashboard() {
       </Sidebar>
 
       <main className="flex-1 p-6 overflow-auto">
-        <button
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="mb-4 p-2 bg-white border border-gray-200 rounded hover:bg-gray-50"
-        >
-          ☰
-        </button>
         {renderContent()}
       </main>
     </div>
