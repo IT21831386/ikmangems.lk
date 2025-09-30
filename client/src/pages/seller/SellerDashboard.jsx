@@ -3,6 +3,8 @@ import OrderHistoryPage from "../user/OrderHistoryPage";
 import AccountSettings from "../user/AccountSettings";
 import Gems from "../gem-listing/GemDisplay";
 import GemCreate from "../gem-listing/Gemstone";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 // Mock data for demonstration
 const mockGems = [
@@ -593,10 +595,23 @@ export default function SellerDashboard() {
   const [gems, setGems] = useState(mockGems);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-
-  const handleLogout = () => {
+  const navigate = useNavigate();
+  /*const handleLogout = () => {
     alert("Logging out...");
     // Simulate logout
+  };*/
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        "http://localhost:5001/api/auth/logout",
+        {},
+        { withCredentials: true }
+      );
+      localStorage.removeItem("token");
+      navigate("/login");
+    } catch (err) {
+      console.error("Logout error", err);
+    }
   };
 
   const handleAddGem = (newGem) => {
@@ -676,7 +691,7 @@ export default function SellerDashboard() {
               <div className="absolute bottom-20 left-10 bg-white-600 border border-gray-200 rounded-md shadow-lg">
                 <button
                   onClick={handleLogout}
-                  className="w-full px-4 py-2 text-left hover:bg-red-500 hover:rounded-md flex items-center text-white-600"
+                  className="w-full px-4 py-2 text-left hover:bg-red-500 hover:rounded-md flex items-center text-white"
                 >
                   Sign out
                 </button>
