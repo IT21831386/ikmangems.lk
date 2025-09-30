@@ -37,6 +37,9 @@ import { Button } from "@/components/ui/button";
 //import UsersList from "./admin-um/DisplayUsers";
 import PaymentHistory from "./payments/paymentHistory";
 //import AccountSettings from "../user/AccountSettings";
+//import UsersList from "./admin-um/DisplayUsers";
+import AdminPaymentStatus from "./payments/adminPaymentStatus";
+//import AccountSettings from "../user/AccountSettings";
 import ListingApprovals from "./listing/listing-approval";
 import Ticket from "../help-center/SupportDashboard";
 import BidManagement from "./BidManagement";
@@ -121,7 +124,7 @@ export default function ManageUsers() {
         return <DisplayUsers />;
 
       case "transactions":
-        return <PaymentHistory />;
+        return <AdminPaymentStatus />;
 
       case "bids":
         return <BidManagement />;
