@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+
 
 import { Button } from "@/components/ui/button";
 import {
@@ -174,8 +175,17 @@ export default function Signup() {
             >
               {isSubmitting ? "Signing up..." : "Sign Up"}
             </Button>
+
           </CardFooter>
         </form>
+
+            <div className="text-center text-sm mt-5">
+              Log in instead?{" "}
+              <Link to="/login" className="text-blue-500 hover:text-blue-800">
+                Login
+              </Link>
+            </div>
+
       </CardContent>
     </Card>
   );
