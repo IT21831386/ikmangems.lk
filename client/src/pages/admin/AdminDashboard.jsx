@@ -228,7 +228,7 @@ export default function ManageUsers() {
             </SidebarMenu>
           </SidebarContent>
 
-          <SidebarFooter>
+         {/* <SidebarFooter>
             <Button
               variant="outline"
               className="w-full bg-red-800 text-white hover:bg-red-600"
@@ -236,7 +236,29 @@ export default function ManageUsers() {
             >
               <LogOut className="mr-2" /> Logout
             </Button>
-          </SidebarFooter>
+          </SidebarFooter>*/}
+
+
+                 <SidebarFooter>
+                    <SidebarMenu>
+                      <SidebarMenuItem>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <SidebarMenuButton>
+                              <User2 className="mr-2 text-gray-400" /> User
+                              <ChevronUp className="ml-auto text-gray-400" />
+                            </SidebarMenuButton>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent side="top">
+                            <DropdownMenuItem onClick={handleLogout} className=" text-red-600 hover:text-red-600">
+                              Sign out
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </SidebarMenuItem>
+                    </SidebarMenu>
+                  </SidebarFooter>
+
         </Sidebar>
 
         {/* MAIN CHANGE: New content area structure */}
