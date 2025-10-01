@@ -1,8 +1,14 @@
 import mongoose from "mongoose";
+import User from "./userModel.js";
+import Gemstone from "./Gem.js";
 
 const bidSchema = new mongoose.Schema(
   {
-    gem: { type: mongoose.Schema.Types.ObjectId, ref: "Gem", required: true },
+    gem: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Gemstone",
+      required: true,
+    },
     buyer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

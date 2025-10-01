@@ -1,9 +1,9 @@
 //Dana
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import PaymentHistory from "../paymentHistory";
-import UsersList from "../admin-um/DisplayUsers";
+import PaymentHistory from "./paymentHistory";
 import AccountSettings from "./AccountSettings"; 
+import MyAuctions from "./MyAuctions"
 
 import {
   Inbox,
@@ -58,9 +58,7 @@ export default function ManageUsers() {
 
   const sidebarItems = [
     { title: "Dashboard", key: "dashboard", icon: Home },
-    { title: "Users", key: "users", icon: Inbox },
-    { title: "Transactions", key: "transactions", icon: Wallet },
-    { title: "My Bids", key: "mybids", icon: Gavel },
+    { title: "My Auctions", key: "myAuctions", icon: Gavel },
     { title: "Profile", key: "profile", icon: UserCog },
   ];
 
@@ -70,13 +68,13 @@ export default function ManageUsers() {
         return <div>Welcome to the dashboard</div>;
 
       case "users":
-        return <UsersList />; // <-- use the separate UsersList component here
+        return <UsersList />;
 
       case "transactions":
         return <PaymentHistory />;
 
-      case "mybids":
-        return <div>Ongoing auctions you placed bids on</div>;
+      case "myAuctions":
+        return <MyAuctions />;
 
       case "profile":
         return <AccountSettings />;
@@ -130,7 +128,7 @@ export default function ManageUsers() {
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="top">
-                  <DropdownMenuItem onClick={handleLogout}>
+                  <DropdownMenuItem onClick={handleLogout} className="bg-red-500 text-white hover:bg-red-600">
                     Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
