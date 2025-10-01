@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PaymentHistory from "./paymentHistory";
 import AccountSettings from "./AccountSettings"; 
+import MyAuctions from "./MyAuctions"
 
 import {
   Inbox,
@@ -57,7 +58,7 @@ export default function ManageUsers() {
 
   const sidebarItems = [
     { title: "Dashboard", key: "dashboard", icon: Home },
-    { title: "My Bids", key: "mybids", icon: Gavel },
+    { title: "My Auctions", key: "myAuctions", icon: Gavel },
     { title: "Profile", key: "profile", icon: UserCog },
   ];
 
@@ -72,8 +73,8 @@ export default function ManageUsers() {
       case "transactions":
         return <PaymentHistory />;
 
-      case "mybids":
-        return <div>Ongoing auctions you placed bids on</div>;
+      case "myAuctions":
+        return <MyAuctions />;
 
       case "profile":
         return <AccountSettings />;
