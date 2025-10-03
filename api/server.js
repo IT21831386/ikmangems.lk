@@ -26,7 +26,7 @@ dotenv.config();
 const corsOptions = {
   origin: "http://localhost:5173", // your frontend origin
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "x-user-type"], // allow your custom header here
+  allowedHeaders: ["Content-Type", "x-user-type", "x-user-email"], // allow your custom header here
   credentials: true, // if you use cookies or auth headers
 };
 
