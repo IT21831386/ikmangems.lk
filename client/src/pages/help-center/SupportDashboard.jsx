@@ -2,7 +2,7 @@
 /* eslint-disable no-empty */
 import React, { useState, useEffect } from "react";
 
-const API_BASE = "http://localhost:5001/api/support/tickets"; // adjust if your backend runs on different port
+const API_BASE = "http://localhost:5001/api/support/tickets";
 
 const SupportDashboard = () => {
   const [tickets, setTickets] = useState([]);
@@ -16,7 +16,6 @@ const SupportDashboard = () => {
   const [showAddResponseModal, setShowAddResponseModal] = useState(false);
   const [responseMessage, setResponseMessage] = useState("");
 
-  // Load tickets on mount or when filter changes
   useEffect(() => {
     loadTickets();
   }, [filterStatus]);
@@ -46,7 +45,7 @@ const SupportDashboard = () => {
       const data = await res.json();
       if (data.success) {
         setSelectedTicket(data.ticket);
-        setNewStatus(data.ticket.status); // sync dropdown
+        setNewStatus(data.ticket.status);
       } else {
         alert(data.message);
       }
@@ -65,10 +64,9 @@ const SupportDashboard = () => {
       const data = await res.json();
       if (data.success) {
         alert("Status updated!");
-        loadTicketDetails(ticketId); // refresh ticket view
-        loadTickets(); // refresh list
+        loadTicketDetails(ticketId);
+        loadTickets();
 
-        // Broadcast status update event for notifications
         window.dispatchEvent(
           new CustomEvent("ticket-updated", {
             detail: {
@@ -79,7 +77,6 @@ const SupportDashboard = () => {
           })
         );
 
-        // Also broadcast via localStorage for cross-tab communication
         try {
           localStorage.setItem(
             "ticketUpdatedBroadcast",
@@ -90,11 +87,7 @@ const SupportDashboard = () => {
               ts: Date.now(),
             })
           );
-          // Clean up to avoid cluttering storage
-          setTimeout(
-            () => localStorage.removeItem("ticketUpdatedBroadcast"),
-            100
-          );
+          setTimeout(() => localStorage.removeItem("ticketUpdatedBroadcast"), 100);
         } catch {}
       } else {
         alert(data.message);
@@ -119,30 +112,19 @@ const SupportDashboard = () => {
         alert("Response added!");
         setResponseMessage("");
         setShowAddResponseModal(false);
-        loadTicketDetails(selectedTicket._id); // refresh conversation
+        loadTicketDetails(selectedTicket._id);
 
-        // Broadcast response added event for notifications
         window.dispatchEvent(
           new CustomEvent("ticket-response-added", {
-            detail: {
-              ticketId: selectedTicket._id,
-              ticket: data.ticket,
-              timestamp: Date.now(),
-            },
+            detail: { ticketId: selectedTicket._id, ticket: data.ticket, timestamp: Date.now() },
           })
         );
 
-        // Also broadcast via localStorage for cross-tab communication
         try {
           localStorage.setItem(
             "ticketResponseAdded",
-            JSON.stringify({
-              ticketId: selectedTicket._id,
-              ticket: data.ticket,
-              timestamp: Date.now(),
-            })
+            JSON.stringify({ ticketId: selectedTicket._id, ticket: data.ticket, timestamp: Date.now() })
           );
-          // Clean up immediately to avoid cluttering storage
           setTimeout(() => localStorage.removeItem("ticketResponseAdded"), 100);
         } catch {}
       } else {
@@ -155,9 +137,7 @@ const SupportDashboard = () => {
 
   const openAddResponseModal = () => {
     if (selectedTicket?.responses?.length > 0) {
-      alert(
-        "This ticket already has a response. You can only add one response per ticket."
-      );
+      alert("This ticket already has a response. You can only add one response per ticket.");
       return;
     }
     setShowAddResponseModal(true);
@@ -170,7 +150,6 @@ const SupportDashboard = () => {
 
   const editResponse = async (ticketId) => {
     if (!editMessage.trim()) return alert("Please enter a message");
-
     try {
       const res = await fetch(`${API_BASE}/${ticketId}/response`, {
         method: "PUT",
@@ -182,33 +161,18 @@ const SupportDashboard = () => {
         alert("Response updated!");
         setEditMessage("");
         setEditingResponse(null);
-        loadTicketDetails(ticketId); // refresh conversation
+        loadTicketDetails(ticketId);
 
-        // Broadcast response updated event for notifications
         window.dispatchEvent(
-          new CustomEvent("ticket-response-updated", {
-            detail: {
-              ticketId: ticketId,
-              ticket: data.ticket,
-              timestamp: Date.now(),
-            },
-          })
+          new CustomEvent("ticket-response-updated", { detail: { ticketId, ticket: data.ticket, timestamp: Date.now() } })
         );
 
-        // Also broadcast via localStorage for cross-tab communication
         try {
           localStorage.setItem(
             "ticketResponseUpdated",
-            JSON.stringify({
-              ticketId: ticketId,
-              ticket: data.ticket,
-              timestamp: Date.now(),
-            })
+            JSON.stringify({ ticketId, ticket: data.ticket, timestamp: Date.now() })
           );
-          setTimeout(
-            () => localStorage.removeItem("ticketResponseUpdated"),
-            100
-          );
+          setTimeout(() => localStorage.removeItem("ticketResponseUpdated"), 100);
         } catch {}
       } else {
         alert(data.message);
@@ -220,41 +184,23 @@ const SupportDashboard = () => {
 
   const deleteResponse = async (ticketId) => {
     if (!confirm("Are you sure you want to delete this response?")) return;
-
     try {
-      const res = await fetch(`${API_BASE}/${ticketId}/response`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`${API_BASE}/${ticketId}/response`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
         alert("Response deleted!");
-        loadTicketDetails(ticketId); // refresh conversation
+        loadTicketDetails(ticketId);
 
-        // Broadcast response deleted event for notifications
         window.dispatchEvent(
-          new CustomEvent("ticket-response-deleted", {
-            detail: {
-              ticketId: ticketId,
-              ticket: data.ticket,
-              timestamp: Date.now(),
-            },
-          })
+          new CustomEvent("ticket-response-deleted", { detail: { ticketId, ticket: data.ticket, timestamp: Date.now() } })
         );
 
-        // Also broadcast via localStorage for cross-tab communication
         try {
           localStorage.setItem(
             "ticketResponseDeleted",
-            JSON.stringify({
-              ticketId: ticketId,
-              ticket: data.ticket,
-              timestamp: Date.now(),
-            })
+            JSON.stringify({ ticketId, ticket: data.ticket, timestamp: Date.now() })
           );
-          setTimeout(
-            () => localStorage.removeItem("ticketResponseDeleted"),
-            100
-          );
+          setTimeout(() => localStorage.removeItem("ticketResponseDeleted"), 100);
         } catch {}
       } else {
         alert(data.message);
@@ -274,46 +220,43 @@ const SupportDashboard = () => {
     setEditMessage("");
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString();
-  };
+  const formatDate = (dateString) => new Date(dateString).toLocaleString();
 
   return (
-    <div className="app-container">
-      <div className="page-shell">
-        <h1 className="page-title mb-8">🛠️ Support Dashboard</h1>
+    <div className="min-h-screen p-6 bg-gray-50">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-2xl font-bold mb-8">🛠️ Support Dashboard</h1>
 
         {/* Filter Bar */}
-        <div className="card mb-6">
-          <div className="flex items-center gap-4">
-            <label className="field-label mb-0">Filter by Status:</label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="select w-auto"
-            >
-              <option value="">All</option>
-              <option value="pending">Pending</option>
-              <option value="open">Open</option>
-              <option value="in_progress">In Progress</option>
-              <option value="resolved">Resolved</option>
-              <option value="closed">Closed</option>
-            </select>
-            <button onClick={loadTickets} className="btn btn-primary btn-md">
-              Refresh
-            </button>
-          </div>
+        <div className="bg-white p-4 rounded-lg shadow mb-6 flex items-center gap-4">
+          <label className="font-medium">Filter by Status:</label>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-1 text-gray-700"
+          >
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="open">Open</option>
+            <option value="in_progress">In Progress</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+          </select>
+          <button
+            onClick={loadTickets}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Refresh
+          </button>
         </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-            {error}
-          </div>
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">{error}</div>
         )}
 
         {/* Tickets List */}
-        <div className="card mb-6">
-          <h3 className="section-title mb-4">Tickets ({tickets.length})</h3>
+        <div className="bg-white p-4 rounded-lg shadow mb-6">
+          <h3 className="text-lg font-semibold mb-4">Tickets ({tickets.length})</h3>
           {loading ? (
             <p className="text-gray-600">Loading...</p>
           ) : (
@@ -328,31 +271,19 @@ const SupportDashboard = () => {
                       : "bg-white border-gray-200 hover:bg-gray-50"
                   }`}
                 >
-                  <h4 className="font-semibold text-gray-800">
-                    {ticket.subject}
-                  </h4>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {ticket.name} • {ticket.email}
-                  </p>
+                  <h4 className="font-semibold text-gray-800">{ticket.subject}</h4>
+                  <p className="text-sm text-gray-600 mt-1">{ticket.name} • {ticket.email}</p>
                   <div className="flex items-center justify-between mt-2">
-                    <span
-                      className={`badge ${
-                        ticket.status === "pending"
-                          ? "badge-yellow"
-                          : ticket.status === "open"
-                          ? "bg-blue-100 text-blue-800"
-                          : ticket.status === "in_progress"
-                          ? "bg-orange-100 text-orange-800"
-                          : ticket.status === "resolved"
-                          ? "badge-green"
-                          : "badge-gray"
-                      }`}
-                    >
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      ticket.status === "pending" ? "bg-yellow-200 text-yellow-800" :
+                      ticket.status === "open" ? "bg-blue-100 text-blue-800" :
+                      ticket.status === "in_progress" ? "bg-orange-100 text-orange-800" :
+                      ticket.status === "resolved" ? "bg-green-200 text-green-800" :
+                      "bg-gray-200 text-gray-800"
+                    }`}>
                       {ticket.status}
                     </span>
-                    <span className="text-xs text-gray-500">
-                      {formatDate(ticket.createdAt)}
-                    </span>
+                    <span className="text-xs text-gray-500">{formatDate(ticket.createdAt)}</span>
                   </div>
                 </div>
               ))}
@@ -362,37 +293,24 @@ const SupportDashboard = () => {
 
         {/* Ticket Details Panel */}
         {selectedTicket && (
-          <div className="card">
+          <div className="bg-white p-6 rounded-lg shadow mb-6">
             <div className="flex justify-between items-start mb-6">
-              <h3 className="section-title">{selectedTicket.subject}</h3>
-              <span
-                className={`badge ${
-                  selectedTicket.status === "pending"
-                    ? "badge-yellow"
-                    : selectedTicket.status === "open"
-                    ? "bg-blue-100 text-blue-800"
-                    : selectedTicket.status === "in_progress"
-                    ? "bg-orange-100 text-orange-800"
-                    : selectedTicket.status === "resolved"
-                    ? "badge-green"
-                    : "badge-gray"
-                }`}
-              >
+              <h3 className="text-lg font-semibold">{selectedTicket.subject}</h3>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                selectedTicket.status === "pending" ? "bg-yellow-200 text-yellow-800" :
+                selectedTicket.status === "open" ? "bg-blue-100 text-blue-800" :
+                selectedTicket.status === "in_progress" ? "bg-orange-100 text-orange-800" :
+                selectedTicket.status === "resolved" ? "bg-green-200 text-green-800" :
+                "bg-gray-200 text-gray-800"
+              }`}>
                 {selectedTicket.status.toUpperCase()}
               </span>
             </div>
 
             <div className="space-y-4 mb-6">
-              <p>
-                <strong>From:</strong> {selectedTicket.name} (
-                {selectedTicket.email})
-              </p>
-              <p>
-                <strong>Type:</strong> {selectedTicket.inquiryType}
-              </p>
-              <p>
-                <strong>Description:</strong> {selectedTicket.description}
-              </p>
+              <p><strong>From:</strong> {selectedTicket.name} ({selectedTicket.email})</p>
+              <p><strong>Type:</strong> {selectedTicket.inquiryType}</p>
+              <p><strong>Description:</strong> {selectedTicket.description}</p>
               {selectedTicket.attachment && (
                 <p>
                   <strong>Attachment:</strong>{" "}
@@ -408,40 +326,38 @@ const SupportDashboard = () => {
               )}
             </div>
 
-            <hr className="my-6" />
+            <hr className="my-6 border-gray-300" />
 
             {/* Update Status */}
-            <div className="mb-6">
-              <div className="flex items-center gap-3">
-                <label className="field-label mb-0">Update Status:</label>
-                <select
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                  className="select w-auto"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="open">Open</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="resolved">Resolved</option>
-                  <option value="closed">Closed</option>
-                </select>
-                <button
-                  onClick={() => updateStatus(selectedTicket._id)}
-                  className="btn btn-primary btn-md"
-                >
-                  Save Status
-                </button>
-              </div>
+            <div className="mb-6 flex items-center gap-3">
+              <label className="font-medium">Update Status:</label>
+              <select
+                value={newStatus}
+                onChange={(e) => setNewStatus(e.target.value)}
+                className="border border-gray-300 rounded px-3 py-1 text-gray-700"
+              >
+                <option value="pending">Pending</option>
+                <option value="open">Open</option>
+                <option value="in_progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+                <option value="closed">Closed</option>
+              </select>
+              <button
+                onClick={() => updateStatus(selectedTicket._id)}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Save Status
+              </button>
             </div>
 
             {/* Response Section */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-4">
-                <h4 className="section-title">Response</h4>
+                <h4 className="text-lg font-semibold">Response</h4>
                 {selectedTicket.responses?.length === 0 && (
                   <button
                     onClick={openAddResponseModal}
-                    className="btn btn-primary btn-md"
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
                   >
                     Add Response
                   </button>
@@ -449,7 +365,7 @@ const SupportDashboard = () => {
               </div>
 
               {selectedTicket.responses?.length > 0 ? (
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gray-50 rounded-lg p-4 space-y-4">
                   {selectedTicket.responses.map((resp, idx) => (
                     <div key={idx} className="space-y-3">
                       <div className="flex justify-between items-start">
@@ -464,20 +380,18 @@ const SupportDashboard = () => {
                                 value={editMessage}
                                 onChange={(e) => setEditMessage(e.target.value)}
                                 rows="3"
-                                className="textarea w-full"
+                                className="border border-gray-300 rounded w-full px-3 py-2"
                               />
                               <div className="flex gap-2">
                                 <button
-                                  onClick={() =>
-                                    editResponse(selectedTicket._id)
-                                  }
-                                  className="btn btn-primary btn-sm"
+                                  onClick={() => editResponse(selectedTicket._id)}
+                                  className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
                                 >
                                   Save
                                 </button>
                                 <button
                                   onClick={cancelEditing}
-                                  className="btn btn-danger btn-sm"
+                                  className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
                                 >
                                   Cancel
                                 </button>
@@ -501,14 +415,8 @@ const SupportDashboard = () => {
                           )}
 
                           <div className="text-xs text-gray-500 mt-2">
-                            {formatDate(
-                              resp.editedAt || selectedTicket.createdAt
-                            )}
-                            {resp.editedAt && (
-                              <span className="text-orange-600 ml-2">
-                                (edited)
-                              </span>
-                            )}
+                            {formatDate(resp.editedAt || selectedTicket.createdAt)}
+                            {resp.editedAt && <span className="text-orange-600 ml-2">(edited)</span>}
                           </div>
                         </div>
 
@@ -516,14 +424,14 @@ const SupportDashboard = () => {
                           <div className="flex gap-1 ml-2">
                             <button
                               onClick={() => startEditing(resp)}
-                              className="btn btn-sm bg-blue-500 text-white hover:bg-blue-600"
+                              className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
                               title="Edit response"
                             >
                               ✏️
                             </button>
                             <button
                               onClick={() => deleteResponse(selectedTicket._id)}
-                              className="btn btn-sm bg-red-500 text-white hover:bg-red-600"
+                              className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
                               title="Delete response"
                             >
                               🗑️
@@ -539,7 +447,7 @@ const SupportDashboard = () => {
                   <p className="text-gray-600 mb-4">No response added yet</p>
                   <button
                     onClick={openAddResponseModal}
-                    className="btn btn-primary btn-md"
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
                   >
                     Add Response
                   </button>
@@ -553,24 +461,24 @@ const SupportDashboard = () => {
         {showAddResponseModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-              <h3 className="section-title mb-4">Add Response</h3>
+              <h3 className="text-lg font-semibold mb-4">Add Response</h3>
               <textarea
                 value={responseMessage}
                 onChange={(e) => setResponseMessage(e.target.value)}
                 placeholder="Type your response..."
                 rows="4"
-                className="textarea mb-4"
+                className="border border-gray-300 rounded w-full px-3 py-2 mb-4"
               />
               <div className="flex gap-3">
                 <button
                   onClick={closeAddResponseModal}
-                  className="btn btn-md bg-gray-200 text-gray-800 hover:bg-gray-300 flex-1"
+                  className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={addResponse}
-                  className="btn btn-primary btn-md flex-1"
+                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
                 >
                   Add Response
                 </button>

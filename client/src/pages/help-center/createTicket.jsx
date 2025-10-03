@@ -16,7 +16,10 @@ function CreateTicket() {
     description: "",
     attachment: null,
   });
-  // If navigated in edit mode, prefill form
+  const [editingId, setEditingId] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // Prefill form if editing
   useEffect(() => {
     try {
       const navState = window.history.state && window.history.state.usr;
@@ -30,28 +33,17 @@ function CreateTicket() {
           description: t.description || "",
           attachment: null,
         });
-        // Stash id for submit
         setEditingId(t._id);
       }
     } catch {}
   }, []);
 
-  const [editingId, setEditingId] = useState(null);
-
-  const [errorMessage, setErrorMessage] = useState("");
-
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "attachment") {
-      setFormData((prev) => ({
-        ...prev,
-        attachment: files[0] || null,
-      }));
+      setFormData((prev) => ({ ...prev, attachment: files[0] || null }));
     } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
@@ -82,128 +74,108 @@ function CreateTicket() {
         });
       }
 
-      // Persist user identity to localStorage for listing
       try {
         localStorage.setItem("userEmail", formData.email);
       } catch {}
-      // Navigate to ticketList with contextual state
+
       if (editingId) {
-        navigate("/ticketList", {
-          state: { updatedTicket: res.data.ticket, isEdit: true },
-        });
+        navigate("/ticketList", { state: { updatedTicket: res.data.ticket, isEdit: true } });
       } else {
-        navigate("/ticketList", {
-          state: { newTicket: res.data.ticket, isEdit: false },
-        });
+        navigate("/ticketList", { state: { newTicket: res.data.ticket, isEdit: false } });
       }
     } catch (err) {
-      setErrorMessage(
-        err.response?.data?.message ||
-          "Failed to create ticket. Please try again."
-      );
+      setErrorMessage(err.response?.data?.message || "Failed to create ticket. Please try again.");
     }
   };
 
   const isEdit = Boolean(editingId);
-
   const handleCancel = () => {
     if (isEdit) navigate("/ticketList");
     else navigate("/");
   };
 
   return (
-    <div className="app-container flex items-center justify-center p-6">
-      <div className="w-full max-w-lg card">
-        <h2 className="section-title mb-6 text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
           {isEdit ? "Update Ticket" : "Create New Ticket"}
         </h2>
 
         {errorMessage && <p className="text-red-600 mb-4">{errorMessage}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="field-label">Name</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="input"
-              required
-            />
-          </div>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="Name"
+            required
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
 
-          <div>
-            <label className="field-label">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="input"
-              required
-            />
-          </div>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="Email"
+            required
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
 
-          <div>
-            <label className="field-label">Subject</label>
-            <input
-              type="text"
-              name="subject"
-              value={formData.subject}
-              onChange={handleChange}
-              className="input"
-              required
-            />
-          </div>
+          <input
+            type="text"
+            name="subject"
+            value={formData.subject}
+            onChange={handleChange}
+            placeholder="Subject"
+            required
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
 
-          <div>
-            <label className="field-label">Inquiry Type</label>
-            <select
-              name="inquiryType"
-              value={formData.inquiryType}
-              onChange={handleChange}
-              className="select"
-              required
-            >
-              <option value="auction">Auction</option>
-              <option value="payment">Payment</option>
-              <option value="feedback">Feedback</option>
-              <option value="technical">Technical</option>
-            </select>
-          </div>
+          <select
+            name="inquiryType"
+            value={formData.inquiryType}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            <option value="auction">Auction</option>
+            <option value="payment">Payment</option>
+            <option value="feedback">Feedback</option>
+            <option value="technical">Technical</option>
+          </select>
 
-          <div>
-            <label className="field-label">Description</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows="4"
-              className="textarea"
-              required
-            ></textarea>
-          </div>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            rows="4"
+            placeholder="Description"
+            required
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
 
-          <div>
-            <label className="field-label">Attachment (optional)</label>
-            <input
-              type="file"
-              name="attachment"
-              onChange={handleChange}
-              className="w-full"
-            />
-          </div>
+          <input
+            type="file"
+            name="attachment"
+            onChange={handleChange}
+            className="w-full"
+          />
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 mt-4">
             <button
               type="button"
               onClick={handleCancel}
-              className="btn btn-md w-1/2 bg-gray-200 text-gray-800 hover:bg-gray-300"
+              className="w-1/2 px-5 py-2.5 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300"
             >
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary btn-md w-1/2">
+            <button
+              type="submit"
+              className="w-1/2 px-5 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+            >
               {isEdit ? "Update Ticket" : "Create Ticket"}
             </button>
           </div>
