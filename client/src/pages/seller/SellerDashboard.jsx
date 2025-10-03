@@ -3,6 +3,9 @@ import OrderHistoryPage from "../user/OrderHistoryPage";
 import AccountSettings from "../user/AccountSettings";
 import Gems from "../gem-listing/GemDisplay";
 import GemCreate from "../gem-listing/Gemstone";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import VerificationCenter from "./VerificationCenter"
 
 // Mock data for demonstration
 const mockGems = [
@@ -78,12 +81,14 @@ function Sidebar({ children, isCollapsed, onToggle }) {
         isCollapsed ? "w-16" : "w-64"
       }`}
     >
-      <button
+      {/*<button
         onClick={onToggle}
         className="w-full p-4 text-left hover:bg-gray-50 border-b border-gray-200"
       >
         {isCollapsed ? "" : "Seller Dashboard"}
-      </button>
+        ☰
+        
+      </button>*/}
       {children}
     </div>
   );
@@ -591,10 +596,23 @@ export default function SellerDashboard() {
   const [gems, setGems] = useState(mockGems);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-
-  const handleLogout = () => {
+  const navigate = useNavigate();
+  /*const handleLogout = () => {
     alert("Logging out...");
     // Simulate logout
+  };*/
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        "http://localhost:5001/api/auth/logout",
+        {},
+        { withCredentials: true }
+      );
+      localStorage.removeItem("token");
+      navigate("/login");
+    } catch (err) {
+      console.error("Logout error", err);
+    }
   };
 
   const handleAddGem = (newGem) => {
@@ -619,8 +637,9 @@ export default function SellerDashboard() {
     { title: "Dashboard", key: "dashboard", icon: "" },
     { title: "My Listings", key: "listings", icon: "" },
     { title: "Add New Gem", key: "add-gem", icon: "" },
-    { title: "Revenue", key: "revenue", icon: "" },
+    { title: "Order History", key: "order-history", icon: "" },
     { title: "Profile", key: "profile", icon: "" },
+    { title: "Verification Center", key: "verification", icon: "" },
   ];
 
   const renderContent = () => {
@@ -631,11 +650,15 @@ export default function SellerDashboard() {
         return <Gems />;
       case "add-gem":
         return <GemCreate />;
-      case "revenue":
+      case "order-history":
         return <OrderHistoryPage />;
 
       case "profile":
         return <AccountSettings />;
+
+      case "verification":
+        return <VerificationCenter />;
+
       default:
         return <div>Select an option</div>;
     }
@@ -661,20 +684,20 @@ export default function SellerDashboard() {
         </div>
 
         {/* User Menu */}
-        <div className="absolute bottom-0 w-full border-t border-gray-200">
+        <div className="absolute bottom-0 w-50 border-t border-white">
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="w-full p-4 text-left hover:bg-gray-50 flex items-center"
+              className="w-full p-4 text-left flex items-center"
             >
               <span className="text-xl mr-3">👤</span>
               {!sidebarCollapsed && <span>Seller</span>}
             </button>
             {showUserMenu && (
-              <div className="absolute bottom-full left-0 w-full bg-white border border-gray-200 rounded-t-md shadow-lg">
+              <div className="absolute bottom-10 left-10">
                 <button
                   onClick={handleLogout}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center text-red-600"
+                  className="w-full px-4 py-2 text-left bg-white border rounded-md border-red-600 hover:bg-red-500 hover:text-white hover:rounded-md flex items-center text-red-600"
                 >
                   Sign out
                 </button>
@@ -685,12 +708,6 @@ export default function SellerDashboard() {
       </Sidebar>
 
       <main className="flex-1 p-6 overflow-auto">
-        <button
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="mb-4 p-2 bg-white border border-gray-200 rounded hover:bg-gray-50"
-        >
-          ☰
-        </button>
         {renderContent()}
       </main>
     </div>

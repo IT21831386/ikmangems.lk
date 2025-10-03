@@ -10,6 +10,7 @@ import AuctionDetails from "./pages/Auction/auction_details";
 import AdminPaymentStatus from "./pages/admin/payments/adminPaymentStatus";
 //import NoteDetailPage from "./pages/NoteDetailPage";
 //import toast from "react-hot-toast";
+import AddUser from "./pages/admin/admin-um/AddUser";
 
 //import { BrowserRouter, Routes, Route } from "react-router-dom";
 //import Home from "./pages/Home";
@@ -19,19 +20,25 @@ import Signup from "./pages/auth/Signup";
 //import DashboardPage from "./pages/sellerDashboard";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 //import { Routes } from "react-router-dom";
-import UserManagement from "./pages/user/manageUsers";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 import BidderDashboard from "./pages/user/bidderDashboard";
-import SellerDashboard from "./pages/seller/SellerDashboard";
-import AdminDashboard from "./pages/admin/AdminDashboard";
 
+// ✅ keep only ONE SellerDashboard import:
+import SellerDashboard from "./pages/seller/SellerDashboard";
+
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import VerifyEmail from "./pages/auth/VerifyEmail";
 import GetOTP from "./pages/auth/getOTP";
 import ResetPassword from "./pages/auth/ResetPassword";
 import AccountSettings from "./pages/user/AccountSettings";
-
 import DisplayUsers from "./pages/admin/admin-um/DisplayUsers";
 import OrderHistoryPage from "./pages/user/OrderHistoryPage";
+import EditUsers from "./pages/admin/admin-um/EditUsers";
+import SendEmails from "./pages/admin/admin-um/SendEmails";
+
+//import DisplayUsers from "./pages/admin/admin-um/DisplayUsers";
+//import OrderHistoryPage from "./pages/user/OrderHistoryPage";
 //import EditUsers from "./pages/admin-um/EditUsers";
 
 import Gemstone from "./pages/gem-listing/Gemstone"; // your form component
@@ -57,7 +64,14 @@ const App = () => {
         <Route path="/auction" element={<Auction />} />
         <Route path="/auction-details/:id" element={<AuctionDetails />} />
         <Route path="/admin-payment-status" element={<AdminPaymentStatus />} />
-        <Route path="/contact-us" element={<ContactUs />} />
+        <Route path="/contact-us"
+
+        element={
+        <ProtectedRoute>  
+        <ContactUs />
+        </ProtectedRoute>
+        } />
+
         <Route path="/feedback" element={<FeedbackPage />} />
         <Route path="/feedback-list" element={<FeedbackList />} />
         <Route path="/ticketList" element={<TicketList />} />
@@ -80,11 +94,32 @@ const App = () => {
         }
       />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/manage-users" element={<UserManagement />} />
-      <Route path="/admin-dashboard" element={<AdminDashboard />} />
-      <Route path="/seller-dashboard" element={<SellerDashboard />} />
+
+
+      {/*one seller-dashboard route */}
+
+      <Route path="/seller-dashboard"
+      element={
+      <ProtectedRoute>
+      <SellerDashboard />
+      </ProtectedRoute>
+      } 
+      />
+
+      <Route path="/admin-dashboard"
+      element={
+      <ProtectedRoute>
+      <AdminDashboard />
+      </ProtectedRoute>
+      } />
+
       <Route path="/account-settings" element={<AccountSettings />} />
       <Route path="/display-users" element={<DisplayUsers />} />
+    
+      <Route path="/edit-users" element={<EditUsers />} />
+      <Route path="/sende-mails" element={<SendEmails />} />
+      <Route path="/add-user" element={<AddUser />} />
+      
       <Route path="/order-history" element={<OrderHistoryPage />} />
 
       {/* Public feedback page removed */}

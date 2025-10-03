@@ -1,33 +1,82 @@
+//Dana
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Home, LogOut, UserCog, Users, CreditCard } from "lucide-react";
+//import PaymentHistory from "../paymentHistory";
+import AccountSettings from "../user/AccountSettings"; 
+import DisplayUsers from "./admin-um/DisplayUsers";
+//import AddUser from '../admin-um/AddUser'
+
+import {
+  Inbox,
+  User2,
+  ChevronUp,
+  LogOut,
+  Home,
+  Wallet,
+  UserCog,
+  Gavel,
+  Users, 
+  CreditCard,
+} from "lucide-react";
+import axios from "axios";
 
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import UsersList from "./admin-um/DisplayUsers";
+//import UsersList from "./admin-um/DisplayUsers";
 import PaymentHistory from "./payments/paymentHistory";
-import AccountSettings from "../user/AccountSettings";
+//import AccountSettings from "../user/AccountSettings";
+//import UsersList from "./admin-um/DisplayUsers";
+import AdminPaymentStatus from "./payments/adminPaymentStatus";
+//import AccountSettings from "../user/AccountSettings";
 import ListingApprovals from "./listing/listing-approval";
 import Ticket from "../help-center/SupportDashboard";
 import BidManagement from "./BidManagement";
 
-export default function AdminDashboard() {
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import AddUser from "./admin-um/AddUser";
+
+export default function ManageUsers() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        "http://localhost:5001/api/auth/logout",
+        {},
+        { withCredentials: true }
+      );
+      localStorage.removeItem("token");
+      navigate("/login");
+    } catch (err) {
+      console.error("Logout error", err);
+    }
   };
+
+  const sidebarItems = [
+    { title: "Dashboard", key: "dashboard", icon: Home },
+    { title: "Users", key: "users", icon: UserCog},
+    { title: "Add User", key: "transactions", icon: UserCog},
+    { title: "My Bids", key: "mybids", icon: Gavel },
+    { title: "Profile", key: "profile", icon: UserCog },
+  ];
 
   const renderContent = () => {
     switch (activeSection) {
@@ -72,10 +121,10 @@ export default function AdminDashboard() {
         return <ListingApprovals />;
 
       case "manageusers":
-        return <UsersList />;
+        return <DisplayUsers />;
 
       case "transactions":
-        return <PaymentHistory />;
+        return <AdminPaymentStatus />;
 
       case "bids":
         return <BidManagement />;
@@ -179,7 +228,7 @@ export default function AdminDashboard() {
             </SidebarMenu>
           </SidebarContent>
 
-          <SidebarFooter>
+         {/* <SidebarFooter>
             <Button
               variant="outline"
               className="w-full bg-red-800 text-white hover:bg-red-600"
@@ -187,7 +236,29 @@ export default function AdminDashboard() {
             >
               <LogOut className="mr-2" /> Logout
             </Button>
-          </SidebarFooter>
+          </SidebarFooter>*/}
+
+
+                 <SidebarFooter>
+                    <SidebarMenu>
+                      <SidebarMenuItem>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <SidebarMenuButton>
+                              <User2 className="mr-2 text-gray-400" /> User
+                              <ChevronUp className="ml-auto text-gray-400" />
+                            </SidebarMenuButton>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent side="top">
+                            <DropdownMenuItem onClick={handleLogout} className=" text-red-600 hover:text-red-600">
+                              Sign out
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </SidebarMenuItem>
+                    </SidebarMenu>
+                  </SidebarFooter>
+
         </Sidebar>
 
         {/* MAIN CHANGE: New content area structure */}
