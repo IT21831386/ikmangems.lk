@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { Plus, Pencil, Trash2, Eye, Bell } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Bell, Search, X } from "lucide-react";
 
 const API_BASE = "http://localhost:5001/api";
 
@@ -10,10 +10,12 @@ function TicketList() {
   const location = useLocation();
   const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
+  const [filteredTickets, setFilteredTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
   const [seenCounts, setSeenCounts] = useState({});
   const [notifications, setNotifications] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -32,6 +34,7 @@ function TicketList() {
         }
 
         setTickets(allTickets);
+        setFilteredTickets(allTickets);
         setLoading(false);
       } catch (err) {
         console.error(err);
@@ -46,6 +49,34 @@ function TicketList() {
 
     fetchTickets();
   }, [location.state]);
+
+  // Search and filter functionality
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredTickets(tickets);
+    } else {
+      const filtered = tickets.filter((ticket) => {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          ticket.subject?.toLowerCase().includes(searchLower) ||
+          ticket.description?.toLowerCase().includes(searchLower) ||
+          ticket.status?.toLowerCase().includes(searchLower) ||
+          ticket.inquiryType?.toLowerCase().includes(searchLower) ||
+          ticket.name?.toLowerCase().includes(searchLower) ||
+          ticket.email?.toLowerCase().includes(searchLower)
+        );
+      });
+      setFilteredTickets(filtered);
+    }
+  }, [searchTerm, tickets]);
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+  };
 
   const getUnseenCount = (ticket) => {
     const total = Array.isArray(ticket.responses) ? ticket.responses.length : 0;
@@ -78,6 +109,7 @@ function TicketList() {
       const userEmail = localStorage.getItem("userEmail") || "";
       await axios.delete(`${API_BASE}/tickets/${id}`, { headers: { "x-user-email": userEmail } });
       setTickets((prev) => prev.filter((t) => t._id !== id));
+      setFilteredTickets((prev) => prev.filter((t) => t._id !== id));
     } catch (err) {
       console.error(err);
       alert("Failed to delete ticket");
@@ -151,8 +183,55 @@ function TicketList() {
         <p className="mb-4 text-center text-green-700 bg-green-100 p-2 rounded">Ticket created successfully!</p>
       )}
 
+      {/* Search Bar */}
+      <div className="mb-6">
+        <div className="relative max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search tickets by subject, description, status, or type..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
+          {searchTerm && (
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+              <button
+                onClick={clearSearch}
+                className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                title="Clear search"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          )}
+        </div>
+        {searchTerm && (
+          <p className="mt-2 text-sm text-gray-600">
+            {filteredTickets.length} ticket{filteredTickets.length !== 1 ? 's' : ''} found
+          </p>
+        )}
+      </div>
+
       <div className="space-y-4">
-        {tickets.map((ticket) => (
+        {filteredTickets.length === 0 && searchTerm ? (
+          <div className="text-center py-8">
+            <Search className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No tickets found</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              No tickets match your search criteria. Try adjusting your search terms.
+            </p>
+            <button
+              onClick={clearSearch}
+              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-purple-600 bg-purple-100 hover:bg-purple-200"
+            >
+              Clear search
+            </button>
+          </div>
+        ) : (
+          filteredTickets.map((ticket) => (
           <div key={ticket._id} className="bg-white rounded-xl shadow p-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -243,7 +322,8 @@ function TicketList() {
               </div>
             )}
           </div>
-        ))}
+        ))
+        )}
       </div>
     </div>
   );
