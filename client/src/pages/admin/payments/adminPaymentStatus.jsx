@@ -360,8 +360,8 @@ const AdminPaymentStatus = () => {
     
     // Payment type filter
     const matchesPaymentType = paymentTypeFilter === '' || 
-      (paymentTypeFilter === 'Bank Deposit' && payment.paymentType === 'Bank Deposit') ||
-      (paymentTypeFilter === 'Online Payment' && payment.paymentType === 'Online Payment');
+      (paymentTypeFilter === 'regular' && payment.paymentType !== 'penalty' && !payment.remark?.toLowerCase().includes('penalty')) ||
+      (paymentTypeFilter === 'penalty' && (payment.paymentType === 'penalty' || payment.remark?.toLowerCase().includes('penalty')));
     
     // Bank filter
     const matchesBank = bankFilter === '' || payment.bank === bankFilter;
@@ -414,8 +414,8 @@ const AdminPaymentStatus = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               >
                 <option value="">All Types</option>
-                <option value="Bank Deposit">Bank Deposit</option>
-                <option value="Online Payment">Online Payment</option>
+                <option value="regular">Regular</option>
+                <option value="penalty">Penalty</option>
               </select>
             </div>
 
@@ -470,9 +470,41 @@ const AdminPaymentStatus = () => {
 
         {/* Payment Management Table */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-          <div style={{ backgroundColor: '#fff' }} className="text-blue-600 px-8 py-6 rounded-t-2xl">
+          <div style={{ backgroundColor: '#21374B' }} className="text-white px-8 py-6 rounded-t-2xl">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Transaction History</h2>
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl font-bold">Transaction History</h2>
+                <button
+                  onClick={() => setPaymentTypeFilter('')}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                    paymentTypeFilter === '' 
+                      ? 'bg-blue-500 text-white shadow-md' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setPaymentTypeFilter('regular')}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                    paymentTypeFilter === 'regular' 
+                      ? 'bg-green-500 text-white shadow-md' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Regular
+                </button>
+                <button
+                  onClick={() => setPaymentTypeFilter('penalty')}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                    paymentTypeFilter === 'penalty' 
+                      ? 'bg-red-500 text-white shadow-md' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Penalty
+                </button>
+              </div>
               <button
                 onClick={fetchPayments}
                 className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 text-sm font-semibold shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
@@ -503,7 +535,7 @@ const AdminPaymentStatus = () => {
                   <tr>
                     <th className="w-[11%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Payment Type</th>
                     <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Payment Number</th>
-                    <th className="w-[10%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Auction ID</th>
+                    <th className="w-[10%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">BID ID</th>
                     <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Amount</th>
                     <th className="w-[11%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Bank</th>
                     <th className="w-[11%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Branch</th>

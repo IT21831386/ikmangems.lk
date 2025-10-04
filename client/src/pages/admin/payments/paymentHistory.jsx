@@ -388,7 +388,7 @@ const PaymentHistory = () => {
       yPosition += 10;
     }
     
-    doc.text('Auction ID:', labelX, yPosition);
+    doc.text('BID ID:', labelX, yPosition);
     doc.text(payment.auctionId, valueX, yPosition);
     yPosition += 10;
     
@@ -573,7 +573,7 @@ const PaymentHistory = () => {
                   <tr>
                     <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Payment Type</th>
                     <th className="w-[13%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Payment Number</th>
-                    <th className="w-[10%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Auction ID</th>
+                    <th className="w-[10%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">BID ID</th>
                     <th className="w-[13%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Deposited Amount</th>
                     <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Bank</th>
                     <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Branch</th>

@@ -1,12 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import toast, { Toaster } from 'react-hot-toast';
 import OnlinePayment from './onlinepayment';
 
 const PaymentForm = () => {
+  const [searchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState("home"); // home, bank, online
   const [paymentStatus, setPaymentStatus] = useState(""); // pending, confirmed, etc.
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState(""); // bank or online
+  const [paymentType, setPaymentType] = useState("order"); // order or penalty
+  const [penaltyData, setPenaltyData] = useState(null);
   const [formData, setFormData] = useState({
     fullName: "",
     emailAddress: "",
@@ -23,6 +27,35 @@ const PaymentForm = () => {
 
   const [previewImage, setPreviewImage] = useState(null);
   const [errors, setErrors] = useState({});
+
+  // Check URL parameters on component mount
+  useEffect(() => {
+    const type = searchParams.get('type');
+    const bidId = searchParams.get('bidId');
+    const amount = searchParams.get('amount');
+    
+    if (type === 'penalty' && bidId && amount) {
+      setPaymentType('penalty');
+      setPenaltyData({
+        bidId: bidId,
+        originalAmount: parseFloat(amount),
+        penaltyAmount: Math.round(parseFloat(amount) * 0.15)
+      });
+      // Pre-fill amount with penalty amount
+      setFormData(prev => ({
+        ...prev,
+        auctionId: bidId,
+        amount: Math.round(parseFloat(amount) * 0.15).toString(),
+        remark: `Penalty fee for bid rejection - Bid ID: ${bidId}`
+      }));
+    } else if (bidId) {
+      // Pre-fill BID ID for regular payment
+      setFormData(prev => ({
+        ...prev,
+        auctionId: bidId
+      }));
+    }
+  }, [searchParams]);
 
   const sriLankanBanks = [
     "Bank of Ceylon",
@@ -513,7 +546,7 @@ const PaymentForm = () => {
     
     // Validate required fields
     if (!formData.bank || !formData.branch || !formData.paiddate || !formData.amount || !formData.auctionId) {
-      toast.error("Please fill in all required fields");
+      toast.error("Please fill in all required fields including BID ID");
       return;
     }
 
@@ -544,6 +577,7 @@ const PaymentForm = () => {
       formDataToSend.append('contactNumber', formData.contactNumber);
       formDataToSend.append('billingAddress', formData.billingAddress);
       formDataToSend.append('auctionId', formData.auctionId);
+      formDataToSend.append('paymentType', paymentType);
       formDataToSend.append('slip', formData.slip);
 
       console.log('Sending bank deposit data:', {
@@ -557,6 +591,7 @@ const PaymentForm = () => {
         contactNumber: formData.contactNumber,
         billingAddress: formData.billingAddress,
         auctionId: formData.auctionId,
+        paymentType: paymentType,
         slip: formData.slip?.name
       });
 
@@ -571,6 +606,21 @@ const PaymentForm = () => {
       if (response.ok && result.success) {
         toast.success("Bank deposit submitted successfully!");
         setPaymentStatus("pending");
+        
+          // Store payment status in localStorage with raw bid ID
+          if (formData.auctionId) {
+            const status = paymentType === 'penalty' ? 'rejected' : 'completed';
+            // Extract raw bid ID from formatted ID (BID-013 -> raw ID)
+            const bidIdMatch = formData.auctionId.match(/BID-(\d+)/);
+            if (bidIdMatch) {
+              // We need to find the actual raw bid ID
+              // For now, store with formatted ID and we'll handle lookup in auction_details
+              localStorage.setItem(`payment_status_${formData.auctionId}`, status);
+            } else {
+              // This is already a raw bid ID
+              localStorage.setItem(`payment_status_${formData.auctionId}`, status);
+            }
+          }
       } else {
         toast.error(result.message || "Failed to submit bank deposit");
       }
@@ -797,15 +847,16 @@ const PaymentForm = () => {
       <div className="space-y-6">
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
-            Auction ID
+            BID ID
             <span className="text-red-500 ml-1">*</span>
           </label>
           <input 
             name="auctionId" 
             value={formData.auctionId} 
             onChange={handleInputChange} 
-            placeholder="Enter auction ID"
-            className="w-full px-4 py-3 border border-gray-300 outline-none focus:border-blue-500 bg-white" 
+            placeholder="Enter BID ID"
+            readOnly
+            className="w-full px-4 py-3 border border-gray-300 outline-none focus:border-blue-500 bg-gray-100 cursor-not-allowed" 
             style={{ borderRadius: "30px" }} 
           />
         </div>
@@ -1045,8 +1096,32 @@ const PaymentForm = () => {
           {currentPage === "home" && (
             <div className="bg-white rounded-[30px] p-8 shadow-xl border border-gray-100">
               <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center" style={{ fontFamily: 'Poppins' }}>
-                Custom Order Form
+                {paymentType === 'penalty' ? 'Penalty Payment Form' : 'Custom Order Form'}
               </h1>
+              
+              {/* Penalty Payment Info */}
+              {paymentType === 'penalty' && penaltyData && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-red-800 mb-3">Penalty Payment Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div className="text-center">
+                        <p className="text-gray-600 mb-1">Original Bid Amount</p>
+                        <p className="text-xl font-bold text-gray-900">
+                          LKR {penaltyData.originalAmount.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-red-600 mb-1">Penalty Fee (15%)</p>
+                        <p className="text-xl font-bold text-red-600">
+                          LKR {penaltyData.penaltyAmount.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               {renderBidderDetails}
               {renderPaymentMethods}
             </div>
@@ -1062,6 +1137,8 @@ const PaymentForm = () => {
             <OnlinePayment 
               goBack={goBackToHome}
               clearAllData={clearAllData}
+              paymentType={paymentType}
+              penaltyData={penaltyData}
               bidderData={{
                 fullName: formData.fullName,
                 emailAddress: formData.emailAddress,

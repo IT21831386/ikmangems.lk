@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 
-const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData }) => {
+const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, paymentType = "order", penaltyData = null }) => {
   const [formData, setFormData] = useState({
     // Use bidder data if available
     auctionId: bidderData?.auctionId || "",
@@ -25,6 +25,22 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
   const [paymentId, setPaymentId] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState(""); // pending, confirmed, etc.
   const [errors, setErrors] = useState({});
+
+  // Update form data when bidderData changes
+  useEffect(() => {
+    if (bidderData) {
+      setFormData(prev => ({
+        ...prev,
+        auctionId: bidderData.auctionId || prev.auctionId,
+        amount: bidderData.amount || prev.amount,
+        remark: bidderData.remark || prev.remark,
+        fullName: bidderData.fullName || prev.fullName,
+        emailAddress: bidderData.emailAddress || prev.emailAddress,
+        contactNumber: bidderData.contactNumber || prev.contactNumber,
+        billingAddress: bidderData.billingAddress || prev.billingAddress,
+      }));
+    }
+  }, [bidderData]);
 
   const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, "0"));
   const years = Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() + i).toString().slice(2));
@@ -271,7 +287,7 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
     // Validation per step
     if (currentStep === 1) {
       if (!formData.auctionId || !formData.amount || !formData.contactNumber) {
-        toast.error("Please fill in Auction ID, Payment Amount, and Contact Number");
+        toast.error("Please fill in BID ID, Payment Amount, and Contact Number");
         return;
       }
       
@@ -349,7 +365,10 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          paymentType: paymentType
+        }),
       });
 
       const result = await response.json();
@@ -400,6 +419,12 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
         if (updateResponse.ok) {
           toast.success("Payment successful!");
           setCurrentStep(4); // success screen
+          
+          // Store payment status in localStorage
+          if (formData.auctionId) {
+            const status = paymentType === 'penalty' ? 'rejected' : 'completed';
+            localStorage.setItem(`payment_status_${formData.auctionId}`, status);
+          }
         } else {
           toast.error("Payment verification failed");
           setCurrentStep(5); // error screen
@@ -445,12 +470,14 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
       case 1:
         return (
           <div className="bg-white p-8 shadow-lg" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Online Payment Portal</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-6">
+              Online Payment Portal
+            </h1>
             
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
-                  Auction ID
+                  BID ID
                   <span className="text-red-500 ml-1">*</span>
                 </label>
                 <input
@@ -458,8 +485,9 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
                   name="auctionId"
                   value={formData.auctionId}
                   onChange={handleInputChange}
-                  placeholder="Enter auction ID"
-                  className="w-full px-4 py-3 border border-gray-300 outline-none focus:border-blue-500 bg-white"
+                  placeholder="Enter BID ID"
+                  readOnly
+                  className="w-full px-4 py-3 border border-gray-300 outline-none focus:border-blue-500 bg-gray-100 cursor-not-allowed"
                   style={{ borderRadius: "30px" }}
                 />
               </div>
@@ -517,7 +545,9 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
       case 2:
         return (
           <div className="bg-white p-8 shadow-lg" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Online Payment Portal</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-6">
+              Online Payment Portal
+            </h1>
             <h2 className="text-2xl font-bold text-blue-800 mb-6">Card Details</h2>
             
             <div className="space-y-6">
@@ -690,7 +720,9 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
       case 3:
         return (
           <div className="bg-white p-8 shadow-lg" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Online Payment Portal</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-6">
+              Online Payment Portal
+            </h1>
             
             <div className="space-y-6 text-center">
               <div className="bg-blue-50 p-6 rounded-[20px]">
