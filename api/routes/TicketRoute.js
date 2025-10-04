@@ -7,7 +7,8 @@ import {
   createTicket,
   updateTicket,
   deleteTicket,
-  getTicketById
+  getTicketById,
+  generateTicketPDF // ✅ NEW
 } from "../controllers/ticketController.js";
 
 const router = express.Router();
@@ -17,6 +18,9 @@ router.get('/', getAllTickets);
 router.post('/', createTicket);
 router.put('/:id', updateTicket);
 router.delete('/:id', deleteTicket);
+
+// ✅ Route for generating PDF - MUST come before /:id route
+router.get('/:id/pdf', generateTicketPDF);
 router.get('/:id', getTicketById);
 
 
