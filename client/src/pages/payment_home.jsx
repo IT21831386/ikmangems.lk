@@ -20,7 +20,7 @@ const PaymentForm = () => {
     branch: "",
     paiddate: "",
     amount: "",
-    auctionId: "",
+    bidId: "",
     remark: "",
     slip: null,
   });
@@ -34,6 +34,8 @@ const PaymentForm = () => {
     const bidId = searchParams.get('bidId');
     const amount = searchParams.get('amount');
     
+    console.log('Payment form URL parameters:', { type, bidId, amount });
+    
     if (type === 'penalty' && bidId && amount) {
       setPaymentType('penalty');
       setPenaltyData({
@@ -44,16 +46,31 @@ const PaymentForm = () => {
       // Pre-fill amount with penalty amount
       setFormData(prev => ({
         ...prev,
-        auctionId: bidId,
+        bidId: bidId,
         amount: Math.round(parseFloat(amount) * 0.15).toString(),
         remark: `Penalty fee for bid rejection - Bid ID: ${bidId}`
       }));
-    } else if (bidId) {
-      // Pre-fill BID ID for regular payment
+    } else if (type === 'registration') {
+      setPaymentType('registration');
+      setPaymentMethod('online'); // Auto-select online payment for registration
+      // Pre-fill amount with registration fee
       setFormData(prev => ({
         ...prev,
-        auctionId: bidId
+        bidId: 'REGISTRATION',
+        amount: '1000',
+        remark: 'Seller registration fee'
       }));
+    } else if (bidId) {
+      // Regular bid payment (with or without amount)
+      setPaymentType('order');
+      const newFormData = {
+        ...formData,
+        bidId: bidId,
+        amount: amount || formData.amount, // Use provided amount or keep existing
+        remark: `Payment for Bid ID: ${bidId}`
+      };
+      console.log('Setting formData for regular bid payment:', newFormData);
+      setFormData(newFormData);
     }
   }, [searchParams]);
 
@@ -528,7 +545,7 @@ const PaymentForm = () => {
       emailAddress: "",
       contactNumber: "",
       billingAddress: "",
-      auctionId: "",
+      bidId: "",
       bank: "",
       branch: "",
       paiddate: "",
@@ -544,9 +561,11 @@ const PaymentForm = () => {
     // Prevent multiple submissions
     if (isSubmitting) return;
     
-    // Validate required fields
-    if (!formData.bank || !formData.branch || !formData.paiddate || !formData.amount || !formData.auctionId) {
-      toast.error("Please fill in all required fields including BID ID");
+    // Validate required fields (bidId not required for any payment type)
+    const requiredFields = [formData.bank, formData.branch, formData.paiddate, formData.amount];
+    
+    if (requiredFields.some(field => !field)) {
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -576,8 +595,7 @@ const PaymentForm = () => {
       formDataToSend.append('emailAddress', formData.emailAddress);
       formDataToSend.append('contactNumber', formData.contactNumber);
       formDataToSend.append('billingAddress', formData.billingAddress);
-      formDataToSend.append('auctionId', formData.auctionId);
-      formDataToSend.append('paymentType', paymentType);
+      formDataToSend.append('bidId', formData.bidId);
       formDataToSend.append('slip', formData.slip);
 
       console.log('Sending bank deposit data:', {
@@ -590,8 +608,7 @@ const PaymentForm = () => {
         emailAddress: formData.emailAddress,
         contactNumber: formData.contactNumber,
         billingAddress: formData.billingAddress,
-        auctionId: formData.auctionId,
-        paymentType: paymentType,
+        bidId: formData.bidId,
         slip: formData.slip?.name
       });
 
@@ -606,21 +623,6 @@ const PaymentForm = () => {
       if (response.ok && result.success) {
         toast.success("Bank deposit submitted successfully!");
         setPaymentStatus("pending");
-        
-          // Store payment status in localStorage with raw bid ID
-          if (formData.auctionId) {
-            const status = paymentType === 'penalty' ? 'rejected' : 'completed';
-            // Extract raw bid ID from formatted ID (BID-013 -> raw ID)
-            const bidIdMatch = formData.auctionId.match(/BID-(\d+)/);
-            if (bidIdMatch) {
-              // We need to find the actual raw bid ID
-              // For now, store with formatted ID and we'll handle lookup in auction_details
-              localStorage.setItem(`payment_status_${formData.auctionId}`, status);
-            } else {
-              // This is already a raw bid ID
-              localStorage.setItem(`payment_status_${formData.auctionId}`, status);
-            }
-          }
       } else {
         toast.error(result.message || "Failed to submit bank deposit");
       }
@@ -751,6 +753,125 @@ const PaymentForm = () => {
     </div>
   );
 
+  const renderSellerDetails = (
+    <div className="bg-gradient-to-br from-green-50 to-emerald-100 border-l-4 border-green-500 p-8 rounded-[30px] shadow-lg">
+      <h2 className="text-2xl font-bold text-gray-800 mb-8" style={{ fontFamily: 'Poppins' }}>
+        Seller Details
+      </h2>
+      <div className="space-y-6">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
+            Full Name
+            <span className="text-red-500 ml-1">*</span>
+          </label>
+          <input 
+            type="text" 
+            name="fullName" 
+            value={formData.fullName} 
+            onChange={handleInputChange} 
+            onBlur={handleInputBlur}
+            placeholder="Sanjaya Dissanayake" 
+            autoComplete="off"
+            maxLength={100}
+            className={`w-full px-6 py-4 border-2 rounded-[30px] outline-none transition-all duration-300 bg-white ${
+              errors.fullName 
+                ? 'border-red-400 focus:border-red-500' 
+                : 'border-gray-200 focus:border-green-400'
+            }`}
+            style={{ fontFamily: 'Poppins', fontSize: '16px' }} 
+          />
+          {errors.fullName && (
+            <p className="text-red-500 text-sm mt-1" style={{ fontFamily: 'Poppins' }}>
+              {errors.fullName}
+            </p>
+          )}
+        </div>
+        
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
+            E-mail Address
+            <span className="text-red-500 ml-1">*</span>
+          </label>
+          <input 
+            type="text" 
+            name="emailAddress" 
+            value={formData.emailAddress} 
+            onChange={handleInputChange} 
+            onBlur={handleInputBlur}
+            placeholder="sanjay@example.com" 
+            autoComplete="off"
+            className={`w-full px-6 py-4 border-2 rounded-[30px] outline-none transition-all duration-300 bg-white ${
+              errors.emailAddress 
+                ? 'border-red-400 focus:border-red-500' 
+                : 'border-gray-200 focus:border-green-400'
+            }`}
+            style={{ fontFamily: 'Poppins', fontSize: '16px' }} 
+          />
+          {errors.emailAddress && (
+            <p className="text-red-500 text-sm mt-1" style={{ fontFamily: 'Poppins' }}>
+              {errors.emailAddress}
+            </p>
+          )}
+        </div>
+        
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
+            Contact Number
+            <span className="text-red-500 ml-1">*</span>
+          </label>
+          <input 
+            type="tel" 
+            name="contactNumber" 
+            value={formData.contactNumber} 
+            onChange={handleInputChange} 
+            onBlur={handleInputBlur}
+            placeholder="0701354967" 
+            maxLength="10"
+            autoComplete="off"
+            className={`w-full px-6 py-4 border-2 rounded-[30px] outline-none transition-all duration-300 bg-white ${
+              errors.contactNumber 
+                ? 'border-red-400 focus:border-red-500' 
+                : 'border-gray-200 focus:border-green-400'
+            }`}
+            style={{ fontFamily: 'Poppins', fontSize: '16px' }} 
+          />
+          {errors.contactNumber && (
+            <p className="text-red-500 text-sm mt-1" style={{ fontFamily: 'Poppins' }}>
+              {errors.contactNumber}
+            </p>
+          )}
+        </div>
+        
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
+            Billing Address
+            <span className="text-red-500 ml-1">*</span>
+          </label>
+          <textarea 
+            name="billingAddress" 
+            value={formData.billingAddress} 
+            onChange={handleInputChange} 
+            onBlur={handleInputBlur}
+            placeholder="Enter your billing address" 
+            maxLength={150}
+            className={`w-full px-6 py-4 border-2 rounded-[30px] outline-none resize-none transition-all duration-300 bg-white ${
+              errors.billingAddress 
+                ? 'border-red-400 focus:border-red-500' 
+                : 'border-gray-200 focus:border-green-400'
+            }`}
+            rows={4} 
+            style={{ fontFamily: 'Poppins', fontSize: '16px' }}
+          />
+          {errors.billingAddress && (
+            <p className="text-red-500 text-sm mt-1" style={{ fontFamily: 'Poppins' }}>
+              {errors.billingAddress}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   const renderPaymentMethods = (
     <div className="mt-8">
       <h2 className="text-2xl font-bold text-gray-800 mb-6" style={{ fontFamily: 'Poppins' }}>
@@ -758,28 +879,30 @@ const PaymentForm = () => {
       </h2>
       
       <div className="space-y-4">
-        <label className={`flex items-center p-6 border-2 rounded-[30px] cursor-pointer transition-all duration-300 ${
-          paymentMethod === 'bank' 
-            ? 'border-teal-500 bg-teal-50 shadow-md' 
-            : 'border-gray-200 hover:border-teal-400 hover:bg-teal-50'
-        }`}>
-          <input
-            type="radio"
-            name="paymentMethod"
-            value="bank"
-            checked={paymentMethod === 'bank'}
-            onChange={() => handlePaymentMethodChange('bank')}
-            className="w-5 h-5 text-teal-600 mr-4"
-          />
-          <div className="flex items-center">
-            <div className="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center mr-4">
-              <span className="text-white text-xl">🏦</span>
+        {paymentType !== 'registration' && (
+          <label className={`flex items-center p-6 border-2 rounded-[30px] cursor-pointer transition-all duration-300 ${
+            paymentMethod === 'bank' 
+              ? 'border-teal-500 bg-teal-50 shadow-md' 
+              : 'border-gray-200 hover:border-teal-400 hover:bg-teal-50'
+          }`}>
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="bank"
+              checked={paymentMethod === 'bank'}
+              onChange={() => handlePaymentMethodChange('bank')}
+              className="w-5 h-5 text-teal-600 mr-4"
+            />
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center mr-4">
+                <span className="text-white text-xl">🏦</span>
+              </div>
+              <span className="font-semibold text-gray-700 text-lg" style={{ fontFamily: 'Poppins' }}>
+                Bank Deposit
+              </span>
             </div>
-            <span className="font-semibold text-gray-700 text-lg" style={{ fontFamily: 'Poppins' }}>
-              Bank Deposit
-            </span>
-          </div>
-        </label>
+          </label>
+        )}
 
         <label className={`flex items-center p-6 border-2 rounded-[30px] cursor-pointer transition-all duration-300 ${
           paymentMethod === 'online' 
@@ -845,21 +968,22 @@ const PaymentForm = () => {
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Bank Deposit Portal</h1>
       
       <div className="space-y-6">
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
-            BID ID
-            <span className="text-red-500 ml-1">*</span>
-          </label>
-          <input 
-            name="auctionId" 
-            value={formData.auctionId} 
-            onChange={handleInputChange} 
-            placeholder="Enter BID ID"
-            readOnly
-            className="w-full px-4 py-3 border border-gray-300 outline-none focus:border-blue-500 bg-gray-100 cursor-not-allowed" 
-            style={{ borderRadius: "30px" }} 
-          />
-        </div>
+        {paymentType !== 'registration' && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
+              BID ID
+            </label>
+            <input 
+            name="bidId" 
+            value={formData.bidId}
+              onChange={handleInputChange} 
+              placeholder="Enter BID ID"
+              readOnly
+              className="w-full px-4 py-3 border border-gray-300 outline-none focus:border-blue-500 bg-gray-100 cursor-not-allowed" 
+              style={{ borderRadius: "30px" }} 
+            />
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
@@ -1096,7 +1220,7 @@ const PaymentForm = () => {
           {currentPage === "home" && (
             <div className="bg-white rounded-[30px] p-8 shadow-xl border border-gray-100">
               <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center" style={{ fontFamily: 'Poppins' }}>
-                {paymentType === 'penalty' ? 'Penalty Payment Form' : 'Custom Order Form'}
+                {paymentType === 'penalty' ? 'Penalty Payment Form' : paymentType === 'registration' ? 'Seller Registration Payment' : 'Custom Order Form'}
               </h1>
               
               {/* Penalty Payment Info */}
@@ -1118,11 +1242,32 @@ const PaymentForm = () => {
                         </p>
                       </div>
                     </div>
+                    <p className="text-sm text-red-700 mt-3">
+                      Bid ID: {penaltyData.bidId}
+                    </p>
                   </div>
                 </div>
               )}
               
-              {renderBidderDetails}
+              {/* Registration Payment Info */}
+              {paymentType === 'registration' && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-green-800 mb-3">Registration Fee Payment</h3>
+                    <div className="text-center">
+                      <p className="text-green-600 mb-1">Registration Fee</p>
+                      <p className="text-xl font-bold text-green-800">
+                        LKR 1,000
+                      </p>
+                    </div>
+                    <p className="text-sm text-green-700 mt-3">
+                      Complete your seller registration with this one-time payment
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {paymentType === 'registration' ? renderSellerDetails : renderBidderDetails}
               {renderPaymentMethods}
             </div>
           )}
@@ -1144,7 +1289,7 @@ const PaymentForm = () => {
                 emailAddress: formData.emailAddress,
                 contactNumber: formData.contactNumber,
                 billingAddress: formData.billingAddress,
-                auctionId: formData.auctionId,
+                bidId: formData.bidId,
                 amount: formData.amount,
                 remark: formData.remark
               }}

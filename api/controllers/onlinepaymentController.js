@@ -6,8 +6,10 @@ import axios from "axios";
 // Create a new online payment
 export const createOnlinePayment = async (req, res) => {
   try {
+    console.log('Received payment request:', req.body);
+    
     const {
-      auctionId,
+      bidId,
       amount,
       remark,
       cardType,
@@ -19,11 +21,14 @@ export const createOnlinePayment = async (req, res) => {
       fullName,
       emailAddress,
       contactNumber,
-      billingAddress
+      billingAddress,
+      paymentType
     } = req.body;
+    
+    console.log('Extracted paymentType:', paymentType);
 
-    // Validate required fields
-    if (!auctionId || !amount || !cardNumber || !cardHolderName || !contactNumber) {
+    // Validate required fields (bidId is not required for any payment type)
+    if (!amount || !cardNumber || !cardHolderName || !contactNumber) {
       return res.status(400).json({
         success: false,
         message: "Missing required fields including contact number"
@@ -50,7 +55,7 @@ export const createOnlinePayment = async (req, res) => {
 
     // Create new online payment record (without sensitive card details)
     const onlinePayment = new OnlinePayment({
-      auctionId,
+      bidId: paymentType === 'registration' ? 'REGISTRATION' : bidId, // Use placeholder for registration
       amount: parseFloat(amount),
       remark,
       cardType, // Only store card type (visa/mastercard)
@@ -62,8 +67,11 @@ export const createOnlinePayment = async (req, res) => {
       billingAddress,
       status: 'pending',
       otp: otp,
-      otpExpiry: new Date(Date.now() + 7 * 60 * 1000) // 7 minutes from now
+      otpExpiry: new Date(Date.now() + 7 * 60 * 1000), // 7 minutes from now
+      paymentType: paymentType || 'order' // Store payment type
     });
+    
+    console.log('Saving payment to database with paymentType:', paymentType);
 
     await onlinePayment.save();
     console.log("Online payment saved successfully:", onlinePayment._id);
@@ -94,7 +102,12 @@ export const getAllOnlinePayments = async (req, res) => {
     console.log('=== GET ALL ONLINE PAYMENTS ===');
     const onlinePayments = await OnlinePayment.find().sort({ createdAt: -1 });
     console.log('Found payments:', onlinePayments.length);
-    console.log('Payments:', onlinePayments.map(p => ({ id: p._id, status: p.status, createdAt: p.createdAt })));
+    console.log('Payments with paymentType:', onlinePayments.map(p => ({ 
+      id: p._id, 
+      paymentType: p.paymentType, 
+      status: p.status, 
+      createdAt: p.createdAt 
+    })));
     
     // Remove sensitive fields from response
     const safePayments = onlinePayments.map(payment => {
@@ -193,7 +206,7 @@ export const completePayment = async (req, res) => {
         emailAddress: onlinePayment.emailAddress,
         paymentId: `ONL_${onlinePayment._id.slice(-8).toUpperCase()}`,
         transactionId: onlinePayment.transactionId,
-        auctionId: onlinePayment.auctionId,
+        bidId: onlinePayment.bidId,
         amount: onlinePayment.amount,
         paymentType: 'Online Payment',
         cardType: onlinePayment.cardType,

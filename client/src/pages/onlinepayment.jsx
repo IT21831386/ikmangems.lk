@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useSearchParams } from "react-router-dom";
 
 const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, paymentType = "order", penaltyData = null }) => {
+  const [searchParams] = useSearchParams();
+  const isRegistrationPayment = paymentType === 'registration';
   const [formData, setFormData] = useState({
     // Use bidder data if available
-    auctionId: bidderData?.auctionId || "",
-    amount: bidderData?.amount || "",
+    bidId: bidderData?.bidId || "",
+    amount: isRegistrationPayment ? "1000" : (bidderData?.amount || ""),
     remark: bidderData?.remark || "",
     cardType: "visa",
     cardNumber: "",
@@ -31,8 +34,8 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
     if (bidderData) {
       setFormData(prev => ({
         ...prev,
-        auctionId: bidderData.auctionId || prev.auctionId,
-        amount: bidderData.amount || prev.amount,
+        bidId: bidderData.bidId || prev.bidId,
+        amount: isRegistrationPayment ? "1000" : (bidderData.amount || prev.amount),
         remark: bidderData.remark || prev.remark,
         fullName: bidderData.fullName || prev.fullName,
         emailAddress: bidderData.emailAddress || prev.emailAddress,
@@ -40,7 +43,7 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
         billingAddress: bidderData.billingAddress || prev.billingAddress,
       }));
     }
-  }, [bidderData]);
+  }, [bidderData, isRegistrationPayment]);
 
   const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, "0"));
   const years = Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() + i).toString().slice(2));
@@ -50,6 +53,11 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
     
     // Payment amount validation - only allow positive numbers and decimal point (exact same as bank deposit)
     if (name === 'amount') {
+      // For registration payments, amount is read-only
+      if (isRegistrationPayment) {
+        return;
+      }
+      
       // Remove all characters except numbers and decimal point
       let numericValue = value.replace(/[^0-9.]/g, '');
       
@@ -122,6 +130,27 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
         // Validate CVV when complete
         if (numericValue.length === 3) {
           const validation = validateCVV(numericValue);
+          if (!validation.valid) {
+            setErrors(prev => ({ ...prev, [name]: validation.message }));
+          } else {
+            setErrors(prev => ({ ...prev, [name]: "" }));
+          }
+        } else {
+          setErrors(prev => ({ ...prev, [name]: "" }));
+        }
+      }
+      return;
+    }
+    
+    // Contact number validation - only allow numbers and limit to 10 digits
+    if (name === 'contactNumber') {
+      const numericValue = value.replace(/\D/g, ''); // Remove non-numeric characters
+      if (numericValue.length <= 10) {
+        setFormData((prev) => ({ ...prev, [name]: numericValue }));
+        
+        // Validate contact number when complete
+        if (numericValue.length === 10) {
+          const validation = validateContactNumber(numericValue);
           if (!validation.valid) {
             setErrors(prev => ({ ...prev, [name]: validation.message }));
           } else {
@@ -252,6 +281,25 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
     return { valid: true, message: "" };
   };
 
+  // Contact number validation
+  const validateContactNumber = (contactNumber) => {
+    if (!contactNumber || contactNumber.length !== 10) {
+      return { valid: false, message: "Contact number must be 10 digits" };
+    }
+    
+    // Check if all digits
+    if (!/^\d{10}$/.test(contactNumber)) {
+      return { valid: false, message: "Contact number must contain only digits" };
+    }
+    
+    // Check if starts with 0
+    if (!contactNumber.startsWith('0')) {
+      return { valid: false, message: "Contact number must start with 0" };
+    }
+    
+    return { valid: true, message: "" };
+  };
+
   const clearAllData = () => {
     setCurrentStep(1);
     setOtpCode("");
@@ -259,7 +307,7 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
     setPaymentId(null);
     setPaymentStatus("");
     setFormData({
-      auctionId: "",
+      bidId: "",
       amount: "",
       remark: "",
       cardType: "visa",
@@ -286,8 +334,9 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
   const nextStep = async () => {
     // Validation per step
     if (currentStep === 1) {
-      if (!formData.auctionId || !formData.amount || !formData.contactNumber) {
-        toast.error("Please fill in BID ID, Payment Amount, and Contact Number");
+      // BID ID is not required for any payment type
+      if (!formData.amount || !formData.contactNumber) {
+        toast.error("Please fill in Payment Amount and Contact Number");
         return;
       }
       
@@ -360,15 +409,18 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
   const createPaymentAndSendOTP = async () => {
     try {
       setIsSubmitting(true);
+      const requestData = {
+        ...formData,
+        paymentType: paymentType
+      };
+      console.log('Sending payment data to backend:', requestData);
+      
       const response = await fetch('http://localhost:5001/api/online-payments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          paymentType: paymentType
-        }),
+        body: JSON.stringify(requestData),
       });
 
       const result = await response.json();
@@ -421,9 +473,9 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
           setCurrentStep(4); // success screen
           
           // Store payment status in localStorage
-          if (formData.auctionId) {
+          if (formData.bidId) {
             const status = paymentType === 'penalty' ? 'rejected' : 'completed';
-            localStorage.setItem(`payment_status_${formData.auctionId}`, status);
+            localStorage.setItem(`payment_status_${formData.bidId}`, status);
           }
         } else {
           toast.error("Payment verification failed");
@@ -475,22 +527,23 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
             </h1>
             
             <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
-                  BID ID
-                  <span className="text-red-500 ml-1">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="auctionId"
-                  value={formData.auctionId}
-                  onChange={handleInputChange}
-                  placeholder="Enter BID ID"
-                  readOnly
-                  className="w-full px-4 py-3 border border-gray-300 outline-none focus:border-blue-500 bg-gray-100 cursor-not-allowed"
-                  style={{ borderRadius: "30px" }}
-                />
-              </div>
+              {!isRegistrationPayment && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
+                    BID ID
+                  </label>
+                  <input
+                    type="text"
+                    name="bidId"
+                    value={formData.bidId}
+                    onChange={handleInputChange}
+                    placeholder="Enter BID ID"
+                    readOnly
+                    className="w-full px-4 py-3 border border-gray-300 outline-none focus:border-blue-500 bg-gray-100 cursor-not-allowed"
+                    style={{ borderRadius: "30px" }}
+                  />
+                </div>
+              )}
               
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
@@ -502,7 +555,12 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
                   name="amount"
                   value={formData.amount}
                   onChange={handleInputChange}
-                  className={`w-full px-4 py-3 border outline-none focus:border-blue-500 bg-white ${
+                  readOnly={isRegistrationPayment}
+                  className={`w-full px-4 py-3 border outline-none focus:border-blue-500 ${
+                    isRegistrationPayment 
+                      ? 'bg-gray-100 cursor-not-allowed' 
+                      : 'bg-white'
+                  } ${
                     errors.amount 
                       ? 'border-red-400 focus:border-red-500' 
                       : 'border-gray-300 focus:border-blue-500'
@@ -530,6 +588,36 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
                   style={{ borderRadius: "30px" }}
                 />
               </div>
+              
+              {/* Show contact number field if not provided in bidderData */}
+              {!bidderData?.contactNumber && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
+                    Contact Number
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    name="contactNumber"
+                    value={formData.contactNumber}
+                    onChange={handleInputChange}
+                    placeholder="0701354967"
+                    maxLength="10"
+                    autoComplete="off"
+                    className={`w-full px-4 py-3 border outline-none focus:border-blue-500 bg-white ${
+                      errors.contactNumber 
+                        ? 'border-red-400 focus:border-red-500' 
+                        : 'border-gray-300 focus:border-blue-500'
+                    }`}
+                    style={{ borderRadius: "30px" }}
+                  />
+                  {errors.contactNumber && (
+                    <p className="text-red-500 text-sm mt-1" style={{ fontFamily: 'Poppins' }}>
+                      {errors.contactNumber}
+                    </p>
+                  )}
+                </div>
+              )}
               
               <div className="flex justify-end gap-4 mt-8">
                 <button onClick={goBack} className="px-8 py-3 bg-gray-500 hover:bg-gray-600 text-white transition-colors" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>

@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const onlinePaymentSchema = new mongoose.Schema({
     // Basic payment info
-    auctionId: {
+    bidId: {
         type: String,
         required: true,
     },
@@ -61,6 +61,13 @@ const onlinePaymentSchema = new mongoose.Schema({
         type: String,
         enum: ['pending', 'verified', 'completed', 'failed', 'cancelled'],
         default: 'pending',
+    },
+    
+    // Payment type
+    paymentType: {
+        type: String,
+        enum: ['order', 'penalty', 'registration'],
+        default: 'order',
     },
     
     // Transaction details

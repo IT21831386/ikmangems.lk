@@ -55,29 +55,50 @@ const AdminPaymentStatus = () => {
         deleted: payment.deleted || false,
         deleteReason: payment.deleteReason,
         deletedBy: payment.deletedBy,
-        deletedAt: payment.deletedAt
+        deletedAt: payment.deletedAt,
+        // Bank deposits are always regular payments (not registration)
+        isRegistration: false
       }));
 
-      const onlinePayments = (onlineData.data || []).map(payment => ({
-        id: payment._id,
-        paymentId: `ONL_${payment._id.slice(-8).toUpperCase()}`,
-        auctionId: payment.auctionId,
-        paymentType: 'Online Payment',
-        amount: payment.amount,
-        date: new Date(payment.createdAt).toLocaleDateString('en-CA'),
-        status: 'complete', // Online payments are always completed
-        bank: 'IPG',
-        branch: 'IPG',
-        slip: null,
-        fullName: payment.fullName,
-        emailAddress: payment.emailAddress,
-        contactNumber: payment.contactNumber,
-        billingAddress: payment.billingAddress,
-        remark: payment.remark,
-        transactionId: payment.transactionId,
-        cardType: payment.cardType,
-        createdAt: new Date(payment.createdAt)
-      }));
+      console.log('Raw online payments from API:', onlineData.data);
+      console.log('Sample payment structure:', onlineData.data?.[0]);
+      
+      const onlinePayments = (onlineData.data || []).map(payment => {
+        const isRegistration = payment.paymentType === 'registration';
+        console.log(`Payment ${payment._id}: paymentType=${payment.paymentType}, isRegistration=${isRegistration}, amount=${payment.amount}, remark=${payment.remark}`);
+        
+        // Additional check: if it's a registration payment by amount and remark
+        const isRegistrationByContent = payment.amount === 1000 && 
+          (payment.remark?.toLowerCase().includes('registration') || 
+           payment.remark?.toLowerCase().includes('seller') ||
+           payment.bidId === 'REGISTRATION');
+        
+        const finalIsRegistration = isRegistration || isRegistrationByContent;
+        console.log(`Payment ${payment._id}: isRegistrationByContent=${isRegistrationByContent}, finalIsRegistration=${finalIsRegistration}`);
+        
+        return {
+          id: payment._id,
+          paymentId: `ONL_${payment._id.slice(-8).toUpperCase()}`,
+          auctionId: finalIsRegistration ? 'N/A' : payment.bidId,
+          paymentType: finalIsRegistration ? 'Registration Payment' : 'Online Payment',
+          amount: payment.amount,
+          date: new Date(payment.createdAt).toLocaleDateString('en-CA'),
+          status: 'complete', // Online payments are always completed
+          bank: 'IPG',
+          branch: 'IPG',
+          slip: null,
+          fullName: payment.fullName,
+          emailAddress: payment.emailAddress,
+          contactNumber: payment.contactNumber,
+          billingAddress: payment.billingAddress,
+          remark: payment.remark,
+          transactionId: payment.transactionId,
+          cardType: payment.cardType,
+          createdAt: new Date(payment.createdAt),
+          // Add registration-specific fields
+          isRegistration: finalIsRegistration
+        };
+      });
 
       // Combine all payments and sort by date (newest first)
       const combinedPayments = [...bankPayments, ...onlinePayments].sort((a, b) => 
@@ -360,8 +381,11 @@ const AdminPaymentStatus = () => {
     
     // Payment type filter
     const matchesPaymentType = paymentTypeFilter === '' || 
-      (paymentTypeFilter === 'regular' && payment.paymentType !== 'penalty' && !payment.remark?.toLowerCase().includes('penalty')) ||
-      (paymentTypeFilter === 'penalty' && (payment.paymentType === 'penalty' || payment.remark?.toLowerCase().includes('penalty')));
+      (paymentTypeFilter === 'bank' && payment.paymentType === 'Bank Deposit') ||
+      (paymentTypeFilter === 'online' && (payment.paymentType === 'Online Payment' || payment.paymentType === 'Registration Payment')) ||
+      (paymentTypeFilter === 'regular' && payment.paymentType === 'Online Payment' && !payment.isRegistration) ||
+      (paymentTypeFilter === 'penalty' && (payment.paymentType === 'penalty' || payment.remark?.toLowerCase().includes('penalty'))) ||
+      (paymentTypeFilter === 'registration' && payment.isRegistration);
     
     // Bank filter
     const matchesBank = bankFilter === '' || payment.bank === bankFilter;
@@ -372,6 +396,10 @@ const AdminPaymentStatus = () => {
       (statusFilter === 'Rejected' && payment.status === 'failure') ||
       (statusFilter === 'Completed' && (payment.status === 'success' || payment.status === 'complete')) ||
       (statusFilter === 'Pending' && payment.status === 'pending');
+    
+    if (paymentTypeFilter === 'registration') {
+      console.log(`Payment ${payment.id}: isRegistration=${payment.isRegistration}, paymentType=${payment.paymentType}, matchesRegistration=${payment.isRegistration}`);
+    }
     
     return matchesDate && matchesPaymentType && matchesBank && matchesStatus;
   });
@@ -414,8 +442,8 @@ const AdminPaymentStatus = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               >
                 <option value="">All Types</option>
-                <option value="regular">Regular</option>
-                <option value="penalty">Penalty</option>
+                <option value="bank">Bank Deposits</option>
+                <option value="online">Online Payments</option>
               </select>
             </div>
 
@@ -468,42 +496,56 @@ const AdminPaymentStatus = () => {
           </div>
         </div>
 
+        {/* Filter Buttons */}
+        <div className="mt-6 flex justify-center gap-4">
+          <button
+            onClick={() => setPaymentTypeFilter('')}
+            className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+              paymentTypeFilter === '' 
+                ? 'bg-blue-500 text-white shadow-md' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setPaymentTypeFilter('regular')}
+            className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+              paymentTypeFilter === 'regular' 
+                ? 'bg-green-500 text-white shadow-md' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Regular
+          </button>
+          <button
+            onClick={() => setPaymentTypeFilter('penalty')}
+            className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+              paymentTypeFilter === 'penalty' 
+                ? 'bg-red-500 text-white shadow-md' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Penalty
+          </button>
+          <button
+            onClick={() => setPaymentTypeFilter('registration')}
+            className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+              paymentTypeFilter === 'registration' 
+                ? 'bg-purple-500 text-white shadow-md' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Registration
+          </button>
+        </div>
+
         {/* Payment Management Table */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <div style={{ backgroundColor: '#21374B' }} className="text-white px-8 py-6 rounded-t-2xl">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-4">
                 <h2 className="text-2xl font-bold">Transaction History</h2>
-                <button
-                  onClick={() => setPaymentTypeFilter('')}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                    paymentTypeFilter === '' 
-                      ? 'bg-blue-500 text-white shadow-md' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setPaymentTypeFilter('regular')}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                    paymentTypeFilter === 'regular' 
-                      ? 'bg-green-500 text-white shadow-md' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Regular
-                </button>
-                <button
-                  onClick={() => setPaymentTypeFilter('penalty')}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                    paymentTypeFilter === 'penalty' 
-                      ? 'bg-red-500 text-white shadow-md' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Penalty
-                </button>
               </div>
               <button
                 onClick={fetchPayments}
@@ -549,8 +591,14 @@ const AdminPaymentStatus = () => {
                   {filteredPayments.map((payment, index) => (
                     <tr key={payment.id} className={`hover:bg-gray-50 transition-colors duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
                       <td className="w-[11%] px-4 py-5">
-                        <span className="text-sm font-bold text-gray-800">
-                          {payment.paymentType === 'Bank Deposit' ? 'Bank Deposit' : 'Online Payment'}
+                        <span className={`text-sm font-bold ${
+                          payment.paymentType === 'Registration Payment' 
+                            ? 'text-purple-700' 
+                            : payment.paymentType === 'Bank Deposit' 
+                            ? 'text-blue-700' 
+                            : 'text-green-700'
+                        }`}>
+                          {payment.paymentType}
                         </span>
                       </td>
                       <td className="w-[12%] px-4 py-5">
@@ -559,8 +607,12 @@ const AdminPaymentStatus = () => {
                         </span>
                       </td>
                       <td className="w-[10%] px-4 py-5">
-                        <span className="text-gray-800 text-sm">
-                          {payment.auctionId}
+                        <span className={`text-sm font-medium ${
+                          payment.isRegistration 
+                            ? 'text-purple-600 font-bold' 
+                            : 'text-gray-800'
+                        }`}>
+                          {payment.isRegistration ? 'N/A' : payment.auctionId}
                         </span>
                       </td>
                       <td className="w-[12%] px-4 py-5">

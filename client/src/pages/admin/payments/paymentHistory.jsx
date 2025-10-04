@@ -110,7 +110,20 @@ const PaymentHistory = () => {
       const nonDeletedPayments = combinedPayments.filter(payment => !payment.deleted);
       console.log('Non-deleted payments after filtering:', nonDeletedPayments.map(p => ({ id: p.id, deleted: p.deleted, status: p.status })));
       
-      setAllPayments(nonDeletedPayments);
+      // Filter out registration payments (seller registration fees from verification center)
+      const nonRegistrationPayments = nonDeletedPayments.filter(payment => {
+        const isRegistration = payment.paymentType === 'registration' || 
+          (payment.amount === 1000 && 
+           (payment.remark?.toLowerCase().includes('registration') || 
+            payment.remark?.toLowerCase().includes('seller') ||
+            payment.auctionId === 'REGISTRATION'));
+        
+        console.log(`Payment ${payment.id}: isRegistration=${isRegistration}, amount=${payment.amount}, remark=${payment.remark}`);
+        return !isRegistration;
+      });
+      
+      console.log('Non-registration payments after filtering:', nonRegistrationPayments.length);
+      setAllPayments(nonRegistrationPayments);
 
       // If no data, show sample data for testing
       if (combinedPayments.length === 0) {

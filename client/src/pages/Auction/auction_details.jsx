@@ -511,6 +511,7 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
       const formattedBidId = `BID-${String(bidIndex + 1).padStart(3, "0")}`;
       
       console.log(`Bid ${bidId} found at index ${bidIndex}, formatted as ${formattedBidId}`);
+      console.log('Navigating to payment form with URL:', `/payment-form?bidId=${formattedBidId}`);
       
       // Update local bid status to show payment in progress
       setBids(prevBids => 
