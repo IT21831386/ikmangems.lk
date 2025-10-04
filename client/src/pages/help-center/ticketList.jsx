@@ -17,6 +17,18 @@ function TicketList() {
   const [notifications, setNotifications] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Helper function to ensure unique tickets by ID
+  const getUniqueTickets = (tickets) => {
+    const seen = new Set();
+    return tickets.filter(ticket => {
+      if (seen.has(ticket._id)) {
+        return false;
+      }
+      seen.add(ticket._id);
+      return true;
+    });
+  };
+
   useEffect(() => {
     const fetchTickets = async () => {
       try {
@@ -26,16 +38,31 @@ function TicketList() {
         });
         let allTickets = res.data.tickets || [];
 
+        // Handle new ticket - check if it already exists to prevent duplicates
+        if (location.state?.newTicket) {
+          const newTicket = location.state.newTicket;
+          const existingTicket = allTickets.find(t => t._id === newTicket._id);
+          if (!existingTicket) {
+            allTickets = [newTicket, ...allTickets];
+          }
+        }
+        
+        // Handle updated ticket
         if (location.state?.isEdit && location.state?.updatedTicket) {
-          const u = location.state.updatedTicket;
-          allTickets = allTickets.map((t) => (t._id === u._id ? u : t));
-        } else if (location.state?.newTicket) {
-          allTickets = [location.state.newTicket, ...allTickets];
+          const updatedTicket = location.state.updatedTicket;
+          allTickets = allTickets.map((t) => (t._id === updatedTicket._id ? updatedTicket : t));
         }
 
-        setTickets(allTickets);
-        setFilteredTickets(allTickets);
+        // Ensure no duplicate tickets
+        const uniqueTickets = getUniqueTickets(allTickets);
+        setTickets(uniqueTickets);
+        setFilteredTickets(uniqueTickets);
         setLoading(false);
+        
+        // Clear location state after processing to prevent duplicates on refresh
+        if (location.state?.newTicket || location.state?.isEdit) {
+          window.history.replaceState({}, document.title);
+        }
       } catch (err) {
         console.error(err);
         setLoading(false);
