@@ -265,7 +265,14 @@ function TicketList() {
                     : "bg-gray-200 text-gray-800"
                 }`}
               >
-                <Bell className="w-4 h-4" />
+                <div className="relative">
+                  <Bell className="w-4 h-4" />
+                  {getUnseenCount(ticket) > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full text-[10px] leading-none px-1.5 py-0.5">
+                      {getUnseenCount(ticket)}
+                    </span>
+                  )}
+                </div>
               </button>
 
               <button
