@@ -66,6 +66,38 @@ const userSchema = new mongoose.Schema(
     verifyOtpExpireAt: Number,
     resetOtp: String,
     resetOtpExpireAt: Number,
+
+
+    nicFrontImage: { type: String },
+    nicBackImage: { type: String },
+    nicStatus: {
+      type: String,
+      enum: ["not_uploaded", "pending", "approved", "rejected"],
+      default: "not_uploaded",
+    },
+
+    // Step 4 - Business Documents (Optional)
+    businessDocs: [{ type: String }], // array to store multiple docs if needed
+    businessStatus: {
+      type: String,
+      enum: ["not_uploaded", "pending", "approved", "rejected"],
+      default: "not_uploaded",
+    },
+
+    // Step 5 - Registration Payment
+    registrationPaymentStatus: {
+      type: String,
+      enum: ["unpaid", "pending", "paid"],
+      default: "unpaid",
+    },
+
+    // Step 6 - Platform Review (Final Admin Approval)
+    sellerVerificationStatus: {
+      type: String,
+      enum: ["not_started", "in_review", "verified", "rejected"],
+      default: "not_started",
+    },
+    
   },
   { timestamps: true }
 );

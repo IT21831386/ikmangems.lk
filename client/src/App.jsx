@@ -16,6 +16,10 @@ import AddUser from "./pages/admin/admin-um/AddUser";
 //import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
+import NICUpload from './components/NICUpload';
+import VerificationCenter from './pages/seller/VerificationCenter';
+import AdminNICReview from './pages/admin/admin-um/AdminNICReview';
+
 //import Dashboard from "./pages/bidderDashboard";
 //import DashboardPage from "./pages/sellerDashboard";
 import ForgotPassword from "./pages/auth/ForgotPassword";
@@ -84,6 +88,9 @@ const App = () => {
       <Route path="/get-otp" element={<GetOTP />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/verification" element={<VerificationCenter />} />
+      <Route path="/upload-nic" element={<NICUpload />} />
+      <Route path="/admin/nic-review" element={<AdminNICReview />} />
 
       <Route
         path="/bidder-dashboard"

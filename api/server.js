@@ -8,6 +8,7 @@ import { join } from "path";
 import otpRoutes from "./routes/otpRoutes.js";
 import authRouter from "./routes/authRoutes.js";
 import userRouter from "./routes/userRoutes.js";
+import nicRouter from './routes/nicRoutes.js'
 import paymentRoutes from "./routes/paymentRoutes.js";
 import onlinePaymentRoutes from "./routes/onlinepaymentRoutes.js";
 import { connectDB } from "./config/db.js";
@@ -60,6 +61,11 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/online-payments", onlinePaymentRoutes);
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
+// Register routes
+app.use('/api/nic', nicRouter);
+// Serve static files for uploaded images
+app.use('/uploads', express.static('uploads'));
+
 app.use("/api/otp", otpRoutes);
 app.use("/api/bids", bidRoutes);
 app.use("/uploads", express.static(join(process.cwd(), "uploads")));
