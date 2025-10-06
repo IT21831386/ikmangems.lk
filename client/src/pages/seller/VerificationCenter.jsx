@@ -255,11 +255,14 @@ export default VerificationCenter;*/
 
 
 import React, { useState, useEffect } from 'react';
-import { Check, Circle, Lock, Mail, CreditCard, FileText, Building2, Wallet, CheckCircle2, Clock } from 'lucide-react';
+import { Check, Circle, Lock, Mail, CreditCard, FileText, Building2, Wallet, CheckCircle2, Clock, XCircle } from 'lucide-react';
 
 const VerificationCenter = () => {
-  const [currentStep, setCurrentStep] = useState(1);
   const [nicStatus, setNicStatus] = useState('not_uploaded');
+  const [businessStatus, setBusinessStatus] = useState('not_uploaded');
+  const [payoutStatus, setPayoutStatus] = useState('not_completed');
+  const [paymentStatus, setPaymentStatus] = useState('unpaid');
+  const [reviewStatus, setReviewStatus] = useState('not_started');
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
@@ -268,20 +271,16 @@ const VerificationCenter = () => {
 
   const fetchUserVerificationStatus = async () => {
     try {
-      const response = await fetch('/api/nic/status', {
+      const response = await fetch('/api/verification/status', {
         credentials: 'include',
       });
       const data = await response.json();
       if (data.success) {
-        setNicStatus(data.data.nicStatus);
-        
-        if (data.data.nicStatus === 'approved') {
-          setCurrentStep(4);
-        } else if (data.data.nicStatus === 'pending') {
-          setCurrentStep(3);
-        } else {
-          setCurrentStep(3);
-        }
+        setNicStatus(data.data.nicStatus || 'not_uploaded');
+        setBusinessStatus(data.data.businessStatus || 'not_uploaded');
+        setPayoutStatus(data.data.payoutStatus || 'not_completed');
+        setPaymentStatus(data.data.registrationPaymentStatus || 'unpaid');
+        setReviewStatus(data.data.sellerVerificationStatus || 'not_started');
       }
     } catch (err) {
       console.error('Failed to fetch verification status:', err);
@@ -298,7 +297,7 @@ const VerificationCenter = () => {
       details: ['Name, email, password', 'Contact information', 'Shop name'],
       icon: Circle,
       time: '2 min',
-      status: 'completed'
+      isRequired: true
     },
     {
       id: 2,
@@ -307,28 +306,27 @@ const VerificationCenter = () => {
       details: ['Verification link sent', 'Click to confirm', 'One-time code'],
       icon: Mail,
       time: '2 min',
-      status: 'completed'
+      isRequired: true
     },
     {
       id: 3,
-      name: 'Verify Identity',
+      name: 'Verify Identity (NIC)',
       description: 'Submit your ID documents',
       details: ['Government-issued ID', 'NIC, Passport, or License', 'Clear photo required'],
       icon: FileText,
       time: '5 min',
-      status: currentStep >= 3 ? 'current' : 'upcoming',
-      nicRequired: true
+      isRequired: true,
+      getStatus: () => nicStatus
     },
     {
       id: 4,
       name: 'Verify Business',
-      description: 'Upload business documents (if applicable)',
+      description: 'Upload business documents (Optional)',
       details: ['Business registration', 'Tax ID number', 'Licenses & permits'],
       icon: Building2,
       time: '5 min',
-      status: currentStep >= 4 ? (currentStep === 4 ? 'current' : 'completed') : 'upcoming',
-      optional: true,
-      requiresNIC: true
+      isRequired: false,
+      getStatus: () => businessStatus
     },
     {
       id: 5,
@@ -337,8 +335,8 @@ const VerificationCenter = () => {
       details: ['Bank account info', 'Verification deposit', 'Multiple options supported'],
       icon: Wallet,
       time: '3 min',
-      status: currentStep >= 5 ? (currentStep === 5 ? 'current' : 'completed') : 'upcoming',
-      requiresNIC: true
+      isRequired: true,
+      getStatus: () => payoutStatus === 'completed' ? 'approved' : payoutStatus === 'not_completed' ? 'not_uploaded' : payoutStatus
     },
     {
       id: 6,
@@ -347,8 +345,8 @@ const VerificationCenter = () => {
       details: ['Secure payment gateway', 'Multiple payment options', 'One-time fee'],
       icon: CreditCard,
       time: '2 min',
-      status: currentStep >= 6 ? (currentStep === 6 ? 'current' : 'completed') : 'upcoming',
-      requiresNIC: true
+      isRequired: true,
+      getStatus: () => paymentStatus === 'paid' ? 'approved' : paymentStatus === 'unpaid' ? 'not_uploaded' : paymentStatus
     },
     {
       id: 7,
@@ -357,25 +355,32 @@ const VerificationCenter = () => {
       details: ['Admin verification', 'Document review', 'Account activation'],
       icon: CheckCircle2,
       time: '1-3 business days',
-      status: currentStep >= 7 ? 'current' : 'upcoming',
-      requiresNIC: true
+      isRequired: true,
+      getStatus: () => {
+        if (reviewStatus === 'verified') return 'approved';
+        if (reviewStatus === 'in_review') return 'pending';
+        if (reviewStatus === 'rejected') return 'rejected';
+        return 'not_uploaded';
+      }
     }
   ];
 
   const getStepStatus = (step) => {
-    if (step.nicRequired && step.id === 3) {
-      if (nicStatus === 'approved') return 'completed';
-      if (nicStatus === 'pending') return 'pending';
-      return 'current';
+    // Step 1 & 2 are always completed
+    if (step.id <= 2) return 'completed';
+    
+    // For steps with dynamic status
+    if (step.getStatus) {
+      const status = step.getStatus();
+      if (status === 'approved' || status === 'paid' || status === 'completed') return 'completed';
+      if (status === 'pending' || status === 'in_review') return 'pending';
+      if (status === 'rejected') return 'rejected';
+      if (status === 'not_uploaded' || status === 'unpaid' || status === 'not_completed' || status === 'not_started') {
+        return step.isRequired ? 'available' : 'skippable';
+      }
     }
     
-    if (step.requiresNIC && nicStatus !== 'approved') {
-      return 'locked';
-    }
-    
-    if (step.id < currentStep) return 'completed';
-    if (step.id === currentStep) return 'current';
-    return 'upcoming';
+    return 'available';
   };
 
   const StatusIcon = ({ step }) => {
@@ -390,14 +395,6 @@ const VerificationCenter = () => {
       );
     }
     
-    if (status === 'current') {
-      return (
-        <div className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center animate-pulse">
-          <Icon className="w-3 h-3 text-white" />
-        </div>
-      );
-    }
-    
     if (status === 'pending') {
       return (
         <div className="w-9 h-9 rounded-full bg-yellow-500 flex items-center justify-center">
@@ -406,10 +403,26 @@ const VerificationCenter = () => {
       );
     }
     
-    if (status === 'locked') {
+    if (status === 'rejected') {
       return (
-        <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center">
-          <Lock className="w-3 h-3 text-gray-400" />
+        <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center">
+          <XCircle className="w-3 h-3 text-white" />
+        </div>
+      );
+    }
+    
+    if (status === 'skippable') {
+      return (
+        <div className="w-9 h-9 rounded-full bg-purple-100 border-2 border-purple-300 flex items-center justify-center">
+          <Icon className="w-3 h-3 text-purple-600" />
+        </div>
+      );
+    }
+    
+    if (status === 'available') {
+      return (
+        <div className="w-9 h-9 rounded-full bg-blue-100 border-2 border-blue-300 flex items-center justify-center">
+          <Icon className="w-3 h-3 text-blue-600" />
         </div>
       );
     }
@@ -421,11 +434,22 @@ const VerificationCenter = () => {
     );
   };
 
-  const handleContinue = (step) => {
-    if (step.id === 3 && nicStatus === 'approved') {
-      setCurrentStep(4);
-    } else if (step.id !== 3) {
-      setCurrentStep(currentStep + 1);
+  const handleSkipBusiness = async () => {
+    try {
+      const response = await fetch('/api/business/skip', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      if (data.success) {
+        setBusinessStatus('skipped');
+        await fetchUserVerificationStatus();
+      }
+    } catch (err) {
+      console.error('Failed to skip business verification:', err);
     }
   };
 
@@ -437,26 +461,41 @@ const VerificationCenter = () => {
     );
   }
 
+  const completedSteps = steps.filter(s => {
+    const status = getStepStatus(s);
+    return status === 'completed';
+  }).length;
+
+  const requiredSteps = steps.filter(s => s.isRequired).length;
+  const completedRequiredSteps = steps.filter(s => {
+    if (!s.isRequired) return false;
+    const status = getStepStatus(s);
+    return status === 'completed';
+  }).length;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6">
       <div className="max-w-5xl mx-auto">
         <div className="text-left mb-12">
           <h1 className="text-2xl font-bold text-gray-900 mb-3">
-            Complete these steps to start selling on our platform
+            Complete Your Seller Verification
           </h1>
+          <p className="text-gray-600">
+            Complete all required steps in any order. {completedRequiredSteps} of {requiredSteps} required steps completed.
+          </p>
         </div>
 
         <div className="mb-12">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Overall Progress</span>
+            <span className="text-sm font-medium text-gray-700">Required Steps Progress</span>
             <span className="text-sm font-medium text-gray-700">
-              {steps.filter(s => getStepStatus(s) === 'completed').length} of {steps.length} completed
+              {completedRequiredSteps} of {requiredSteps} completed
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-3">
             <div 
-              className="bg-gradient-to-r from-blue-500 to-blue-500 h-3 rounded-full transition-all duration-500"
-              style={{ width: `${(steps.filter(s => getStepStatus(s) === 'completed').length / steps.length) * 100}%` }}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-500"
+              style={{ width: `${(completedRequiredSteps / requiredSteps) * 100}%` }}
             />
           </div>
         </div>
@@ -476,10 +515,14 @@ const VerificationCenter = () => {
                   className={`relative bg-white rounded-xl border-2 transition-all duration-300 ${
                     status === 'completed' 
                       ? 'border-green-200 hover:shadow-md' 
-                      : status === 'current'
+                      : status === 'available'
                       ? 'border-blue-400 shadow-lg hover:shadow-xl'
                       : status === 'pending'
                       ? 'border-yellow-400 shadow-md'
+                      : status === 'rejected'
+                      ? 'border-red-400 shadow-md'
+                      : status === 'skippable'
+                      ? 'border-purple-200 hover:shadow-md'
                       : 'border-gray-200 hover:shadow-md'
                   }`}
                 >
@@ -490,13 +533,18 @@ const VerificationCenter = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className={`text-xl font-semibold ${
-                            status === 'current' ? 'text-blue-600' : 'text-gray-900'
+                            status === 'available' || status === 'skippable' ? 'text-blue-600' : 'text-gray-900'
                           }`}>
                             {step.name}
                           </h3>
-                          {step.optional && (
-                            <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded">
+                          {!step.isRequired && (
+                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded">
                               Optional
+                            </span>
+                          )}
+                          {step.isRequired && (
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                              Required
                             </span>
                           )}
                           <span className="ml-auto text-sm text-gray-500 flex items-center gap-1">
@@ -516,51 +564,83 @@ const VerificationCenter = () => {
                           ))}
                         </ul>
                         
-                        {status === 'current' && step.id !== 3 && (
-                          <button 
-                            onClick={() => handleContinue(step)}
-                            className="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors duration-200"
-                          >
-                            Continue
-                          </button>
-                        )}
-                        
-                        {status === 'current' && step.id === 3 && (
+                        {/* NIC Verification - Step 3 */}
+                        {step.id === 3 && (status === 'available' || status === 'rejected') && (
                           <div className="mt-4">
                             <a
                               href="/upload-nic"
-                              className="inline-block px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors duration-200"
+                              className={`inline-block px-6 py-2 ${
+                                status === 'rejected' ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
+                              } text-white font-medium rounded-lg transition-colors duration-200`}
                             >
-                              Upload NIC Documents
+                              {status === 'rejected' ? 'Resubmit NIC Documents' : 'Upload NIC Documents'}
                             </a>
                           </div>
                         )}
                         
-                        {status === 'pending' && (
-                          <div className="mt-4 flex items-center gap-2 text-yellow-600 text-sm font-medium">
-                            <Clock className="w-4 h-4 animate-pulse" />
-                            Under Admin Review - Please wait for approval
+                        {/* Business Verification - Step 4 */}
+                        {step.id === 4 && (status === 'available' || status === 'skippable' || status === 'rejected') && (
+                          <div className="mt-4 flex gap-3">
+                            <a
+                              href="/upload-business"
+                              className={`inline-block px-6 py-2 ${
+                                status === 'rejected' ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
+                              } text-white font-medium rounded-lg transition-colors duration-200`}
+                            >
+                              {status === 'rejected' ? 'Resubmit Business Documents' : 'Upload Business Documents'}
+                            </a>
+                            {!step.isRequired && status !== 'rejected' && (
+                              <button
+                                onClick={handleSkipBusiness}
+                                className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors duration-200"
+                              >
+                                Skip This Step
+                              </button>
+                            )}
                           </div>
                         )}
                         
+                        {/* Payout Setup - Step 5 */}
+                        {step.id === 5 && (status === 'available' || status === 'rejected') && (
+                          <div className="mt-4">
+                            <a
+                              href="/setup-payout"
+                              className={`inline-block px-6 py-2 ${
+                                status === 'rejected' ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
+                              } text-white font-medium rounded-lg transition-colors duration-200`}
+                            >
+                              {status === 'rejected' ? 'Update Payout Method' : 'Setup Payout Method'}
+                            </a>
+                          </div>
+                        )}
+                        
+                        {/* Payment - Step 6 */}
+                        {step.id === 6 && (status === 'available' || status === 'rejected') && (
+                          <div className="mt-4">
+                            <a
+                              href="/registration-payment"
+                              className={`inline-block px-6 py-2 ${
+                                status === 'rejected' ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
+                              } text-white font-medium rounded-lg transition-colors duration-200`}
+                            >
+                              {status === 'rejected' ? 'Retry Payment' : 'Pay Registration Fee'}
+                            </a>
+                          </div>
+                        )}
+                        
+                        {/* Pending Status */}
+                        {status === 'pending' && (
+                          <div className="mt-4 flex items-center gap-2 text-yellow-600 text-sm font-medium">
+                            <Clock className="w-4 h-4 animate-pulse" />
+                            {step.id === 7 ? 'Under Admin Review' : 'Documents submitted - Under Review'}
+                          </div>
+                        )}
+                        
+                        {/* Completed Status */}
                         {status === 'completed' && (
                           <div className="mt-4 flex items-center gap-2 text-green-600 text-sm font-medium">
                             <Check className="w-4 h-4" />
                             Completed
-                          </div>
-                        )}
-                        
-                        {status === 'locked' && (
-                          <div className="mt-4 flex items-center gap-2 text-gray-400 text-sm">
-                            <Lock className="w-4 h-4" />
-                            Complete NIC verification to unlock
-                          </div>
-                        )}
-                        
-                        {status === 'upcoming' && !step.requiresNIC && (
-                          <div className="mt-4 flex items-center gap-2 text-gray-400 text-sm">
-                            <Lock className="w-4 h-4" />
-                            Complete previous steps to unlock
                           </div>
                         )}
                       </div>
@@ -574,7 +654,7 @@ const VerificationCenter = () => {
 
         <div className="mt-12 bg-white rounded-xl p-6 border border-gray-200">
           <h4 className="font-semibold text-gray-900 mb-4">Status Legend</h4>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
                 <Check className="w-4 h-4 text-white" />
@@ -582,22 +662,28 @@ const VerificationCenter = () => {
               <span className="text-sm text-gray-700">Completed</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                <Circle className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-full bg-blue-100 border-2 border-blue-300 flex items-center justify-center">
+                <Circle className="w-4 h-4 text-blue-600" />
               </div>
-              <span className="text-sm text-gray-700">Current Step</span>
+              <span className="text-sm text-gray-700">Available</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center">
                 <Clock className="w-4 h-4 text-white" />
               </div>
-              <span className="text-sm text-gray-700">Pending Review</span>
+              <span className="text-sm text-gray-700">Pending</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                <Lock className="w-4 h-4 text-gray-400" />
+              <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
+                <XCircle className="w-4 h-4 text-white" />
               </div>
-              <span className="text-sm text-gray-700">Locked</span>
+              <span className="text-sm text-gray-700">Rejected</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-purple-100 border-2 border-purple-300 flex items-center justify-center">
+                <Building2 className="w-4 h-4 text-purple-600" />
+              </div>
+              <span className="text-sm text-gray-700">Optional</span>
             </div>
           </div>
         </div>
