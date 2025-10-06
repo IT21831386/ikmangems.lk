@@ -253,6 +253,17 @@ function TicketList() {
             </div>
 
             <div className="flex gap-1">
+              {ticket.attachment && (
+                <a
+                  href={ticket.attachment}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-blue-100 text-blue-800 text-xs"
+                  title="View attachment"
+                >
+                  📎 Attachment
+                </a>
+              )}
               <button
                 onClick={() => {
                   setExpandedId(expandedId === ticket._id ? null : ticket._id);

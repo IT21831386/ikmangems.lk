@@ -40,7 +40,13 @@ export async function getTicketById(req, res) {
 export async function createTicket(req, res) {
   try {
     // Extract fields from request body
-    const { name, email, subject, inquiryType, description, attachment } = req.body;
+    const { name, email, subject, inquiryType, description } = req.body;
+    // If a file was uploaded, build a public URL
+    let attachment = undefined;
+    if (req.file) {
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      attachment = `${baseUrl}/uploads/${req.file.filename}`;
+    }
 
     // Manually validate required fields (optional but good UX)
     if (!name || !email || !subject || !inquiryType || !description) {
@@ -50,14 +56,7 @@ export async function createTicket(req, res) {
     }
 
     // Create new Ticket document
-    const newTicket = new Ticket({
-      name,
-      email,
-      subject,
-      inquiryType,
-      description,
-      attachment // optional
-    });
+    const newTicket = new Ticket({ name, email, subject, inquiryType, description, attachment });
 
     // Save to MongoDB
     await newTicket.save();
@@ -76,7 +75,12 @@ export async function createTicket(req, res) {
 
 export async function updateTicket  (req, res) {
    try{
-    const { name,email,subject,inquiryType,description,attachment } = req.body
+    const { name,email,subject,inquiryType,description } = req.body
+    let attachment = req.body.attachment;
+    if (req.file) {
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      attachment = `${baseUrl}/uploads/${req.file.filename}`;
+    }
     const isAdmin = req.headers['x-admin-secret'] && req.headers['x-admin-secret'] === (process.env.ADMIN_SECRET || 'change-me-in-prod');
     const userEmail = req.headers['x-user-email'];
 

@@ -285,6 +285,18 @@ const SupportDashboard = () => {
                     </span>
                     <span className="text-xs text-gray-500">{formatDate(ticket.createdAt)}</span>
                   </div>
+                  {ticket.attachment && (
+                    <div className="mt-2">
+                      <a
+                        href={ticket.attachment}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        📎 Attachment
+                      </a>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

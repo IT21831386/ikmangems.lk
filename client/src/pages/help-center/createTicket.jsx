@@ -51,26 +51,28 @@ function CreateTicket() {
     e.preventDefault();
     setErrorMessage("");
     try {
-      const payload = {
-        name: formData.name,
-        email: formData.email,
-        subject: formData.subject,
-        inquiryType: formData.inquiryType,
-        description: formData.description,
-      };
+      const payload = new FormData();
+      payload.append("name", formData.name);
+      payload.append("email", formData.email);
+      payload.append("subject", formData.subject);
+      payload.append("inquiryType", formData.inquiryType);
+      payload.append("description", formData.description);
+      if (formData.attachment) {
+        payload.append("attachment", formData.attachment);
+      }
 
       const userEmail = formData.email;
       let res;
       if (editingId) {
         res = await axios.put(`${API_BASE}/tickets/${editingId}`, payload, {
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "multipart/form-data",
             "x-user-email": userEmail,
           },
         });
       } else {
         res = await axios.post(`${API_BASE}/tickets`, payload, {
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "multipart/form-data" },
         });
       }
 
