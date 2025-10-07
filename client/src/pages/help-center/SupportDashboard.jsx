@@ -244,9 +244,9 @@ const SupportDashboard = () => {
   const olderTickets = filteredTickets.filter((t) => nowTs - new Date(t.createdAt).getTime() > threeHoursMs);
 
   return (
-    <div className="min-h-screen p-6 bg-gray-50">
+    <div className="min-h-screen p-6 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold mb-8">🎫 Ticket Management</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">🎫 Ticket Management</h1>
 
         {/* Filter Bar */}
         <div className="bg-white p-4 rounded-lg shadow mb-6 flex items-center gap-4">
