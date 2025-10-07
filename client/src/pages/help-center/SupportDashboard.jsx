@@ -255,40 +255,73 @@ const SupportDashboard = () => {
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">{error}</div>
         )}
 
-        {/* Tickets List */}
+        {/* Tickets List - Split by Created Time (<= 3 hours vs > 3 hours) */}
         <div className="bg-white p-4 rounded-lg shadow mb-6">
           <h3 className="text-lg font-semibold mb-4">Tickets ({tickets.length})</h3>
           {loading ? (
             <p className="text-gray-600">Loading...</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {tickets.map((ticket) => (
-                <div
-                  key={ticket._id}
-                  onClick={() => loadTicketDetails(ticket._id)}
-                  className={`p-4 rounded-lg border cursor-pointer transition-colors ${
-                    selectedTicket?._id === ticket._id
-                      ? "bg-blue-50 border-blue-300"
-                      : "bg-white border-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  <h4 className="font-semibold text-gray-800">{ticket.subject}</h4>
-                  <p className="text-sm text-gray-600 mt-1">{ticket.name} • {ticket.email}</p>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      ticket.status === "pending" ? "bg-yellow-200 text-yellow-800" :
-                      ticket.status === "open" ? "bg-blue-100 text-blue-800" :
-                      ticket.status === "in_progress" ? "bg-orange-100 text-orange-800" :
-                      ticket.status === "resolved" ? "bg-green-200 text-green-800" :
-                      "bg-gray-200 text-gray-800"
-                    }`}>
-                      {ticket.status}
-                    </span>
-                    <span className="text-xs text-gray-500">{formatDate(ticket.createdAt)}</span>
+            <>
+              {(() => {
+                const threeHoursMs = 3 * 60 * 60 * 1000;
+                const now = Date.now();
+                const recentTickets = tickets.filter(t => now - new Date(t.createdAt).getTime() <= threeHoursMs);
+                const olderTickets = tickets.filter(t => now - new Date(t.createdAt).getTime() > threeHoursMs);
+
+                const renderTicketCard = (ticket) => (
+                  <div
+                    key={ticket._id}
+                    onClick={() => loadTicketDetails(ticket._id)}
+                    className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                      selectedTicket?._id === ticket._id
+                        ? "bg-blue-50 border-blue-300"
+                        : "bg-white border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    <h4 className="font-semibold text-gray-800">{ticket.subject}</h4>
+                    <p className="text-sm text-gray-600 mt-1">{ticket.name} • {ticket.email}</p>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        ticket.status === "pending" ? "bg-yellow-200 text-yellow-800" :
+                        ticket.status === "open" ? "bg-blue-100 text-blue-800" :
+                        ticket.status === "in_progress" ? "bg-orange-100 text-orange-800" :
+                        ticket.status === "resolved" ? "bg-green-200 text-green-800" :
+                        "bg-gray-200 text-gray-800"
+                      }`}>
+                        {ticket.status}
+                      </span>
+                      <span className="text-xs text-gray-500">{formatDate(ticket.createdAt)}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                );
+
+                return (
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="text-md font-semibold mb-3">Created in the last 3 hours ({recentTickets.length})</h4>
+                      {recentTickets.length === 0 ? (
+                        <p className="text-gray-500 text-sm">No tickets created in the last 3 hours.</p>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {recentTickets.map(renderTicketCard)}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <h4 className="text-md font-semibold mb-3">Older than 3 hours ({olderTickets.length})</h4>
+                      {olderTickets.length === 0 ? (
+                        <p className="text-gray-500 text-sm">No tickets older than 3 hours.</p>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {olderTickets.map(renderTicketCard)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+            </>
           )}
         </div>
 
