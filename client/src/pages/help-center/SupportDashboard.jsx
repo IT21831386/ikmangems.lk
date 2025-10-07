@@ -15,6 +15,7 @@ const SupportDashboard = () => {
   const [editMessage, setEditMessage] = useState("");
   const [showAddResponseModal, setShowAddResponseModal] = useState(false);
   const [responseMessage, setResponseMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     loadTickets();
@@ -222,11 +223,25 @@ const SupportDashboard = () => {
 
   const formatDate = (dateString) => new Date(dateString).toLocaleString();
 
-  // Split tickets into two groups by age: <= 3 hours vs > 3 hours
+  // Filter tickets by search term
+  const filteredTickets = !searchTerm.trim()
+    ? tickets
+    : tickets.filter((t) => {
+        const s = searchTerm.toLowerCase();
+        return (
+          t.subject?.toLowerCase().includes(s) ||
+          t.name?.toLowerCase().includes(s) ||
+          t.email?.toLowerCase().includes(s) ||
+          t.status?.toLowerCase().includes(s) ||
+          t.inquiryType?.toLowerCase().includes(s)
+        );
+      });
+
+  // Split tickets by age relative to now
   const threeHoursMs = 3 * 60 * 60 * 1000;
   const nowTs = Date.now();
-  const recentTickets = tickets.filter((t) => nowTs - new Date(t.createdAt).getTime() <= threeHoursMs);
-  const olderTickets = tickets.filter((t) => nowTs - new Date(t.createdAt).getTime() > threeHoursMs);
+  const recentTickets = filteredTickets.filter((t) => nowTs - new Date(t.createdAt).getTime() <= threeHoursMs);
+  const olderTickets = filteredTickets.filter((t) => nowTs - new Date(t.createdAt).getTime() > threeHoursMs);
 
   return (
     <div className="min-h-screen p-6 bg-gray-50">
@@ -259,6 +274,23 @@ const SupportDashboard = () => {
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">{error}</div>
         )}
+
+        {/* Search */}
+        <div className="bg-white p-4 rounded-lg shadow mb-6 flex items-center gap-3">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by subject, user, email, status, or type"
+            className="flex-1 border border-gray-300 rounded px-3 py-2 text-gray-700"
+          />
+          <button
+            onClick={() => setSearchTerm("")}
+            className="border border-gray-300 text-gray-700 px-3 py-2 rounded hover:bg-gray-50"
+          >
+            Clear
+          </button>
+        </div>
 
         {/* Tickets List - split by age */}
         <div className="bg-white p-4 rounded-lg shadow mb-6">
@@ -293,18 +325,6 @@ const SupportDashboard = () => {
                     </span>
                     <span className="text-xs text-gray-500">{formatDate(ticket.createdAt)}</span>
                   </div>
-                  {ticket.attachment && (
-                    <div className="mt-2">
-                      <a
-                        href={ticket.attachment}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        📎 Attachment
-                      </a>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -341,18 +361,6 @@ const SupportDashboard = () => {
                     </span>
                     <span className="text-xs text-gray-500">{formatDate(ticket.createdAt)}</span>
                   </div>
-                  {ticket.attachment && (
-                    <div className="mt-2">
-                      <a
-                        href={ticket.attachment}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        📎 Attachment
-                      </a>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
