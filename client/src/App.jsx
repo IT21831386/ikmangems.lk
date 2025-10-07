@@ -19,6 +19,8 @@ import Signup from "./pages/auth/Signup";
 import NICUpload from './components/NICUpload';
 import VerificationCenter from './pages/seller/VerificationCenter';
 import AdminNICReview from './pages/admin/admin-um/AdminNICReview';
+import BusinessVerification from './pages/seller/BusinessVerification';
+import AdminDocumentReview from './pages/admin/admin-um/AdminDocumentReview';
 
 //import Dashboard from "./pages/bidderDashboard";
 //import DashboardPage from "./pages/sellerDashboard";
@@ -90,7 +92,9 @@ const App = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verification" element={<VerificationCenter />} />
       <Route path="/upload-nic" element={<NICUpload />} />
+      <Route path="/upload-business" element={<BusinessVerification />} />
       <Route path="/admin/nic-review" element={<AdminNICReview />} />
+      <Route path="/admin/document-review" element={<AdminDocumentReview />} />
 
       <Route
         path="/bidder-dashboard"

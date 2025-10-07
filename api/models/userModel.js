@@ -80,7 +80,7 @@ const userSchema = new mongoose.Schema(
     businessDocs: [{ type: String }], // array to store multiple docs if needed
     businessStatus: {
       type: String,
-      enum: ["not_uploaded", "pending", "approved", "rejected"],
+      enum: ["not_uploaded", "pending", "approved", "rejected", "skipped"],
       default: "not_uploaded",
     },
 
@@ -97,6 +97,11 @@ const userSchema = new mongoose.Schema(
       enum: ["not_started", "in_review", "verified", "rejected"],
       default: "not_started",
     },
+    
+    // Additional fields for verification
+    verificationNotes: { type: String },
+    nicRejectionReason: { type: String },
+    businessRejectionReason: { type: String },
     
   },
   { timestamps: true }

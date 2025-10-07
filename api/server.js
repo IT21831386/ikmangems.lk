@@ -18,6 +18,8 @@ import TicketRoute from "./routes/TicketRoute.js";
 import FeedbackRoute from "./routes/feedbackRoute.js";
 // import AdminTicketRoutes from "./routes/ticketAdminRoutes.js";
 import SupportTicketRoutes from "./routes/supportTicketRoutes.js";
+import verificationRoutes from "./routes/verificationRoutes.js";
+import businessRoutes from "./routes/businessRoutes.js";
 
 // Load .env file from root directory (one level up from api folder)
 const rootPath = path.resolve();
@@ -75,6 +77,8 @@ app.use("/api/tickets", TicketRoute);
 app.use("/api/feedbacks", FeedbackRoute);
 // app.use("/api/admin/tickets", AdminTicketRoutes);
 app.use("/api/support", SupportTicketRoutes);
+app.use("/api/verification", verificationRoutes);
+app.use("/api/business", businessRoutes);
 
 // Simple API check route
 app.get("/", (req, res) => res.send("API working"));

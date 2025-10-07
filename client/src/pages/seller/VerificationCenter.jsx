@@ -269,9 +269,14 @@ const VerificationCenter = () => {
     fetchUserVerificationStatus();
   }, []);
 
+  // Add refresh functionality
+  const refreshStatus = () => {
+    fetchUserVerificationStatus();
+  };
+
   const fetchUserVerificationStatus = async () => {
     try {
-      const response = await fetch('/api/verification/status', {
+      const response = await fetch('http://localhost:5001/api/verification/status', {
         credentials: 'include',
       });
       const data = await response.json();
@@ -372,7 +377,7 @@ const VerificationCenter = () => {
     // For steps with dynamic status
     if (step.getStatus) {
       const status = step.getStatus();
-      if (status === 'approved' || status === 'paid' || status === 'completed') return 'completed';
+      if (status === 'approved' || status === 'paid' || status === 'completed' || status === 'skipped') return 'completed';
       if (status === 'pending' || status === 'in_review') return 'pending';
       if (status === 'rejected') return 'rejected';
       if (status === 'not_uploaded' || status === 'unpaid' || status === 'not_completed' || status === 'not_started') {
@@ -436,7 +441,7 @@ const VerificationCenter = () => {
 
   const handleSkipBusiness = async () => {
     try {
-      const response = await fetch('/api/business/skip', {
+      const response = await fetch('http://localhost:5001/api/verification/skip-business', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -477,12 +482,23 @@ const VerificationCenter = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6">
       <div className="max-w-5xl mx-auto">
         <div className="text-left mb-12">
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">
-            Complete Your Seller Verification
-          </h1>
-          <p className="text-gray-600">
-            Complete all required steps in any order. {completedRequiredSteps} of {requiredSteps} required steps completed.
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-3">
+                Complete Your Seller Verification
+              </h1>
+              <p className="text-gray-600">
+                Complete all required steps in any order. {completedRequiredSteps} of {requiredSteps} required steps completed.
+              </p>
+            </div>
+            <button
+              onClick={refreshStatus}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center gap-2"
+            >
+              <Clock className="w-4 h-4" />
+              Refresh Status
+            </button>
+          </div>
         </div>
 
         <div className="mb-12">
