@@ -1,5 +1,7 @@
 import PDFDocument from 'pdfkit';
 import Ticket from '../models/ticketModel.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 
 
@@ -91,6 +93,18 @@ export async function updateTicket  (req, res) {
       return res.status(403).json({ message: 'Forbidden: not your ticket' });
     }
 
+    // Enforce 3-hour window for user-initiated updates (admins bypass)
+    if (!isAdmin) {
+      const createdAt = new Date(existing.createdAt).getTime();
+      const now = Date.now();
+      const threeHoursMs = 3 * 60 * 60 * 1000;
+      if (now - createdAt > threeHoursMs) {
+        return res.status(403).json({
+          message: 'Update window expired: tickets can only be updated within 3 hours of creation.'
+        });
+      }
+    }
+
     const update = { name,email,subject,inquiryType,description,attachment };
     Object.keys(update).forEach((k) => update[k] === undefined && delete update[k]);
 
@@ -147,7 +161,7 @@ export async function generateTicketPDF(req, res) {
     }
 
     console.log('Creating PDF document...');
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({ margin: 50 });
 
     // Set response headers
     res.setHeader('Content-Type', 'application/pdf');
@@ -157,34 +171,111 @@ export async function generateTicketPDF(req, res) {
     // Pipe the PDF into the response
     doc.pipe(res);
 
-    // Add ticket content
-    doc.fontSize(20).text(`🎫 Ticket: ${ticket.subject}`, { underline: true });
+    // Header
+    doc
+      .fontSize(22)
+      .fillColor('#1f2937')
+      .text('Support Ticket Report', { align: 'left' });
+    doc.moveDown(0.25);
+    doc
+      .fontSize(14)
+      .fillColor('#4b5563')
+      .text(`Ticket: ${ticket.subject}`);
+
+    // Separator
+    doc.moveDown(0.5);
+    doc
+      .moveTo(50, doc.y)
+      .lineTo(doc.page.width - 50, doc.y)
+      .strokeColor('#e5e7eb')
+      .stroke();
     doc.moveDown();
 
-    doc.fontSize(12)
-      .text(`Name: ${ticket.name}`)
-      .text(`Email: ${ticket.email}`)
-      .text(`Type: ${ticket.inquiryType}`)
-      .text(`Status: ${ticket.status}`)
-      .text(`Created At: ${new Date(ticket.createdAt).toLocaleString()}`)
-      .text(`Updated At: ${new Date(ticket.updatedAt).toLocaleString()}`)
-      .moveDown();
+    // Metadata
+    const asLocal = (d) => new Date(d).toLocaleString();
+    doc.fontSize(12).fillColor('#111827');
+    doc.text(`From: ${ticket.name} <${ticket.email}>`);
+    doc.text(`Type: ${ticket.inquiryType}`);
+    doc.text(`Status: ${ticket.status}`);
+    doc.text(`Created: ${asLocal(ticket.createdAt)}`);
+    doc.text(`Updated: ${asLocal(ticket.updatedAt)}`);
+    doc.moveDown();
 
-    doc.text(`Description:`, { underline: true, font: 'Helvetica-Bold' });
-    doc.font('Helvetica').text(ticket.description || 'No description.').moveDown();
+    // Description
+    doc
+      .fontSize(13)
+      .fillColor('#1f2937')
+      .text('Description', { underline: true });
+    doc
+      .fontSize(12)
+      .fillColor('#111827')
+      .text(ticket.description || 'No description provided.', { align: 'left' });
 
+    // Try to embed main attachment if present
+    const tryEmbedAttachment = (attachmentUrl, label = 'Attachment') => {
+      if (!attachmentUrl) return;
+      try {
+        const urlObj = new URL(attachmentUrl);
+        const filename = path.basename(urlObj.pathname);
+        const uploadsPath = path.join(path.resolve(), 'uploads', filename);
+        const lower = filename.toLowerCase();
+        const isImage = lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.gif') || lower.endsWith('.webp');
+
+        doc.moveDown();
+        doc.fontSize(12).fillColor('#1f2937').text(label, { underline: true });
+        doc.fontSize(11).fillColor('#2563eb').text(attachmentUrl, { link: attachmentUrl, underline: true });
+
+        if (isImage) {
+          doc.moveDown(0.5);
+          try {
+            doc.image(uploadsPath, { fit: [400, 300], align: 'left' });
+          } catch (e) {
+            // If embedding fails, still keep the link
+            console.warn('Could not embed image, kept link only:', e.message);
+          }
+        }
+      } catch (e) {
+        console.warn('Attachment handling error:', e.message);
+      }
+    };
+
+    if (ticket.attachment) {
+      tryEmbedAttachment(ticket.attachment, 'User Attachment');
+    }
+
+    // Responses section
     if (ticket.responses && ticket.responses.length > 0) {
-      doc.addPage().fontSize(14).text('💬 Responses:', { underline: true });
+      doc.addPage();
+      doc.fontSize(16).fillColor('#1f2937').text('Responses', { underline: true });
+      doc.moveDown(0.5);
 
       ticket.responses.forEach((r, index) => {
+        const header = `#${index + 1} • ${r.sender === 'admin' ? 'Admin' : 'User'} response`;
         doc
-          .fontSize(12)
-          .moveDown()
-          .text(`Sender: ${r.sender}`)
-          .text(`Message: ${r.message}`)
-          .text(`Edited At: ${r.editedAt ? new Date(r.editedAt).toLocaleString() : 'N/A'}`)
-          .text(`Attachment: ${r.attachment || 'None'}`)
-          .moveDown();
+          .fontSize(13)
+          .fillColor('#111827')
+          .text(header);
+
+        const ts = r.editedAt ? asLocal(r.editedAt) + ' (edited)' : asLocal(ticket.createdAt);
+        doc.fontSize(10).fillColor('#6b7280').text(ts);
+        doc.moveDown(0.25);
+
+        doc.fontSize(12).fillColor('#111827').text(r.message || '-', { align: 'left' });
+
+        if (r.attachment) {
+          tryEmbedAttachment(r.attachment, 'Response Attachment');
+        }
+
+        // Divider between responses
+        if (index < ticket.responses.length - 1) {
+          doc.moveDown(0.5);
+          doc
+            .moveTo(50, doc.y)
+            .lineTo(doc.page.width - 50, doc.y)
+            .strokeColor('#e5e7eb')
+            .stroke();
+          doc.moveDown(0.5);
+        }
       });
     }
 

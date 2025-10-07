@@ -12,7 +12,7 @@ function CreateTicket() {
     name: "",
     email: "",
     subject: "",
-    inquiryType: "auction",
+    inquiryType: "general",
     description: "",
     attachment: null,
   });
@@ -29,7 +29,7 @@ function CreateTicket() {
           name: t.name || "",
           email: t.email || "",
           subject: t.subject || "",
-          inquiryType: t.inquiryType || "auction",
+          inquiryType: t.inquiryType || "general",
           description: t.description || "",
           attachment: null,
         });
@@ -83,6 +83,7 @@ function CreateTicket() {
       if (editingId) {
         navigate("/ticketList", { state: { updatedTicket: res.data.ticket, isEdit: true } });
       } else {
+        window.alert("This ticket can only be edited within 3 hours of creation.");
         navigate("/ticketList", { state: { newTicket: res.data.ticket, isEdit: false } });
       }
     } catch (err) {
@@ -136,18 +137,29 @@ function CreateTicket() {
             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
-          <select
-            name="inquiryType"
-            value={formData.inquiryType}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="auction">Auction</option>
-            <option value="payment">Payment</option>
-            <option value="feedback">Feedback</option>
-            <option value="technical">Technical</option>
-          </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <div className="grid grid-cols-7 gap-2 mb-3">
+              {[
+                { key: 'general', label: 'General', color: 'bg-gray-200' },
+                { key: 'seller', label: 'Seller', color: 'bg-indigo-200' },
+                { key: 'buyer', label: 'Buyer', color: 'bg-green-200' },
+                { key: 'verification', label: 'Verification', color: 'bg-yellow-200' },
+                { key: 'support', label: 'Support', color: 'bg-blue-200' },
+                { key: 'auction', label: 'Auction', color: 'bg-purple-200' },
+                { key: 'payment', label: 'Payment', color: 'bg-pink-200' },
+              ].map((c) => (
+                <button
+                  key={c.key}
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, inquiryType: c.key }))}
+                  className={`h-10 rounded flex items-center justify-center text-sm font-medium ${c.color} ${formData.inquiryType === c.key ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <textarea
             name="description"

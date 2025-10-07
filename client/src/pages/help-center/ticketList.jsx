@@ -239,6 +239,12 @@ function TicketList() {
         )}
       </div>
 
+      {(location.state?.newTicket) && (
+        <div className="mb-4 p-3 rounded-lg bg-green-50 text-green-700 border border-green-200">
+          ✅ New ticket created: <strong>{location.state.newTicket.subject}</strong>
+        </div>
+      )}
+
       {filteredTickets.map(ticket => (
         <div key={ticket._id} className="bg-white rounded-xl shadow p-4 space-y-2">
           <div className="flex justify-between items-start">
@@ -247,8 +253,24 @@ function TicketList() {
                 <h2 className="text-xl font-bold text-gray-700">{ticket.subject}</h2>
                 <span className={statusBadgeClass(ticket.status)}>{ticket.status?.toUpperCase()}</span>
                 <span className={typeBadge(ticket.inquiryType)}>{ticket.inquiryType?.toUpperCase()}</span>
+                    {ticket.attachment && (
+                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                        <span>📎</span>
+                        <span>Attachment</span>
+                      </span>
+                    )}
+                    <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">💬 {Array.isArray(ticket.responses) ? ticket.responses.length : 0}</span>
               </div>
-              <p className="text-gray-600">{ticket.description}</p>
+                  <p className="text-gray-600">{ticket.description}</p>
+                  <div className="mt-1 text-xs text-gray-500">
+                    <span>From: {ticket.name} ({ticket.email})</span>
+                  </div>
+                  {getUnseenCount(ticket) > 0 && (
+                    <div className="mt-2 inline-flex items-center gap-1 text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded-full">
+                      <span>🔔</span>
+                      <span>{getUnseenCount(ticket)} new response{getUnseenCount(ticket) > 1 ? 's' : ''}</span>
+                    </div>
+                  )}
               <p className="text-sm text-gray-400">Last updated: {new Date(ticket.updatedAt).toLocaleString()}</p>
             </div>
 
@@ -286,13 +308,23 @@ function TicketList() {
                 </div>
               </button>
 
-              <button
-                onClick={() => handleEdit(ticket)}
-                title="Edit"
-                className="px-3 py-1.5 rounded-lg bg-yellow-200 text-yellow-800 text-xs"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
+              {(() => {
+                const created = new Date(ticket.createdAt).getTime();
+                const threeHoursMs = 3 * 60 * 60 * 1000;
+                const canEdit = Date.now() - created <= threeHoursMs;
+                return (
+                  <button
+                    onClick={() => canEdit && handleEdit(ticket)}
+                    title={canEdit ? "Edit" : "Edit disabled after 3 hours"}
+                    className={`px-3 py-1.5 rounded-lg text-xs ${
+                      canEdit ? "bg-yellow-200 text-yellow-800" : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    }`}
+                    disabled={!canEdit}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                );
+              })()}
 
               <button
                 onClick={() => handleDelete(ticket._id)}
@@ -327,6 +359,27 @@ function TicketList() {
               <p><strong>Name:</strong> {ticket.name}</p>
               <p><strong>Email:</strong> {ticket.email}</p>
               <p><strong>Created:</strong> {new Date(ticket.createdAt).toLocaleString()}</p>
+              {ticket.attachment && (
+                <div className="mt-2">
+                  <strong>Attachment:</strong>{' '}
+                  <a
+                    href={ticket.attachment}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    View File
+                  </a>
+                  <div className="mt-2">
+                    <img
+                      src={ticket.attachment}
+                      alt="attachment preview"
+                      className="max-h-40 rounded border"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  </div>
+                </div>
+              )}
               {ticket.responses?.length > 0 && (
                 <div className="mt-2">
                   <strong>Latest Response:</strong>
