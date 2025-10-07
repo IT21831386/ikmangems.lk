@@ -3,6 +3,7 @@ import OrderHistoryPage from "../user/OrderHistoryPage";
 import AccountSettings from "../user/AccountSettings";
 import Gems from "../gem-listing/GemDisplay";
 import GemCreate from "../gem-listing/Gemstone";
+import GemAnalytics from "./GemAnalytics";
 
 // Mock data for demonstration
 const mockGems = [
@@ -619,6 +620,7 @@ export default function SellerDashboard() {
     { title: "Dashboard", key: "dashboard", icon: "" },
     { title: "My Listings", key: "listings", icon: "" },
     { title: "Add New Gem", key: "add-gem", icon: "" },
+    { title: "Analytics", key: "analytics", icon: "" },
     { title: "Revenue", key: "revenue", icon: "" },
     { title: "Profile", key: "profile", icon: "" },
   ];
@@ -633,6 +635,8 @@ export default function SellerDashboard() {
         return <GemCreate />;
       case "revenue":
         return <OrderHistoryPage />;
+      case "analytics":
+        return <GemAnalytics />;
 
       case "profile":
         return <AccountSettings />;
