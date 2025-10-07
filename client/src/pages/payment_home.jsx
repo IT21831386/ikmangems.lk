@@ -48,7 +48,7 @@ const PaymentForm = () => {
         ...prev,
         bidId: bidId,
         amount: Math.round(parseFloat(amount) * 0.15).toString(),
-        remark: `Penalty fee for bid rejection - Bid ID: ${bidId}`
+        remark: `Penalty fee for bid rejection ${bidId}`
       }));
     } else if (type === 'registration') {
       setPaymentType('registration');
@@ -67,7 +67,7 @@ const PaymentForm = () => {
         ...formData,
         bidId: bidId,
         amount: amount || formData.amount, // Use provided amount or keep existing
-        remark: `Payment for Bid ID: ${bidId}`
+        remark: `Payment for ${bidId}`
       };
       console.log('Setting formData for regular bid payment:', newFormData);
       setFormData(newFormData);
@@ -623,6 +623,7 @@ const PaymentForm = () => {
       if (response.ok && result.success) {
         toast.success("Bank deposit submitted successfully!");
         setPaymentStatus("pending");
+        setCurrentPage("pending"); // Navigate to pending page
       } else {
         toast.error(result.message || "Failed to submit bank deposit");
       }
@@ -954,7 +955,7 @@ const PaymentForm = () => {
             setErrors({});
             setCurrentPage(paymentMethod);
           }}
-          className="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-[30px] transition-all duration-300 shadow-lg transform hover:scale-105"
+          className="px-10 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all duration-300 shadow-lg transform hover:scale-105"
           style={{ fontFamily: 'Poppins', fontSize: '18px' }}
         >
           Next
@@ -1120,8 +1121,7 @@ const PaymentForm = () => {
                     setPreviewImage(null); 
                     setFormData(prev => ({ ...prev, slip: null })); 
                   }} 
-                  className="px-4 py-2 bg-red-500 text-white hover:bg-red-600" 
-                  style={{ borderRadius: "20px" }}
+                  className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded-lg" 
                 >
                   Remove
                 </button>
@@ -1137,13 +1137,13 @@ const PaymentForm = () => {
                 />
                 <label
                   htmlFor="fileInput"
-                  className="inline-block px-6 py-3 bg-orange-500 text-black font-semibold cursor-pointer hover:bg-orange-600 transition-colors"
-                  style={{ borderRadius: "20px", fontFamily: "Poppins" }}
+                  className="inline-block px-6 py-2 bg-orange-500 text-black font-semibold cursor-pointer hover:bg-orange-600 transition-colors rounded-lg"
+                  style={{ fontFamily: "Poppins" }}
                 >
                   Choose File
                 </label>
                  <p className="text-gray-600 mt-4" style={{ fontFamily: "Poppins" }}>
-                   Select any image - only JPEG/JPG/PNG accepted (max 5 MB)
+                   Upload slip - only JPEG/JPG/PNG accepted (max 5MB)
                  </p>
               </>
             )}
@@ -1154,8 +1154,8 @@ const PaymentForm = () => {
           <button 
             type="button" 
             onClick={goBackToHome} 
-            className="px-8 py-3 bg-gray-500 text-white hover:bg-gray-600 transition-colors" 
-            style={{ borderRadius: "30px", fontFamily: "Poppins" }}
+            className="px-8 py-2 bg-gray-500 text-white hover:bg-gray-600 transition-colors rounded-lg" 
+            style={{ fontFamily: "Poppins" }}
           >
             Back
           </button>
@@ -1163,12 +1163,12 @@ const PaymentForm = () => {
             type="button" 
             onClick={handleBankDepositConfirm}
             disabled={isSubmitting}
-            className={`px-8 py-3 text-white transition-colors ${
+            className={`px-8 py-2 text-white transition-colors rounded-lg ${
               isSubmitting 
                 ? 'bg-blue-300 cursor-not-allowed' 
                 : 'bg-blue-500 hover:bg-blue-600'
             }`}
-            style={{ borderRadius: "30px", fontFamily: "Poppins" }}
+            style={{ fontFamily: "Poppins" }}
           >
             {isSubmitting ? 'Submitting...' : 'Confirm'}
           </button>
@@ -1178,8 +1178,8 @@ const PaymentForm = () => {
   );
 
 
-  const renderPaymentPendingOverlay = () => (
-    <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 bg-opacity-95 flex items-center justify-center z-50" style={{ borderRadius: "30px" }}>
+  const renderPaymentPendingPage = () => (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex flex-col justify-center items-center p-6" style={{ fontFamily: "Poppins" }}>
       <div className="bg-white p-10 max-w-md mx-4 text-center relative shadow-2xl" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>
         <button 
           onClick={clearAllData}
@@ -1223,39 +1223,13 @@ const PaymentForm = () => {
                 {paymentType === 'penalty' ? 'Penalty Payment Form' : paymentType === 'registration' ? 'Seller Registration Payment' : 'Custom Order Form'}
               </h1>
               
-              {/* Penalty Payment Info */}
-              {paymentType === 'penalty' && penaltyData && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
-                  <div className="text-center">
-                    <h3 className="text-lg font-semibold text-red-800 mb-3">Penalty Payment Details</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <div className="text-center">
-                        <p className="text-gray-600 mb-1">Original Bid Amount</p>
-                        <p className="text-xl font-bold text-gray-900">
-                          LKR {penaltyData.originalAmount.toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-red-600 mb-1">Penalty Fee (15%)</p>
-                        <p className="text-xl font-bold text-red-600">
-                          LKR {penaltyData.penaltyAmount.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-sm text-red-700 mt-3">
-                      Bid ID: {penaltyData.bidId}
-                    </p>
-                  </div>
-                </div>
-              )}
               
               {/* Registration Payment Info */}
               {paymentType === 'registration' && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
                   <div className="text-center">
-                    <h3 className="text-lg font-semibold text-green-800 mb-3">Registration Fee Payment</h3>
                     <div className="text-center">
-                      <p className="text-green-600 mb-1">Registration Fee</p>
+                      <p className="text-green-800 mb-2 font-semibold text-lg">Registration Fee</p>
                       <p className="text-xl font-bold text-green-800">
                         LKR 1,000
                       </p>
@@ -1274,9 +1248,10 @@ const PaymentForm = () => {
           {currentPage === "bank" && (
             <div className="relative">
               {renderBankDepositPortal}
-              {/* Payment Pending Overlay - only show on bank deposit page */}
-              {paymentStatus === "pending" && renderPaymentPendingOverlay()}
         </div>
+          )}
+          {currentPage === "pending" && (
+            renderPaymentPendingPage()
           )}
           {currentPage === "online" && (
             <OnlinePayment 

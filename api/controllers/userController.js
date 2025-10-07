@@ -12,6 +12,46 @@ export async function getAllUsers (req, res) {
     }
 }
 
+export async function getUserProfile (req, res) {
+    try {
+        const { email } = req.query;
+        
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+        
+        const user = await userModel.findOne({ email });
+        
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        
+        // Return user data without sensitive information
+        const userProfile = {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            email: user.email,
+            phone: user.phone,
+            country: user.country,
+            city: user.city,
+            address: user.address,
+            bio: user.bio,
+            role: user.role,
+            status: user.status,
+            isAccountVerified: user.isAccountVerified,
+            savedCards: user.savedCards || [],
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+        };
+        
+        res.status(200).json(userProfile);
+        
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 export async function createUser (req, res) {
     try {
         const { firstName, lastName, username, email, password, role, phone, country, city, address, bio, status, isAccountVerified } = req.body;

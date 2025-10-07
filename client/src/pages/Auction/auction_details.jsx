@@ -522,12 +522,12 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
         )
       );
       
-      // Navigate to payment form with formatted bid ID (same format as BidManagement.jsx)
-      navigate(`/payment-form?bidId=${formattedBidId}`);
+      // Navigate to payment form with formatted bid ID for regular payment (same format as BidManagement.jsx)
+      navigate(`/payment-form?type=regular&bidId=${formattedBidId}`);
     } catch (error) {
       console.error("Error fetching bids:", error);
       // Fallback to raw bid ID if API call fails
-      navigate(`/payment-form?bidId=${bidId}`);
+      navigate(`/payment-form?type=regular&bidId=${bidId}`);
     }
   };
 
@@ -1093,8 +1093,8 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
 
       {/* Penalty Message Container */}
       {showPenaltyMessage && selectedBidForRejection && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+        <div className="fixed inset-0 bg-white bg-opacity-95 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border-4 border-gray-200">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="text-red-600" size={32} />

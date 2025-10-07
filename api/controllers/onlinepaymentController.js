@@ -1,4 +1,5 @@
 import OnlinePayment from "../models/onlinepaymentModel.js";
+import User from "../models/userModel.js";
 import textlkService from "../services/textlkService.js";
 import emailService from "../services/emailService.js";
 import axios from "axios";
@@ -22,7 +23,8 @@ export const createOnlinePayment = async (req, res) => {
       emailAddress,
       contactNumber,
       billingAddress,
-      paymentType
+      paymentType,
+      saveCardDetails
     } = req.body;
     
     console.log('Extracted paymentType:', paymentType);
@@ -75,6 +77,57 @@ export const createOnlinePayment = async (req, res) => {
 
     await onlinePayment.save();
     console.log("Online payment saved successfully:", onlinePayment._id);
+
+    // Save card details if requested
+    if (saveCardDetails) {
+      try {
+        // User model is already imported at the top
+        
+        // Find user by email
+        console.log('Looking for user with email:', emailAddress);
+        const user = await User.findOne({ email: emailAddress });
+        console.log('User found:', user ? 'Yes' : 'No');
+        if (user) {
+          // Create masked card number for storage
+          const maskedCardNumber = `**** **** **** ${cardNumber.slice(-4)}`;
+          
+          // Create card object
+          const cardData = {
+            cardNumber: maskedCardNumber,
+            cardType: cardType.charAt(0).toUpperCase() + cardType.slice(1),
+            expiryDate: `${expiryMonth}/${expiryYear}`,
+            holderName: cardHolderName,
+            isDefault: false,
+            addedAt: new Date()
+          };
+
+          // Add card to user's saved cards
+          if (!user.savedCards) {
+            user.savedCards = [];
+          }
+          
+          // Check if card already exists
+          const existingCard = user.savedCards.find(card => 
+            card.cardNumber === maskedCardNumber && 
+            card.expiryDate === cardData.expiryDate
+          );
+          
+          if (!existingCard) {
+            user.savedCards.push(cardData);
+            await user.save();
+            console.log("Card details saved for user:", emailAddress);
+            console.log("User's saved cards after saving:", user.savedCards);
+          } else {
+            console.log("Card already exists for user:", emailAddress);
+          }
+        } else {
+          console.log("User not found for email:", emailAddress);
+        }
+      } catch (cardError) {
+        console.error("Error saving card details:", cardError);
+        // Don't fail the payment if card saving fails
+      }
+    }
 
     res.status(201).json({
       success: true,

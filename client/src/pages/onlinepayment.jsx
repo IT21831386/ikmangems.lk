@@ -22,6 +22,8 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
     billingAddress: bidderData?.billingAddress || "",
   });
 
+  const [saveCardDetails, setSaveCardDetails] = useState(false);
+
   const [currentStep, setCurrentStep] = useState(1);
   const [otpCode, setOtpCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -411,7 +413,8 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
       setIsSubmitting(true);
       const requestData = {
         ...formData,
-        paymentType: paymentType
+        paymentType: paymentType,
+        saveCardDetails: saveCardDetails
       };
       console.log('Sending payment data to backend:', requestData);
       
@@ -620,10 +623,10 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
               )}
               
               <div className="flex justify-end gap-4 mt-8">
-                <button onClick={goBack} className="px-8 py-3 bg-gray-500 hover:bg-gray-600 text-white transition-colors" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>
+                <button onClick={goBack} className="px-8 py-2 bg-gray-500 hover:bg-gray-600 text-white transition-colors rounded-lg" style={{ fontFamily: "Poppins" }}>
                   Back
                 </button>
-                <button onClick={nextStep} className="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white transition-colors" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>
+                <button onClick={nextStep} className="px-8 py-2 bg-blue-500 hover:bg-blue-600 text-white transition-colors rounded-lg" style={{ fontFamily: "Poppins" }}>
                   Next
                 </button>
               </div>
@@ -652,6 +655,7 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
                       checked={formData.cardType === "visa"}
                       onChange={handleInputChange}
                       className="mr-2"
+                      style={{ accentColor: '#dc2626' }}
                     />
                     VISA
                   </label>
@@ -663,6 +667,7 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
                       checked={formData.cardType === "mastercard"}
                       onChange={handleInputChange}
                       className="mr-2"
+                      style={{ accentColor: '#dc2626' }}
                     />
                     MasterCard
                   </label>
@@ -794,11 +799,29 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
                 </p>
               </div>
               
+              {/* Save Card Details Option */}
+              <div className="mt-6">
+                <label className="flex items-center cursor-pointer" style={{ fontFamily: "Poppins" }}>
+                  <input
+                    type="checkbox"
+                    checked={saveCardDetails}
+                    onChange={(e) => setSaveCardDetails(e.target.checked)}
+                    className="mr-3 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <span className="text-sm text-gray-700">
+                    Save card details for future payments
+                  </span>
+                </label>
+                <p className="mt-1 text-xs text-gray-500" style={{ fontFamily: "Poppins" }}>
+                  Your card details will be securely stored for faster checkout next time
+                </p>
+              </div>
+              
               <div className="flex justify-end gap-4 mt-8">
-                <button onClick={prevStep} className="px-8 py-3 bg-gray-500 hover:bg-gray-600 text-white transition-colors" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>
+                <button onClick={prevStep} className="px-8 py-2 bg-gray-500 hover:bg-gray-600 text-white transition-colors rounded-lg" style={{ fontFamily: "Poppins" }}>
                   Back
                 </button>
-                <button onClick={nextStep} className="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white transition-colors" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>
+                <button onClick={nextStep} className="px-8 py-2 bg-blue-500 hover:bg-blue-600 text-white transition-colors rounded-lg" style={{ fontFamily: "Poppins" }}>
                   Next
                 </button>
               </div>
@@ -835,34 +858,31 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
                 <div className="flex justify-center space-x-4 mt-6">
                   <button 
                     onClick={handleResendOTP}
-                    className="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white transition-colors" 
-                    style={{ borderRadius: "30px", fontFamily: "Poppins" }}
+                    className="px-4 py-1.5 bg-gray-500 hover:bg-gray-600 text-white transition-colors rounded-lg text-sm" 
+                    style={{ fontFamily: "Poppins" }}
                   >
                     RESEND
                   </button>
                   <button
                     onClick={() => setCurrentStep(1)}
-                    className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white transition-colors"
-                    style={{ borderRadius: "30px", fontFamily: "Poppins" }}
+                    className="px-4 py-1.5 bg-red-500 hover:bg-red-600 text-white transition-colors rounded-lg text-sm"
+                    style={{ fontFamily: "Poppins" }}
                   >
                     CANCEL
                   </button>
                 </div>
-                <p className="mt-4 text-xs text-gray-500" style={{ fontFamily: "Poppins" }}>
-                  This page will automatically timeout after 30 seconds.
-                </p>
               </div>
               
               <div className="mt-6">
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className={`px-8 py-3 text-white transition-colors ${
+                  className={`px-8 py-2 text-white transition-colors rounded-lg ${
                     isSubmitting 
                       ? 'bg-blue-300 cursor-not-allowed' 
                       : 'bg-blue-500 hover:bg-blue-600'
                   }`}
-                  style={{ borderRadius: "30px", fontFamily: "Poppins" }}
+                  style={{ fontFamily: "Poppins" }}
                 >
                   {isSubmitting ? "Verifying..." : "Confirm"}
                 </button>
