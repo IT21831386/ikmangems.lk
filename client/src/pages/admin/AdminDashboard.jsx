@@ -17,6 +17,7 @@ import {
   Gavel,
   Users, 
   CreditCard,
+  HelpCircle,
 } from "lucide-react";
 import axios from "axios";
 
@@ -43,6 +44,7 @@ import AdminPaymentStatus from "./payments/adminPaymentStatus";
 import ListingApprovals from "./listing/listing-approval";
 import Ticket from "../help-center/SupportDashboard";
 import BidManagement from "./BidManagement";
+import FAQManagement from "./FAQManagement";
 
 import {
   DropdownMenu,
@@ -132,6 +134,9 @@ export default function ManageUsers() {
       case "ticket":
         return <Ticket />;
 
+      case "faq":
+        return <FAQManagement />;
+
       case "profile":
         return <AccountSettings />;
 
@@ -214,6 +219,15 @@ export default function ManageUsers() {
                   className={activeSection === "ticket" ? "bg-gray-200" : ""}
                 >
                   <CreditCard className="mr-2" /> Ticket Management
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setActiveSection("faq")}
+                  className={activeSection === "faq" ? "bg-gray-200" : ""}
+                >
+                  <HelpCircle className="mr-2" /> FAQ Management
                 </SidebarMenuButton>
               </SidebarMenuItem>
 

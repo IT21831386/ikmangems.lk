@@ -1,5 +1,6 @@
 import React from "react";
 import { Search, User, Menu, Star, Shield, Award } from "lucide-react";
+import ChatBot from "../components/ChatBot";
 
 // Hero Section Component
 const HeroSection = () => {
@@ -227,6 +228,7 @@ const App = () => {
       <WelcomeSection />
       <PopularGems />
       <VerifiedSellers />
+      <ChatBot />
     </div>
   );
 };
