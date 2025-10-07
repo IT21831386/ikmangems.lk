@@ -6,8 +6,8 @@ import {
   getAllOnlinePayments,
   updatePaymentStatus,
   completePayment,
-  //verifyOTP,
-  //resendOTP,
+  verifyOTP,
+  resendOTP,
   testServer,
   //testTextLK,
   //testSMS,
@@ -27,8 +27,8 @@ router.get("/:id", getOnlinePaymentById);
 
 // POST routes
 router.post("/", createOnlinePayment);
-//router.post("/verify-otp", verifyOTP);
-//router.post("/resend-otp", resendOTP);
+router.post("/verify-otp", verifyOTP);
+router.post("/resend-otp", resendOTP);
 //router.post("/test-sms", testSMS);
 router.post("/test-email", testEmail);
 

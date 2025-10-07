@@ -74,3 +74,4 @@ async function testVerificationEndpoints() {
 
 // Run the test
 testVerificationEndpoints();
+

@@ -1,5 +1,5 @@
 import OnlinePayment from "../models/onlinepaymentModel.js";
-//import textlkService from "../services/textlkService.js";
+import textlkService from "../services/textlkService.js";
 import emailService from "../services/emailService.js";
 //import axios from "axios";
 
@@ -31,12 +31,14 @@ export const createOnlinePayment = async (req, res) => {
     }
 
     // Generate OTP
-    //const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
     // Send OTP via TextLK
-    /*console.log('Sending OTP to:', contactNumber);
-    console.log('Generated OTP:', otp);
-    const smsResult = await textlkService.sendOTP(contactNumber, `Your OTP for ikmangems.lk payment verification is: ${otp}. Valid for 7 minutes.`);
+    console.log('Sending OTP to:', contactNumber);
+    const smsResult = await textlkService.sendOTP(
+      contactNumber,
+      `Your OTP for ikmangems.lk payment verification is: ${otp}. Valid for 7 minutes.`
+    );
     console.log('SMS Result:', smsResult);
     
     if (!smsResult.success) {
@@ -46,7 +48,7 @@ export const createOnlinePayment = async (req, res) => {
         message: "Failed to send OTP",
         error: smsResult.error
       });
-    }*/
+    }
 
     // Create new online payment record (without sensitive card details)
     const onlinePayment = new OnlinePayment({
@@ -61,8 +63,8 @@ export const createOnlinePayment = async (req, res) => {
       contactNumber,
       billingAddress,
       status: 'pending',
-      //otp: otp,
-      //otpExpiry: new Date(Date.now() + 7 * 60 * 1000) // 7 minutes from now
+      otp: otp,
+      otpExpiry: new Date(Date.now() + 7 * 60 * 1000) // 7 minutes from now
     });
 
     await onlinePayment.save();
@@ -276,7 +278,7 @@ export const updatePaymentStatus = async (req, res) => {
 };
 
 // Verify OTP
-/*export const verifyOTP = async (req, res) => {
+export const verifyOTP = async (req, res) => {
   try {
     const { paymentId, otp } = req.body;
 
@@ -315,7 +317,7 @@ export const updatePaymentStatus = async (req, res) => {
     //console.log('OTP Expired:', new Date() > onlinePayment.otpExpiry);
 
     // Verify OTP
-    /*if (onlinePayment.otp !== otp) {
+    if (onlinePayment.otp !== otp) {
       return res.status(400).json({
         success: false,
         message: "Invalid OTP",
@@ -376,7 +378,10 @@ export const resendOTP = async (req, res) => {
     const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
     
     // Send OTP via TextLK
-    const smsResult = await textlkService.sendOTP(onlinePayment.contactNumber);
+    const smsResult = await textlkService.sendOTP(
+      onlinePayment.contactNumber,
+      `Your OTP for ikmangems.lk payment verification is: ${newOtp}. Valid for 7 minutes.`
+    );
     
     if (!smsResult.success) {
       return res.status(500).json({
@@ -408,7 +413,7 @@ export const resendOTP = async (req, res) => {
       error: error.message
     });
   }
-};*/
+};
 
 // Simple server test
 export const testServer = async (req, res) => {

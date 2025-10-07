@@ -10,3 +10,4 @@ const BusinessVerification = () => {
 };
 
 export default BusinessVerification;
+
