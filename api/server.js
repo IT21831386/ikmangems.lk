@@ -9,6 +9,7 @@ import otpRoutes from "./routes/otpRoutes.js";
 import authRouter from "./routes/authRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import nicRouter from './routes/nicRoutes.js'
+import payoutRouter from "./routes/payoutRoute.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import onlinePaymentRoutes from "./routes/onlinepaymentRoutes.js";
 import { connectDB } from "./config/db.js";
@@ -67,6 +68,7 @@ app.use("/api/user", userRouter);
 app.use('/api/nic', nicRouter);
 // Serve static files for uploaded images
 app.use('/uploads', express.static('uploads'));
+app.use("/api/payout", payoutRouter);
 
 app.use("/api/otp", otpRoutes);
 app.use("/api/bids", bidRoutes);

@@ -91,6 +91,12 @@ const userSchema = new mongoose.Schema(
       default: "unpaid",
     },
 
+     payoutStatus: {
+      type: String,
+      enum: ["not_completed", "completed"],
+      default: "not_completed",
+    },
+
     // Step 6 - Platform Review (Final Admin Approval)
     sellerVerificationStatus: {
       type: String,

@@ -620,7 +620,7 @@ const VerificationCenter = () => {
                         {step.id === 5 && (status === 'available' || status === 'rejected') && (
                           <div className="mt-4">
                             <a
-                              href="/setup-payout"
+                              href="/setup-payout-method"
                               className={`inline-block px-6 py-2 ${
                                 status === 'rejected' ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
                               } text-white font-medium rounded-lg transition-colors duration-200`}

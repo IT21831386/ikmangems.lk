@@ -1,5 +1,6 @@
 // controllers/verificationController.js
 import userModel from "../models/userModel.js";
+import payoutModel from "../models/payoutModel.js";
 
 // Get User's Complete Verification Status
 export const getVerificationStatus = async (req, res) => {
@@ -17,12 +18,16 @@ export const getVerificationStatus = async (req, res) => {
       });
     }
 
+    // Check payout status from payout model
+    const payout = await payoutModel.findOne({ userId });
+    const payoutStatus = payout ? 'completed' : 'not_completed';
+
     res.json({
       success: true,
       data: {
         nicStatus: user.nicStatus || 'not_uploaded',
         businessStatus: user.businessStatus || 'not_uploaded',
-        payoutStatus: 'not_completed', // This would be from a separate payout model
+        payoutStatus: payoutStatus,
         registrationPaymentStatus: user.registrationPaymentStatus || 'unpaid',
         sellerVerificationStatus: user.sellerVerificationStatus || 'not_started',
         nicFrontImage: user.nicFrontImage,

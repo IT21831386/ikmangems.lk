@@ -42,6 +42,7 @@ import DisplayUsers from "./pages/admin/admin-um/DisplayUsers";
 import OrderHistoryPage from "./pages/user/OrderHistoryPage";
 import EditUsers from "./pages/admin/admin-um/EditUsers";
 import SendEmails from "./pages/admin/admin-um/SendEmails";
+import SetupPayoutMethod from "./pages/seller/SetupPayoutMethod"
 
 //import DisplayUsers from "./pages/admin/admin-um/DisplayUsers";
 //import OrderHistoryPage from "./pages/user/OrderHistoryPage";
@@ -95,6 +96,7 @@ const App = () => {
       <Route path="/upload-business" element={<BusinessVerification />} />
       <Route path="/admin/nic-review" element={<AdminNICReview />} />
       <Route path="/admin/document-review" element={<AdminDocumentReview />} />
+      <Route path="/setup-payout-method" element={<SetupPayoutMethod />} />
 
       <Route
         path="/bidder-dashboard"
