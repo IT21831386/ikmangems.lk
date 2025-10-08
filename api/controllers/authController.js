@@ -11,6 +11,7 @@ const cookieOptions = {
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
 };
 
+// ✅ Middleware to verify token
 export const verifyToken = (req, res, next) => {
   const token = req.cookies.token;
 
@@ -30,16 +31,15 @@ export const verifyToken = (req, res, next) => {
   }
 };
 
+// controllers/authController.js
 export const register = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { firstName, lastName, email, password, role } = req.body;
 
-  if (!name || !email || !password || !role) {
+  if (!firstName || !lastName || !email || !password) {
     return res.json({ success: false, message: "Missing details" });
   }
 
-  // Optional: Validate role (you can remove this if not needed)
-  const allowedRoles = ["buyer", "seller", "admin"];
-  if (!allowedRoles.includes(role)) {
+  if (role && !["user", "seller", "admin"].includes(role)) {
     return res.json({ success: false, message: "Invalid role" });
   }
 
@@ -52,10 +52,11 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new userModel({
-      name,
+      firstName,
+      lastName,
       email,
       password: hashedPassword,
-      role: role,
+      role: role || "user",
     });
 
     await user.save();
@@ -71,22 +72,23 @@ export const register = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    await transporter.sendMail({
-      from: process.env.SENDER_EMAIL,
-      to: email,
-      subject: "Welcome!",
-      text: `Welcome ${name}! Your account has been created as ${user.role}.`,
-    });
-
     return res.json({
       success: true,
-      user: { id: user._id, name, email, role: user.role },
+      user: {
+        id: user._id,
+        firstName,
+        lastName,
+        email,
+        role: user.role,
+      },
     });
   } catch (error) {
     return res.json({ success: false, message: error.message });
   }
 };
 
+
+// ✅ Login
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -110,9 +112,7 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "15m",
-      }
+      { expiresIn: "15m" }
     );
 
     res.cookie("token", token, {
@@ -136,6 +136,7 @@ export const login = async (req, res) => {
   }
 };
 
+// ✅ Logout
 export const logout = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
@@ -145,6 +146,7 @@ export const logout = (req, res) => {
   return res.json({ success: true, message: "Logged Out" });
 };
 
+// ✅ Check if authenticated
 export const isAuthenticated = (req, res) => {
   const token = req.cookies.token;
   if (!token) {
@@ -163,6 +165,7 @@ export const isAuthenticated = (req, res) => {
   }
 };
 
+// ✅ Send verification OTP
 export const sendVerifyOtp = async (req, res) => {
   try {
     const { userId } = req.body;
@@ -190,6 +193,7 @@ export const sendVerifyOtp = async (req, res) => {
   }
 };
 
+// ✅ Verify email
 export const verifyEmail = async (req, res) => {
   const { userId, otp } = req.body;
   if (!userId || !otp)
@@ -216,6 +220,7 @@ export const verifyEmail = async (req, res) => {
   }
 };
 
+// ✅ Send reset OTP
 export const sendResetOtp = async (req, res) => {
   const { email } = req.body;
   if (!email) return res.json({ success: false, message: "Email required" });
@@ -243,6 +248,7 @@ export const sendResetOtp = async (req, res) => {
   }
 };
 
+// ✅ Reset password
 export const resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;
   if (!email || !otp || !newPassword)
@@ -270,4 +276,103 @@ export const resetPassword = async (req, res) => {
   } catch (error) {
     return res.json({ success: false, message: error.message });
   }
+
 };
+
+
+// controllers/authController.js
+
+// ✅ Verify reset OTP
+export const verifyResetOtp = async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp)
+    return res.json({ success: false, message: "Email and OTP are required" });
+
+  try {
+    const user = await userModel.findOne({ email });
+    if (!user) return res.json({ success: false, message: "User not found" });
+
+    if (!user.resetOtp || user.resetOtp !== otp)
+      return res.json({ success: false, message: "Invalid OTP" });
+
+    if (user.resetOtpExpireAt < Date.now())
+      return res.json({ success: false, message: "OTP expired" });
+
+    return res.json({ success: true, message: "OTP verified successfully" });
+  } catch (error) {
+    return res.json({ success: false, message: error.message });
+  }
+};
+
+
+
+export const sendCustomEmail = async (req, res) => {
+  try {
+    const { to, subject, message, userName } = req.body;
+
+    if (!to || !subject || !message) {
+      return res.json({ success: false, message: "Email, subject, and message are required" });
+    }
+
+    const personalizedMessage = userName 
+      ? `Dear ${userName},\n\n${message}\n\nBest regards,\nAdmin Team`
+      : message;
+
+    await transporter.sendMail({
+      from: process.env.SENDER_EMAIL,
+      to: to,
+      subject: subject,
+      text: personalizedMessage,
+      html: `<div style="font-family: Arial, sans-serif; max-width:600px;">
+              ${userName ? `<p>Dear <strong>${userName}</strong>,</p>` : ""}
+              <div>${message.replace(/\n/g, "<br>")}</div>
+              <hr>
+              <p>Best regards,<br><strong>Admin Team</strong></p>
+            </div>`,
+    });
+
+    res.json({ success: true, message: "Email sent successfully" });
+  } catch (error) {
+    console.error("Email sending error:", error);
+    res.json({ success: false, message: "Failed to send email: " + error.message });
+  }
+};
+
+
+
+
+export const sendBulkEmail = async (req, res) => {
+  try {
+    const { recipients, subject, message } = req.body;
+
+    if (!recipients || !Array.isArray(recipients) || recipients.length === 0)
+      return res.json({ success: false, message: "Recipients array is required" });
+
+    const emailPromises = recipients.map((recipient) => {
+      const personalizedMessage = recipient.name
+        ? `Dear ${recipient.name},\n\n${message}\n\nBest regards,\nAdmin Team`
+        : message;
+
+      return transporter.sendMail({
+        from: process.env.SENDER_EMAIL,
+        to: recipient.email,
+        subject: subject,
+        text: personalizedMessage,
+        html: `<div style="font-family: Arial, sans-serif; max-width:600px;">
+                ${recipient.name ? `<p>Dear <strong>${recipient.name}</strong>,</p>` : ""}
+                <div>${message.replace(/\n/g, "<br>")}</div>
+                <hr>
+                <p>Best regards,<br><strong>Admin Team</strong></p>
+              </div>`,
+      });
+    });
+
+    await Promise.all(emailPromises);
+    res.json({ success: true, message: `Bulk email sent to ${recipients.length} recipients` });
+  } catch (error) {
+    console.error("Bulk email error:", error);
+    res.json({ success: false, message: "Failed to send bulk email: " + error.message });
+  }
+};
+

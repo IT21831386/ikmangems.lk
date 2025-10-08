@@ -368,7 +368,7 @@ const GemstoneCRUDDisplay = () => {
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-800 text-white">
+              <thead className="bg-gray-100 text-gray-600">
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">
                     ID
