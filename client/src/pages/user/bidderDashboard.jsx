@@ -1,7 +1,7 @@
 //Dana
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import PaymentHistory from "./paymentHistory";
+import PaymentHistory from "../admin/payments/paymentHistory";
 import AccountSettings from "./AccountSettings"; 
 import MyAuctions from "./MyAuctions"
 
@@ -59,6 +59,7 @@ export default function ManageUsers() {
   const sidebarItems = [
     { title: "Dashboard", key: "dashboard", icon: Home },
     { title: "My Auctions", key: "myAuctions", icon: Gavel },
+    { title: "Payment History", key: "Payment History", icon: Wallet },
     { title: "Profile", key: "profile", icon: UserCog },
   ];
 
@@ -70,7 +71,7 @@ export default function ManageUsers() {
       case "users":
         return <UsersList />;
 
-      case "transactions":
+      case "Payment History":
         return <PaymentHistory />;
 
       case "myAuctions":

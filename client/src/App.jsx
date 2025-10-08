@@ -16,6 +16,12 @@ import AddUser from "./pages/admin/admin-um/AddUser";
 //import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
+import NICUpload from './components/NICUpload';
+import VerificationCenter from './pages/seller/VerificationCenter';
+import AdminNICReview from './pages/admin/admin-um/AdminNICReview';
+import BusinessVerification from './pages/seller/BusinessVerification';
+import AdminDocumentReview from './pages/admin/admin-um/AdminDocumentReview';
+
 //import Dashboard from "./pages/bidderDashboard";
 //import DashboardPage from "./pages/sellerDashboard";
 import ForgotPassword from "./pages/auth/ForgotPassword";
@@ -36,6 +42,7 @@ import DisplayUsers from "./pages/admin/admin-um/DisplayUsers";
 import OrderHistoryPage from "./pages/user/OrderHistoryPage";
 import EditUsers from "./pages/admin/admin-um/EditUsers";
 import SendEmails from "./pages/admin/admin-um/SendEmails";
+import SetupPayoutMethod from "./pages/seller/SetupPayoutMethod"
 
 //import DisplayUsers from "./pages/admin/admin-um/DisplayUsers";
 //import OrderHistoryPage from "./pages/user/OrderHistoryPage";
@@ -84,6 +91,12 @@ const App = () => {
       <Route path="/get-otp" element={<GetOTP />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/verification" element={<VerificationCenter />} />
+      <Route path="/upload-nic" element={<NICUpload />} />
+      <Route path="/upload-business" element={<BusinessVerification />} />
+      <Route path="/admin/nic-review" element={<AdminNICReview />} />
+      <Route path="/admin/document-review" element={<AdminDocumentReview />} />
+      <Route path="/setup-payout-method" element={<SetupPayoutMethod />} />
 
       <Route
         path="/bidder-dashboard"

@@ -13,9 +13,8 @@ export const sendOTP = async (req, res) => {
   const { phone } = req.body;
   if (!phone) return res.status(400).json({ message: "Phone number is required" });
 
-  const otp = generateOTP();
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes expiry
-
   otpStore[phone] = { otp, expiresAt };
 
   const message = `Your OTP is: ${otp}. It will expire in 5 minutes.`;
@@ -30,17 +29,18 @@ export const sendOTP = async (req, res) => {
       },
       body: JSON.stringify({
         recipient: phone,
-        sender_id: process.env.SENDER_ID || "ikmangems",
+        //sender_id: process.env.SENDER_ID || "ikmangems",
+        sender_id: process.env.SENDER_ID || "TextLKDemo",
         type: "plain",
         message,
       }),
     });
 
     const data = await response.json();
-
     if (data.status === "success") {
       return res.json({ success: true, message: "OTP sent successfully" });
     } else {
+      console.error("TextLK response error:", data);
       return res.status(500).json({ success: false, message: "Failed to send OTP", error: data });
     }
   } catch (err) {

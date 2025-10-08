@@ -8,6 +8,8 @@ import { join } from "path";
 import otpRoutes from "./routes/otpRoutes.js";
 import authRouter from "./routes/authRoutes.js";
 import userRouter from "./routes/userRoutes.js";
+import nicRouter from './routes/nicRoutes.js'
+import payoutRouter from "./routes/payoutRoute.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import onlinePaymentRoutes from "./routes/onlinepaymentRoutes.js";
 import { connectDB } from "./config/db.js";
@@ -18,6 +20,8 @@ import FeedbackRoute from "./routes/feedbackRoute.js";
 // import AdminTicketRoutes from "./routes/ticketAdminRoutes.js";
 import SupportTicketRoutes from "./routes/supportTicketRoutes.js";
 import faqRoutes from "./routes/faqRoutes.js";
+import verificationRoutes from "./routes/verificationRoutes.js";
+import businessRoutes from "./routes/businessRoutes.js";
 
 // Load .env file from root directory (one level up from api folder)
 const rootPath = path.resolve();
@@ -61,6 +65,12 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/online-payments", onlinePaymentRoutes);
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
+// Register routes
+app.use('/api/nic', nicRouter);
+// Serve static files for uploaded images
+app.use('/uploads', express.static('uploads'));
+app.use("/api/payout", payoutRouter);
+
 app.use("/api/otp", otpRoutes);
 app.use("/api/bids", bidRoutes);
 app.use("/uploads", express.static(join(process.cwd(), "uploads")));
@@ -71,6 +81,9 @@ app.use("/api/feedbacks", FeedbackRoute);
 // app.use("/api/admin/tickets", AdminTicketRoutes);
 app.use("/api/support", SupportTicketRoutes);
 app.use("/api/faqs", faqRoutes);
+
+app.use("/api/verification", verificationRoutes);
+app.use("/api/business", businessRoutes);
 
 // Simple API check route
 app.get("/", (req, res) => res.send("API working"));

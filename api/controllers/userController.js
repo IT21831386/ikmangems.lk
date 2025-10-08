@@ -213,3 +213,36 @@ export const getUserData = async (req, res) => {
         res.json({success: false, message: error.message})
     }
 }*/
+
+//import userModel from "../models/userModel.js";
+
+export const uploadNIC = async (req, res) => {
+  try {
+    const userId = req.user.id; // assuming you’re using JWT middleware
+    const user = await userModel.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Both files come from frontend (field names: nicFrontImage, nicBackImage)
+    const frontImage = req.files["nicFrontImage"]?.[0]?.path;
+    const backImage = req.files["nicBackImage"]?.[0]?.path;
+
+    if (!frontImage || !backImage)
+      return res.status(400).json({ message: "Both NIC images required" });
+
+    user.nicFrontImage = frontImage;
+    user.nicBackImage = backImage;
+    user.nicStatus = "pending"; // waiting for admin review
+    await user.save();
+
+    res.status(200).json({
+      message: "NIC images uploaded successfully, awaiting verification.",
+      data: {
+        nicFrontImage: frontImage,
+        nicBackImage: backImage,
+        nicStatus: user.nicStatus,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+}
