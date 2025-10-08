@@ -7,7 +7,7 @@ const ticketSchema = new mongoose.Schema({
   inquiryType: {
     type: String,
     required: true,
-    enum: ['auction', 'payment', 'feedback', 'technical']
+    enum: ['general', 'seller', 'buyer', 'verification', 'support', 'auction', 'payment']
   },
   description: { type: String, required: true },
   attachment: { type: String }, // optional

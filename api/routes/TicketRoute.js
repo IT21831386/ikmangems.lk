@@ -7,16 +7,21 @@ import {
   createTicket,
   updateTicket,
   deleteTicket,
-  getTicketById
+  getTicketById,
+  generateTicketPDF // ✅ NEW
 } from "../controllers/ticketController.js";
+import upload from "../middleware/upload.js";
 
 const router = express.Router();
 
 // Routes
 router.get('/', getAllTickets);
-router.post('/', createTicket);
-router.put('/:id', updateTicket);
+router.post('/', upload.single('attachment'), createTicket);
+router.put('/:id', upload.single('attachment'), updateTicket);
 router.delete('/:id', deleteTicket);
+
+// ✅ Route for generating PDF - MUST come before /:id route
+router.get('/:id/pdf', generateTicketPDF);
 router.get('/:id', getTicketById);
 
 

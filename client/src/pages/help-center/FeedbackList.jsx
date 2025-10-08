@@ -96,8 +96,10 @@ const FeedbackList = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-12">
-      <div className="bg-white rounded-2xl shadow-xl p-8 mb-10">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+      <div className="max-w-5xl mx-auto px-6 py-12">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">Feedback</h1>
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-10">
         <div className="flex flex-col md:flex-row md:items-center gap-3 justify-between">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Feedbacks</h2>
           <div className="flex items-center gap-2 w-full md:w-auto">
@@ -134,7 +136,7 @@ const FeedbackList = () => {
               {userFeedbacks.map((fb) => (
                 <div
                   key={fb._id}
-                  className="border border-blue-200 bg-blue-50 rounded-lg p-4"
+                  className="border border-blue-200 bg-blue-50 rounded-lg p-4 hover:shadow-md transition-shadow"
                 >
                   <p className="text-gray-800">
                     <strong>{fb.name}</strong> ({fb.email})
@@ -242,7 +244,7 @@ const FeedbackList = () => {
               {otherFeedbacks.map((fb) => (
                 <div
                   key={fb._id}
-                  className="border border-gray-200 bg-gray-50 rounded-lg p-4"
+                  className="border border-gray-200 bg-gray-50 rounded-lg p-4 hover:shadow-md transition-shadow"
                 >
                   <p className="text-gray-800">
                     <strong>{fb.name}</strong> ({fb.email})
@@ -270,6 +272,7 @@ const FeedbackList = () => {
             </div>
           )}
         </section>
+        </div>
       </div>
     </div>
   );
