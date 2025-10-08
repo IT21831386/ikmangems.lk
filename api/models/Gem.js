@@ -2,14 +2,14 @@ import { Schema, model } from "mongoose";
 
 const gemstoneSchema = new Schema(
   {
-    // Basic Information
+    
     name: {
       type: String,
       required: [true, "Gemstone name is required"],
       trim: true,
       minlength: [2, "Name must be at least 2 characters"],
       maxlength: [100, "Name cannot exceed 100 characters"],
-      index: true, // For search optimization
+      index: true, 
     },
 
     description: {
@@ -24,29 +24,14 @@ const gemstoneSchema = new Schema(
       type: String,
       required: [true, "Category is required"],
       enum: {
-        values: [
-          "Diamond",
-          "Ruby",
-          "Sapphire",
-          "Emerald",
-          "Topaz",
-          "Garnet",
-          "Amethyst",
-          "Citrine",
-          "Aquamarine",
-          "Tourmaline",
-          "Moonstone",
-          "Peridot",
-          "Opal",
-          "Pearl",
-          "Other",
+        values: ["Diamond", "Ruby", "Sapphire", "Emerald", "Topaz", "Garnet", "Amethyst", 
+          "Citrine", "Aquamarine","Tourmaline", "Moonstone", "Peridot", "Opal", "Pearl", "Other",
         ],
         message: "Please select a valid category",
       },
       index: true,
     },
 
-    // Physical Properties
     weight: {
       type: Number,
       min: [0.01, "Weight must be at least 0.01 carats"],
@@ -104,18 +89,8 @@ const gemstoneSchema = new Schema(
       type: String,
       enum: {
         values: [
-          "FL",
-          "IF",
-          "VVS1",
-          "VVS2",
-          "VS1",
-          "VS2",
-          "SI1",
-          "SI2",
-          "I1",
-          "I2",
-          "I3",
-          "Not Graded",
+          "FL", "IF", "VVS1", "VVS2", "VS1", "VS2",
+          "SI1", "SI2", "I1","I2", "I3", "Not Graded",
         ],
         message: "Please select a valid clarity grade",
       },
@@ -125,25 +100,13 @@ const gemstoneSchema = new Schema(
       type: String,
       enum: {
         values: [
-          "Round",
-          "Princess",
-          "Cushion",
-          "Emerald",
-          "Oval",
-          "Radiant",
-          "Asscher",
-          "Marquise",
-          "Heart",
-          "Pear",
-          "Cabochon",
-          "Raw/Rough",
-          "Other",
+          "Round", "Princess", "Cushion", "Emerald", "Oval", "Radiant", "Asscher",
+          "Marquise", "Heart", "Pear", "Cabochon", "Raw/Rough", "Other",
         ],
         message: "Please select a valid cut type",
       },
     },
 
-    // Origin Information
     origin: {
       country: {
         type: String,
@@ -180,7 +143,6 @@ const gemstoneSchema = new Schema(
       },
     },
 
-    // Images with enhanced validation
     images: [
       {
         url: {
@@ -206,7 +168,6 @@ const gemstoneSchema = new Schema(
       },
     ],
 
-    // Certificate Information
     certificateDetails: {
       hasCertificate: {
         type: Boolean,
@@ -218,7 +179,6 @@ const gemstoneSchema = new Schema(
         maxlength: [50, "Certificate number cannot exceed 50 characters"],
         validate: {
           validator: function (value) {
-            // If has certificate, number is required
             if (this.certificateDetails?.hasCertificate && !value) {
               return false;
             }
@@ -232,16 +192,7 @@ const gemstoneSchema = new Schema(
         type: String,
         enum: {
           values: [
-            "GIA",
-            "AIGS",
-            "Gübelin",
-            "SSEF",
-            "GRS",
-            "Lotus",
-            "EGL",
-            "AGS",
-            "Other",
-            "None",
+            "GIA", "AIGS", "Gubelin", "SSEF", "GRS", "Lotus", "EGL", "AGS", "Other", "None",
           ],
           message: "Please select a valid certifying body",
         },
@@ -261,7 +212,6 @@ const gemstoneSchema = new Schema(
         type: Date,
         validate: {
           validator: function (value) {
-            // If there's an issue date and expiry date, expiry should be after issue
             if (this.certificateDetails?.issueDate && value) {
               return value > this.certificateDetails.issueDate;
             }
@@ -272,13 +222,12 @@ const gemstoneSchema = new Schema(
       },
     },
 
-    // Pricing Information
     minimumBid: {
       type: Number,
       required: [true, "Minimum bid is required"],
       min: [1, "Minimum bid must be at least 1 LKR"],
       max: [100000000, "Minimum bid seems unrealistic"],
-      index: true, // For price range queries
+      index: true, 
     },
 
     reservePrice: {
@@ -336,7 +285,6 @@ const gemstoneSchema = new Schema(
       },
     },
 
-    // Status and Verification
     verificationStatus: {
       type: String,
       enum: {
@@ -357,7 +305,6 @@ const gemstoneSchema = new Schema(
     rejectedAt: Date,
     rejectedBy: { type: Schema.Types.ObjectId, ref: "User" },
 
-    // Document Validation (Enhanced)
     documentValidation: {
       certificateVerified: { type: Boolean, default: false },
       documentsUploaded: [String],
@@ -375,14 +322,12 @@ const gemstoneSchema = new Schema(
       },
     },
 
-    // Status
     isActive: {
       type: Boolean,
       default: true,
       index: true,
     },
 
-    // Metadata
     views: {
       type: Number,
       default: 0,
@@ -555,14 +500,11 @@ gemstoneSchema.statics.getStatistics = function () {
 };
 
 /* ====================== MIDDLEWARE ====================== */
-// Pre-save middleware
 gemstoneSchema.pre("save", function (next) {
-  // Ensure at least one image is marked as primary
   if (this.images.length > 0 && !this.images.some((img) => img.isPrimary)) {
     this.images[0].isPrimary = true;
   }
 
-  // Auto-generate tags based on content
   if (
     this.isModified("name") ||
     this.isModified("color") ||
@@ -578,9 +520,7 @@ gemstoneSchema.pre("save", function (next) {
   next();
 });
 
-// Pre-remove middleware to cleanup files
 gemstoneSchema.pre("remove", async function (next) {
-  // In a real app, you'd cleanup the uploaded files here
   console.log(`Cleaning up files for gemstone: ${this.name}`);
   next();
 });
