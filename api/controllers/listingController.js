@@ -1,6 +1,7 @@
 import Gemstone from "../models/Gem.js";
 import { body, validationResult } from "express-validator";
 import fs from "fs/promises";
+import Auction from "../models/Auction.js";
 
 /* ----------------------  FORM VALIDATION ---------------------- */
 export const validateGemstone = [
@@ -910,6 +911,7 @@ export async function verifyGemstone(req, res) {
           name: gemstone.name,
           verificationStatus: gemstone.verificationStatus,
           verifiedAt: gemstone.verifiedAt,
+          isAuctioned: gemstone.isAuctioned,
         },
       },
     });
@@ -985,3 +987,44 @@ export async function rejectGemstone(req, res) {
     });
   }
 }
+
+export const createAuction = async (req, res) => {
+  try {
+    const { gemId, startPrice, startTime, endTime } = req.body;
+
+    const gem = await Gem.findById(gemId);
+    if (!gem)
+      return res.status(404).json({ success: false, message: "Gem not found" });
+    if (!gem.isApproved)
+      return res
+        .status(400)
+        .json({ success: false, message: "Gem not approved" });
+    if (gem.isAuctioned)
+      return res
+        .status(400)
+        .json({ success: false, message: "Gem already auctioned" });
+
+    // Create auction
+    const auction = await Auction.create({
+      gem: gemId,
+      seller: req.user._id,
+      startPrice,
+      startTime,
+      endTime,
+    });
+
+    // Update gem status
+    gem.isAuctioned = true;
+    await gem.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Auction created successfully",
+      auction,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to create auction", error });
+  }
+};

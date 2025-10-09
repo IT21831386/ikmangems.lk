@@ -2,14 +2,13 @@ import { Schema, model } from "mongoose";
 
 const gemstoneSchema = new Schema(
   {
-    
     name: {
       type: String,
       required: [true, "Gemstone name is required"],
       trim: true,
       minlength: [2, "Name must be at least 2 characters"],
       maxlength: [100, "Name cannot exceed 100 characters"],
-      index: true, 
+      index: true,
     },
 
     description: {
@@ -24,8 +23,22 @@ const gemstoneSchema = new Schema(
       type: String,
       required: [true, "Category is required"],
       enum: {
-        values: ["Diamond", "Ruby", "Sapphire", "Emerald", "Topaz", "Garnet", "Amethyst", 
-          "Citrine", "Aquamarine","Tourmaline", "Moonstone", "Peridot", "Opal", "Pearl", "Other",
+        values: [
+          "Diamond",
+          "Ruby",
+          "Sapphire",
+          "Emerald",
+          "Topaz",
+          "Garnet",
+          "Amethyst",
+          "Citrine",
+          "Aquamarine",
+          "Tourmaline",
+          "Moonstone",
+          "Peridot",
+          "Opal",
+          "Pearl",
+          "Other",
         ],
         message: "Please select a valid category",
       },
@@ -89,8 +102,18 @@ const gemstoneSchema = new Schema(
       type: String,
       enum: {
         values: [
-          "FL", "IF", "VVS1", "VVS2", "VS1", "VS2",
-          "SI1", "SI2", "I1","I2", "I3", "Not Graded",
+          "FL",
+          "IF",
+          "VVS1",
+          "VVS2",
+          "VS1",
+          "VS2",
+          "SI1",
+          "SI2",
+          "I1",
+          "I2",
+          "I3",
+          "Not Graded",
         ],
         message: "Please select a valid clarity grade",
       },
@@ -100,8 +123,19 @@ const gemstoneSchema = new Schema(
       type: String,
       enum: {
         values: [
-          "Round", "Princess", "Cushion", "Emerald", "Oval", "Radiant", "Asscher",
-          "Marquise", "Heart", "Pear", "Cabochon", "Raw/Rough", "Other",
+          "Round",
+          "Princess",
+          "Cushion",
+          "Emerald",
+          "Oval",
+          "Radiant",
+          "Asscher",
+          "Marquise",
+          "Heart",
+          "Pear",
+          "Cabochon",
+          "Raw/Rough",
+          "Other",
         ],
         message: "Please select a valid cut type",
       },
@@ -192,7 +226,16 @@ const gemstoneSchema = new Schema(
         type: String,
         enum: {
           values: [
-            "GIA", "AIGS", "Gubelin", "SSEF", "GRS", "Lotus", "EGL", "AGS", "Other", "None",
+            "GIA",
+            "AIGS",
+            "Gubelin",
+            "SSEF",
+            "GRS",
+            "Lotus",
+            "EGL",
+            "AGS",
+            "Other",
+            "None",
           ],
           message: "Please select a valid certifying body",
         },
@@ -227,7 +270,7 @@ const gemstoneSchema = new Schema(
       required: [true, "Minimum bid is required"],
       min: [1, "Minimum bid must be at least 1 LKR"],
       max: [100000000, "Minimum bid seems unrealistic"],
-      index: true, 
+      index: true,
     },
 
     reservePrice: {
@@ -338,6 +381,11 @@ const gemstoneSchema = new Schema(
       type: Boolean,
       default: false,
       index: true,
+    },
+
+    isAuctioned: {
+      type: Boolean,
+      default: false,
     },
 
     tags: [

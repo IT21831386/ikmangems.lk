@@ -18,10 +18,17 @@ import {
   getAllBids,
 } from "../controllers/bidController.js";
 import { getGemstoneAnalytics } from "../controllers/analyticsController.js";
-
 import multer, { diskStorage } from "multer";
 import { extname } from "path";
 import { body } from "express-validator";
+import {
+  createAuction,
+  getAllAuctions,
+  getAuctionById,
+  placeAuctionBid,
+  completeAuction,
+  cancelAuction,
+} from "../controllers/auctionController.js";
 
 const router = Router();
 
@@ -337,6 +344,21 @@ router.get("/search/suggestions", (req, res) => {
 router.post("/bids", placeBid);
 router.get("/bids/:gemId", getBidsByGem);
 
+/* ====================== AUCTION ROUTES ====================== */
+
+// Create new auction (only sellers)
+router.post("/auctions", createAuction);
+// Get all auctions (admin or buyer)
+router.get("/auctions", getAllAuctions);
+// Get specific auction
+router.get("/auctions/:id", getAuctionById);
+// Place bid on auction
+router.post("/auctions/:id/bid", placeAuctionBid);
+// Complete auction (admin or system)
+router.post("/auctions/:id/complete", completeAuction);
+// Cancel auction (admin or seller)
+router.post("/auctions/:id/cancel", cancelAuction);
+
 /* ====================== ERROR HANDLING ====================== */
 // Catch-all 404 for this router
 router.use((req, res) => {
@@ -357,6 +379,12 @@ router.use((req, res) => {
       "GET /bids/:id",
       "GET /my-bids",
       "GET /all-bids",
+      "POST /auctions",
+      "GET /auctions",
+      "GET /auctions/:id",
+      "POST /auctions/:id/bid",
+      "POST /auctions/:id/complete",
+      "POST /auctions/:id/cancel",
     ],
   });
 });
