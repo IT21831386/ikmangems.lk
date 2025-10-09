@@ -46,7 +46,15 @@ const PaymentHistory = () => {
       console.log("Bank payments with deleted field:", bankPaymentsData.map(p => ({ id: p._id, deleted: p.deleted, status: p.status })));
 
       // Format bank payments
-      const formattedBankPayments = bankPaymentsData.map(payment => ({
+      const formattedBankPayments = bankPaymentsData.map(payment => {
+        console.log('Bank payment data:', {
+          id: payment._id,
+          auctionId: payment.auctionId,
+          remark: payment.remark,
+          amount: payment.amount
+        });
+        
+        return {
           id: payment._id,
           paymentId: `BNK_${payment._id.slice(-8).toUpperCase()}`,
           auctionId: payment.auctionId,
@@ -69,35 +77,45 @@ const PaymentHistory = () => {
         deleteReason: payment.deleteReason,
         deletedBy: payment.deletedBy,
         deletedAt: payment.deletedAt
-      }));
+      };
+      });
 
       // Format online payments
-      const formattedOnlinePayments = onlinePaymentsData.map(payment => ({
-        id: payment._id,
-        paymentId: `ONL_${payment._id.slice(-8).toUpperCase()}`,
-        transactionId: payment.transactionId || `TXN_${payment._id.slice(-8).toUpperCase()}`,
-        auctionId: payment.auctionId,
-        amount: payment.amount,
-        bank: "IPG",
-        branch: "IPG",
-        date: new Date(payment.createdAt).toLocaleDateString('en-CA'),
-        status: 'complete',
-        remark: payment.remark || "Online payment",
-        paymentType: "Online Payment",
-        cardNumber: payment.cardNumber,
-        cardType: payment.cardType,
-        // Bidder details
-        fullName: payment.fullName,
-        contactNumber: payment.contactNumber,
-        billingAddress: payment.billingAddress,
-        emailAddress: payment.emailAddress,
-        createdAt: new Date(payment.createdAt),
-        // Add deleted fields for filtering
-        deleted: payment.deleted || false,
-        deleteReason: payment.deleteReason,
-        deletedBy: payment.deletedBy,
-        deletedAt: payment.deletedAt
-      }));
+      const formattedOnlinePayments = onlinePaymentsData.map(payment => {
+        console.log('Online payment data:', {
+          id: payment._id,
+          bidId: payment.bidId,
+          remark: payment.remark,
+          amount: payment.amount
+        });
+        
+        return {
+          id: payment._id,
+          paymentId: `ONL_${payment._id.slice(-8).toUpperCase()}`,
+          transactionId: payment.transactionId || `TXN_${payment._id.slice(-8).toUpperCase()}`,
+          auctionId: payment.bidId, // Online payments use bidId field
+          amount: payment.amount,
+          bank: "IPG",
+          branch: "IPG",
+          date: new Date(payment.createdAt).toLocaleDateString('en-CA'),
+          status: 'complete',
+          remark: payment.remark || "Online payment",
+          paymentType: "Online Payment",
+          cardNumber: payment.cardNumber,
+          cardType: payment.cardType,
+          // Bidder details
+          fullName: payment.fullName,
+          contactNumber: payment.contactNumber,
+          billingAddress: payment.billingAddress,
+          emailAddress: payment.emailAddress,
+          createdAt: new Date(payment.createdAt),
+          // Add deleted fields for filtering
+          deleted: payment.deleted || false,
+          deleteReason: payment.deleteReason,
+          deletedBy: payment.deletedBy,
+          deletedAt: payment.deletedAt
+        };
+      });
 
       // Combine both payment types
       const combinedPayments = [...formattedBankPayments, ...formattedOnlinePayments];
@@ -110,7 +128,20 @@ const PaymentHistory = () => {
       const nonDeletedPayments = combinedPayments.filter(payment => !payment.deleted);
       console.log('Non-deleted payments after filtering:', nonDeletedPayments.map(p => ({ id: p.id, deleted: p.deleted, status: p.status })));
       
-      setAllPayments(nonDeletedPayments);
+      // Filter out registration payments (seller registration fees from verification center)
+      const nonRegistrationPayments = nonDeletedPayments.filter(payment => {
+        const isRegistration = payment.paymentType === 'registration' || 
+          (payment.amount === 1000 && 
+           (payment.remark?.toLowerCase().includes('registration') || 
+            payment.remark?.toLowerCase().includes('seller') ||
+            payment.auctionId === 'REGISTRATION'));
+        
+        console.log(`Payment ${payment.id}: isRegistration=${isRegistration}, amount=${payment.amount}, remark=${payment.remark}`);
+        return !isRegistration;
+      });
+      
+      console.log('Non-registration payments after filtering:', nonRegistrationPayments.length);
+      setAllPayments(nonRegistrationPayments);
 
       // If no data, show sample data for testing
       if (combinedPayments.length === 0) {
@@ -293,195 +324,190 @@ const PaymentHistory = () => {
 
 
   const downloadInvoice = (payment) => {
-    // Format date like the example (DD/MM/YYYY HH:MM AM/PM)
-    const formatReceiptDate = (dateString) => {
-      const date = new Date(dateString);
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const year = date.getFullYear();
-      const hours = date.getHours();
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      const displayHours = hours % 12 || 12;
+    try {
+      const doc = new jsPDF();
       
-      return `${day}/${month}/${year} ${displayHours}:${minutes} ${ampm}`;
-    };
-
-    // Generate invoice reference
-    const referenceCode = `${payment.paymentId.slice(-4)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
-
-    // Create PDF using jsPDF
-    const doc = new jsPDF();
-    
-    // Set font
-    doc.setFont('helvetica');
-    
-    // Header with same color as cyber receipt
-    doc.setFillColor(61, 82, 109); // Dark blue-gray color from cyber receipt
-    doc.rect(0, 0, 210, 35, 'F');
-    
-    // Header text
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text('ikmangems.lk', 105, 12, { align: 'center' });
-    
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.text("Sri Lanka's premier platform for authentic gem auctions", 105, 20, { align: 'center' });
-    
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('INVOICE', 105, 28, { align: 'center' });
-    
-    // Reset text color
-    doc.setTextColor(0, 0, 0);
-    
-    let yPosition = 50;
-    
-    // Decorative line under header
-    doc.setDrawColor(61, 82, 109);
-    doc.setLineWidth(0.5);
-    doc.line(20, 42, 190, 42);
-    
-    // Bidder Details Section - Center Right (moved down)
-    const bidderStartY = 60;
-    const centerX = 105; // Center of A4 page (210mm / 2)
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(61, 82, 109);
-    doc.text('BIDDER DETAILS', centerX + 40, bidderStartY);
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(0, 0, 0);
-    doc.text(`${payment.fullName || 'N/A'}`, centerX + 40, bidderStartY + 10);
-    doc.text(`${payment.contactNumber || 'N/A'}`, centerX + 40, bidderStartY + 16);
-    doc.text(`${payment.billingAddress || 'N/A'}`, centerX + 40, bidderStartY + 22);
-    doc.text(`${payment.emailAddress || 'N/A'}`, centerX + 40, bidderStartY + 28);
-    
-    // Payment Details Section - Center (exactly in middle)
-    const paymentStartY = bidderStartY + 50;
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(61, 82, 109);
-    doc.text('PAYMENT DETAILS', centerX, paymentStartY, { align: 'center' });
-    yPosition = paymentStartY + 15;
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(0, 0, 0);
-    
-    // Payment details with proper spacing like in the image
-    const labelX = centerX - 50;
-    const valueX = centerX + 20;
-    
-    doc.text('Payment Number:', labelX, yPosition);
-    doc.text(payment.paymentId, valueX, yPosition);
-    yPosition += 10;
-    
-    if (payment.paymentType === 'Online Payment') {
-      doc.text('Transaction ID:', labelX, yPosition);
-      doc.text(payment.transactionId, valueX, yPosition);
-      yPosition += 10;
+      // Set up colors
+      const primaryColor = [41, 128, 185]; // Blue
+      const secondaryColor = [52, 73, 94]; // Dark gray
+      const accentColor = [46, 204, 113]; // Green
+      
+      // Header Section (Compact)
+      doc.setFillColor(...primaryColor);
+      doc.rect(0, 0, 210, 30, 'F');
+      
+      // Company Logo/Name
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
+      doc.setFont('helvetica', 'bold');
+      doc.text('ikmangems.lk', 20, 20);
+      
+      // Tagline (Compact)
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Sri Lanka\'s premier platform for authentic gem auctions, connecting buyers with verified dealers.', 20, 26);
+      
+      // Invoice Title
+      doc.setTextColor(...secondaryColor);
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text('INVOICE', 20, 45);
+      
+      // Invoice Number and Date (Side by side)
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Invoice #: ${payment.paymentId}`, 20, 55);
+      doc.text(`Date: ${payment.date}`, 120, 55);
+      
+      // Company Details Box (Compact)
+      doc.setFillColor(248, 249, 250);
+      doc.rect(120, 35, 80, 25, 'F');
+      doc.setDrawColor(220, 220, 220);
+      doc.rect(120, 35, 80, 25, 'S');
+      
+      doc.setTextColor(...secondaryColor);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('ikmangems.lk', 125, 42);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Colombo, Sri Lanka', 125, 48);
+      doc.text('info@ikmangems.lk', 125, 54);
+      
+      // Customer Details Section (Compact)
+      doc.setTextColor(...secondaryColor);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Bill To:', 20, 70);
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(payment.fullName || 'N/A', 20, 78);
+      doc.text(payment.emailAddress || 'N/A', 20, 84);
+      doc.text(payment.contactNumber || 'N/A', 20, 90);
+      
+      // Payment Details Table Header (Centered)
+      const tableWidth = 150;
+      const tableStartX = (210 - tableWidth) / 2; // Center the table
+      doc.setFillColor(...primaryColor);
+      doc.rect(tableStartX, 100, tableWidth, 10, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Description', tableStartX + 5, 107);
+      doc.text('Details', tableStartX + 80, 107);
+      
+      // Payment Details Rows
+      let yPos = 115;
+      
+      // Payment Type Row
+      doc.setTextColor(...secondaryColor);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text('Payment Method', tableStartX + 5, yPos);
+      doc.text(payment.paymentType || 'N/A', tableStartX + 80, yPos);
+      yPos += 6;
+      
+      // BID ID Row
+      doc.text('BID ID', tableStartX + 5, yPos);
+      doc.text(payment.auctionId || 'N/A', tableStartX + 80, yPos);
+      yPos += 6;
+      
+      // Payment Date Row
+      doc.text('Payment Date', tableStartX + 5, yPos);
+      doc.text(payment.date || 'N/A', tableStartX + 80, yPos);
+      yPos += 6;
+      
+      // Status Row
+      doc.text('Status', tableStartX + 5, yPos);
+      const statusText = payment.status === 'complete' || payment.status === 'success' ? 'Completed' : 
+                        payment.status === 'pending' ? 'Pending' : 
+                        payment.status === 'failed' || payment.status === 'failure' ? 'Failed' : payment.status;
+      doc.text(statusText, tableStartX + 80, yPos);
+      yPos += 6;
+      
+      // Card Type (for online payments)
+      if (payment.paymentType === 'Online Payment' && payment.cardType) {
+        doc.text('Card Type', tableStartX + 5, yPos);
+        doc.text(payment.cardType.toUpperCase(), tableStartX + 80, yPos);
+        yPos += 6;
+      }
+      
+      // Transaction ID (for online payments)
+      if (payment.transactionId) {
+        doc.text('Transaction ID', tableStartX + 5, yPos);
+        doc.text(payment.transactionId, tableStartX + 80, yPos);
+        yPos += 6;
+      }
+      
+      // Bank Details (for bank deposits)
+      if (payment.paymentType === 'Bank Deposit') {
+        if (payment.bank) {
+          doc.text('Bank', tableStartX + 5, yPos);
+          doc.text(payment.bank, tableStartX + 80, yPos);
+          yPos += 6;
+        }
+        if (payment.branch) {
+          doc.text('Branch', tableStartX + 5, yPos);
+          doc.text(payment.branch, tableStartX + 80, yPos);
+          yPos += 6;
+        }
+      }
+      
+      // Remark
+      if (payment.remark) {
+        doc.text('Description', tableStartX + 5, yPos);
+        doc.text(payment.remark, tableStartX + 80, yPos);
+        yPos += 6;
+      }
+      
+      // Amount Section (Compact)
+      yPos += 10;
+      
+      // Simple underline
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.line(50, yPos, 160, yPos);
+      
+      // Amount label
+      yPos += 8;
+      doc.setTextColor(...secondaryColor);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      const amountLabel = 'Amount:';
+      const amountLabelWidth = doc.getTextWidth(amountLabel);
+      doc.text(amountLabel, (210 - amountLabelWidth) / 2, yPos);
+      
+      // Amount value
+      yPos += 6;
+      doc.setTextColor(...accentColor);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      const amountText = formatAmount(payment.amount);
+      const amountWidth = doc.getTextWidth(amountText);
+      doc.text(amountText, (210 - amountWidth) / 2, yPos);
+      
+      // Footer (Ultra Compact)
+      yPos += 12;
+      doc.setTextColor(...secondaryColor);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Thank you for your business!', 20, yPos);
+      doc.text('For any queries, please contact us at info@ikmangems.lk', 20, yPos + 4);
+      doc.text('This is a computer-generated invoice.', 20, yPos + 8);
+      
+      // Copyright at the very bottom
+      doc.setFontSize(7);
+      doc.text('© 2025 ikmangems.lk. All rights reserved.', 20, yPos + 12);
+      
+      // Download the PDF
+      doc.save(`invoice_${payment.paymentId}.pdf`);
+      toast.success("Invoice downloaded successfully!");
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate invoice. Please try again.');
     }
-    
-    doc.text('Auction ID:', labelX, yPosition);
-    doc.text(payment.auctionId, valueX, yPosition);
-    yPosition += 10;
-    
-    doc.text('Payment Method:', labelX, yPosition);
-    doc.text(payment.paymentType === 'Bank Deposit' ? 'Bank Deposit' : 'Online Payment', valueX, yPosition);
-    yPosition += 10;
-    
-    if (payment.paymentType === 'Bank Deposit') {
-      doc.text('Bank:', labelX, yPosition);
-      doc.text(payment.bank, valueX, yPosition);
-      yPosition += 10;
-      doc.text('Branch:', labelX, yPosition);
-      doc.text(payment.branch, valueX, yPosition);
-      yPosition += 10;
-    } else {
-      const cardTypeText = payment.cardType === 'visa' ? 'Visa Card' : 
-                          payment.cardType === 'mastercard' ? 'Master Card' : 'Card Payment';
-      doc.text('Payment Type:', labelX, yPosition);
-      doc.text(cardTypeText, valueX, yPosition);
-      yPosition += 10;
-    }
-    
-    doc.text('Deposited Amount:', labelX, yPosition);
-    doc.text(formatAmount(payment.amount), valueX, yPosition);
-    yPosition += 10;
-    
-    doc.text('Currency:', labelX, yPosition);
-    doc.text('LKR', valueX, yPosition);
-    yPosition += 10;
-    
-    doc.text('Payment Date:', labelX, yPosition);
-    doc.text(formatReceiptDate(payment.date), valueX, yPosition);
-    yPosition += 10;
-    
-    doc.text('Remarks:', labelX, yPosition);
-    doc.text(payment.remark || 'N/A', valueX, yPosition);
-    yPosition += 10;
-    
-    // Status as regular text like other items
-    const statusText = getStatusText(payment.status).toUpperCase();
-    doc.text('Status:', labelX, yPosition);
-    doc.text(statusText, valueX, yPosition);
-    yPosition += 15;
-    
-    // Horizontal bar below payment details
-    doc.setDrawColor(61, 82, 109);
-    doc.setLineWidth(0.5);
-    doc.line(20, yPosition, 190, yPosition);
-    yPosition += 10;
-    
-    // Reset text color
-    doc.setTextColor(0, 0, 0);
-    
-    // Position footer at bottom of page (A4 height is 297mm, footer height is 35mm)
-    const footerY = 262; // 297 - 35 = 262mm from top
-    
-    // Invoice Reference without container (plain text)
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(61, 82, 109);
-    doc.text('Invoice Reference:', centerX, yPosition, { align: 'center' });
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(0, 0, 0);
-    doc.text(referenceCode, centerX, yPosition + 8, { align: 'center' });
-    yPosition += 20;
-    
-    // Generated info with darker text
-    doc.setTextColor(50, 50, 50); // Much darker than before
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Generated at: ${formatReceiptDate(new Date())}`, 20, yPosition);
-    doc.text('Page: 1 of 1', 170, yPosition);
-    
-    // Footer with same color as header
-    doc.setFillColor(61, 82, 109); // Same dark blue-gray color
-    doc.rect(0, footerY, 210, 35, 'F');
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('ikmangems.lk', 105, footerY + 8, { align: 'center' });
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Colombo, Sri Lanka', 105, footerY + 15, { align: 'center' });
-    doc.text('info@ikmangems.lk | +94 11 123 4567', 105, footerY + 21, { align: 'center' });
-    doc.text('© 2025 ikmangems.lk. All rights reserved.', 105, footerY + 27, { align: 'center' });
-    
-    // Download the PDF
-    doc.save(`invoice_${payment.paymentId}.pdf`);
-    
-    toast.success("Invoice downloaded as PDF!");
   };
 
 
@@ -503,55 +529,79 @@ const PaymentHistory = () => {
 
 
         {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              id="search"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        <div className="mb-8">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-              </button>
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">Search Payments</h3>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                id="search"
+                placeholder="Search by payment number, BID ID, or any other field..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-12 pr-12 py-4 border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-gradient-to-r from-indigo-50 to-purple-50"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-indigo-400 hover:text-indigo-600 transition-colors duration-200"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            {searchTerm && (
+              <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-indigo-200">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm font-semibold text-indigo-800">
+                    Found {filteredPayments.length} payment{filteredPayments.length !== 1 ? 's' : ''} matching "{searchTerm}"
+                  </span>
+                </div>
+              </div>
             )}
-            </div>
-          {searchTerm && (
-            <div className="mt-2 text-sm text-gray-600">
-              Found {filteredPayments.length} payment{filteredPayments.length !== 1 ? 's' : ''} matching "{searchTerm}"
-            </div>
-          )}
           </div>
+        </div>
 
         {/* Payment Information Table */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
-          <div style={{ backgroundColor: '#2C3E50' }} className="text-white px-8 py-6 rounded-t-3xl">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white px-8 py-6 rounded-t-2xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Payment Information</h2>
-              <div className="flex space-x-2">
-                <button
-                  onClick={fetchPaymentHistory}
-                  className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 text-sm font-semibold shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-                  style={{ borderRadius: '30px' }}
-                >
-                  🔄 Refresh
-                </button>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold">Payment Information</h2>
               </div>
+              <button
+                onClick={fetchPaymentHistory}
+                className="flex items-center px-6 py-3 bg-white text-indigo-600 rounded-lg hover:bg-gray-50 transition-all duration-200 text-sm font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </button>
             </div>
-        </div>
+          </div>
 
           {filteredPayments.length === 0 ? (
             <div className="text-center py-16">
@@ -569,24 +619,24 @@ const PaymentHistory = () => {
           ) : (
             <div className="w-full">
               <table className="w-full table-fixed">
-                <thead className="bg-gray-200 border-b border-gray-300">
+                <thead className="bg-gradient-to-r from-blue-50 to-indigo-100 border-b-2 border-indigo-200">
                   <tr>
-                    <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Payment Type</th>
-                    <th className="w-[13%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Payment Number</th>
-                    <th className="w-[10%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Auction ID</th>
-                    <th className="w-[13%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Deposited Amount</th>
-                    <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Bank</th>
-                    <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Branch</th>
-                    <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Payment Date</th>
-                    <th className="w-[11%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Payment Status</th>
-                    <th className="w-[15%] px-4 py-6 text-left text-base font-bold text-gray-900 whitespace-nowrap">Invoice</th>
+                    <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-indigo-800 whitespace-nowrap">Payment Type</th>
+                    <th className="w-[13%] px-4 py-6 text-left text-base font-bold text-indigo-800 whitespace-nowrap">Payment Number</th>
+                    <th className="w-[10%] px-4 py-6 text-left text-base font-bold text-indigo-800 whitespace-nowrap">BID ID</th>
+                    <th className="w-[13%] px-4 py-6 text-left text-base font-bold text-indigo-800 whitespace-nowrap">Deposited Amount</th>
+                    <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-indigo-800 whitespace-nowrap">Bank</th>
+                    <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-indigo-800 whitespace-nowrap">Branch</th>
+                    <th className="w-[12%] px-4 py-6 text-left text-base font-bold text-indigo-800 whitespace-nowrap">Payment Date</th>
+                    <th className="w-[11%] px-4 py-6 text-left text-base font-bold text-indigo-800 whitespace-nowrap">Payment Status</th>
+                    <th className="w-[15%] px-4 py-6 text-left text-base font-bold text-indigo-800 whitespace-nowrap">Invoice</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-indigo-100">
                   {filteredPayments.map((payment, index) => (
-                    <tr key={payment.id} className={`hover:bg-gray-50 transition-colors duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
+                    <tr key={payment.id} className={`hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 ${index % 2 === 0 ? 'bg-white' : 'bg-gradient-to-r from-blue-25 to-indigo-25'}`}>
                       <td className="w-[12%] px-4 py-5">
-                        <span className="text-sm font-bold text-gray-800">
+                        <span className="text-sm font-bold text-black">
                           {payment.paymentType === 'Bank Deposit' ? 'Bank Deposit' : 'Online Payment'}
                         </span>
                       </td>
@@ -596,12 +646,12 @@ const PaymentHistory = () => {
                         </span>
                       </td>
                       <td className="w-[10%] px-4 py-5">
-                        <span className="text-gray-800 text-sm">
-                          {payment.auctionId}
+                        <span className="text-black text-sm">
+                          {payment.auctionId || 'N/A'}
                         </span>
                       </td>
                       <td className="w-[13%] px-4 py-5">
-                        <span className="font-bold text-gray-800 text-sm">
+                        <span className="font-bold text-blue-600 text-sm">
                           {formatAmount(payment.amount)}
                         </span>
                       </td>
@@ -611,31 +661,33 @@ const PaymentHistory = () => {
                       <td className="w-[12%] px-4 py-5 text-gray-700 font-medium text-sm truncate">
                         {payment.branch || 'Not Available'}
                       </td>
-                      <td className="w-[12%] px-4 py-5 text-gray-700 font-medium text-sm">
-                        {payment.date}
+                      <td className="w-[12%] px-4 py-5">
+                        <span className="inline-flex items-center px-2 py-1 bg-gradient-to-r from-rose-100 to-pink-100 text-rose-800 font-semibold text-xs rounded-md border border-rose-200">
+                          📅 {payment.date}
+                        </span>
                       </td>
                       <td className="w-[11%] px-4 py-5">
-                        <span 
-                          className="text-xs font-semibold"
-                          style={{ 
-                            color: payment.status === 'pending' ? '#EA580C' : (payment.status === 'complete' || payment.status === 'success' ? '#4ECDC4' : '#FF6B6B')
-                          }}
-                        >
-                          {getStatusText(payment.status)}
+                        <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold w-20 ${
+                          payment.status === 'complete' || payment.status === 'success' 
+                            ? 'bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-800 border border-emerald-200' 
+                            : payment.status === 'pending'
+                            ? 'bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-800 border border-yellow-200'
+                            : 'bg-gradient-to-r from-red-100 to-rose-100 text-red-800 border border-red-200'
+                        }`}>
+                          {payment.status === 'success' ? 'Complete' : payment.status === 'failure' ? 'Failed' : getStatusText(payment.status)}
                         </span>
                       </td>
                       <td className="w-[15%] px-4 py-5">
                         {/* Download logic: All payments can download invoice (including failed ones) */}
                         {payment.paymentType === 'Bank Deposit' ? (
                           payment.status === 'pending' ? (
-                            <span className="inline-flex items-center px-3 py-1.5 bg-gray-200 text-gray-600 rounded-lg text-xs font-semibold cursor-not-allowed border border-gray-300 w-24 justify-center">
+                            <span className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 rounded-lg text-xs font-semibold cursor-not-allowed border border-gray-300 w-24 justify-center">
                               ⏳ Pending
                             </span>
                           ) : (
                             <button
                               onClick={() => downloadInvoice(payment)}
-                              className="flex items-center justify-center px-3 py-1.5 text-white rounded-lg hover:opacity-90 transition-all duration-200 text-xs font-semibold shadow-sm hover:shadow-md transform hover:-translate-y-0.5 w-24"
-                              style={{ backgroundColor: '#000000', borderRadius: '30px' }}
+                              className="flex items-center justify-center px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 text-xs font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-24"
                             >
                               📄 Download
                             </button>
@@ -643,8 +695,7 @@ const PaymentHistory = () => {
                         ) : (
                           <button
                             onClick={() => downloadInvoice(payment)}
-                            className="flex items-center justify-center px-3 py-1.5 text-white rounded-lg hover:opacity-90 transition-all duration-200 text-xs font-semibold shadow-sm hover:shadow-md transform hover:-translate-y-0.5 w-24"
-                            style={{ backgroundColor: '#000000', borderRadius: '30px' }}
+                            className="flex items-center justify-center px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 text-xs font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-24"
                           >
                             📄 Download
                           </button>

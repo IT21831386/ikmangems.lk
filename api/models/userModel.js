@@ -109,6 +109,16 @@ const userSchema = new mongoose.Schema(
     nicRejectionReason: { type: String },
     businessRejectionReason: { type: String },
     
+    
+    // Saved credit cards
+    savedCards: [{
+      cardNumber: { type: String, required: true },
+      cardType: { type: String, required: true },
+      expiryDate: { type: String, required: true },
+      holderName: { type: String, required: true },
+      isDefault: { type: Boolean, default: false },
+      addedAt: { type: Date, default: Date.now }
+    }],
   },
   { timestamps: true }
 );

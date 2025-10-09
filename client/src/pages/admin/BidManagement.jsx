@@ -1,8 +1,10 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { Search, Download, FileText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Search, Download, FileText, CreditCard } from "lucide-react";
 
 function BidManagement() {
+  const navigate = useNavigate();
   const [bids, setBids] = useState([]);
   const [filteredBids, setFilteredBids] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +40,12 @@ function BidManagement() {
       setFilteredBids(filtered);
     }
   }, [searchTerm, bids]);
+
+  // Handle payment navigation
+  const handlePayment = (bid, index) => {
+    const bidId = `BID-${String(index + 1).padStart(3, "0")}`;
+    navigate(`/payment-form?bidId=${bidId}&amount=${bid.amount}`);
+  };
 
   // PDF Generation Function
   const generatePDF = () => {
@@ -308,6 +316,9 @@ function BidManagement() {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
                   </th>
                 </tr>
               </thead>

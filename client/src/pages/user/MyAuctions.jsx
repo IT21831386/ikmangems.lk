@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Clock, CheckCircle, AlertCircle, Package, CreditCard, User, Mail, Phone } from 'lucide-react';
 
 const MyAuctions = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('won');
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -94,8 +96,12 @@ const MyAuctions = () => {
   };
 
   const handlePayment = (auction) => {
-    setSelectedAuction(auction);
-    setShowPaymentModal(true);
+    // Generate bid ID in the same format as bid management table
+    const bidIndex = wonAuctions.findIndex(a => a.id === auction.id);
+    const bidId = `BID-${String(bidIndex + 1).padStart(3, "0")}`;
+    
+    // Navigate to payment form with bidId and amount
+    navigate(`/payment-form?bidId=${bidId}&amount=${auction.finalBid}`);
   };
 
   const processPayment = () => {

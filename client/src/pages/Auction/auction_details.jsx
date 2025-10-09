@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
+import axios from "axios";
 
 import {
   ArrowLeft,
@@ -50,6 +51,8 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [bids, setBids] = useState([]);
+  const [showPenaltyMessage, setShowPenaltyMessage] = useState(false);
+  const [selectedBidForRejection, setSelectedBidForRejection] = useState(null);
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const userType = user.role || "seller";
@@ -125,20 +128,46 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
     fetchGem();
   }, [id]);
 
-  // Fetch bids
-  useEffect(() => {
-    const fetchBids = async () => {
-      try {
-        if (!gemData?.id) return;
+  // Fetch bids and check payment status from localStorage
+  const fetchBidsWithStatus = async () => {
+    try {
+      if (!gemData?.id) return;
 
-        const data = await gemstoneAPI.getBidsByGem(gemData.id);
-        setBids(data);
-      } catch (err) {
-        console.error("Failed to fetch bids:", err);
+      const data = await gemstoneAPI.getBidsByGem(gemData.id);
+      
+      // Check localStorage for payment status
+      const bidsWithStatus = data.map(bid => {
+        // Get the formatted bid ID (same logic as handleProceed)
+        const bidIndex = data.findIndex(b => b._id === bid._id);
+        const formattedBidId = `BID-${String(bidIndex + 1).padStart(3, "0")}`;
+        
+        const paymentStatus = localStorage.getItem(`payment_status_${formattedBidId}`);
+        if (paymentStatus) {
+          return { ...bid, paymentStatus };
+        }
+        return bid;
+      });
+      
+      setBids(bidsWithStatus);
+    } catch (err) {
+      console.error("Failed to fetch bids:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchBidsWithStatus();
+  }, [gemData?.id]);
+
+  // Refresh bids when component becomes visible (user navigates back)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchBidsWithStatus();
       }
     };
 
-    fetchBids();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [gemData?.id]);
 
   // Place bid
@@ -466,10 +495,79 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
     navigate(`/auction`);
   };
 
-  const handleProceed = (bidId) => {
+  const handleProceed = async (bidId) => {
     console.log("Proceed clicked for bid:", bidId);
-    // Navigate to payment, auction details, or other actions
-    navigate(`/payment-form`);
+    try {
+      // Fetch all bids from the same API endpoint as BidManagement.jsx
+      const { data } = await axios.get("http://localhost:5001/api/bids/all");
+      const allBids = data.bids;
+      
+      // Replicate the exact same logic as BidManagement.jsx
+      // BidManagement uses filteredBids.map((bid, index) => ...) 
+      // So we need to find the index in the same order as displayed
+      const bidIndex = allBids.findIndex(bid => bid._id === bidId);
+      
+      // Use the exact same formatting as BidManagement.jsx line 321
+      const formattedBidId = `BID-${String(bidIndex + 1).padStart(3, "0")}`;
+      
+      console.log(`Bid ${bidId} found at index ${bidIndex}, formatted as ${formattedBidId}`);
+      console.log('Navigating to payment form with URL:', `/payment-form?bidId=${formattedBidId}`);
+      
+      // Update local bid status to show payment in progress
+      setBids(prevBids => 
+        prevBids.map(bid => 
+          bid._id === bidId 
+            ? { ...bid, paymentStatus: 'pending' }
+            : bid
+        )
+      );
+      
+      // Navigate to payment form with formatted bid ID for regular payment (same format as BidManagement.jsx)
+      navigate(`/payment-form?type=regular&bidId=${formattedBidId}`);
+    } catch (error) {
+      console.error("Error fetching bids:", error);
+      // Fallback to raw bid ID if API call fails
+      navigate(`/payment-form?type=regular&bidId=${bidId}`);
+    }
+  };
+
+  const handleReject = (bidId) => {
+    console.log("Reject clicked for bid:", bidId);
+    const bid = bids.find(b => b._id === bidId);
+    setSelectedBidForRejection(bid);
+    setShowPenaltyMessage(true);
+  };
+
+  const handleConfirmRejection = async () => {
+    if (selectedBidForRejection) {
+      console.log("Bid rejected with penalty:", selectedBidForRejection._id);
+      try {
+        // Fetch all bids from the same API endpoint as BidManagement.jsx
+        const { data } = await axios.get("http://localhost:5001/api/bids/all");
+        const allBids = data.bids;
+        
+        // Find the bid index in the global bids list (same as BidManagement.jsx)
+        const bidIndex = allBids.findIndex(bid => bid._id === selectedBidForRejection._id);
+        const formattedBidId = `BID-${String(bidIndex + 1).padStart(3, "0")}`;
+        
+        // Close the penalty message and redirect to payment form
+        setShowPenaltyMessage(false);
+        setSelectedBidForRejection(null);
+        // Navigate to payment form for penalty payment with penalty parameter
+        navigate(`/payment-form?type=penalty&bidId=${formattedBidId}&amount=${selectedBidForRejection.amount}`);
+      } catch (error) {
+        console.error("Error fetching bids:", error);
+        // Fallback to raw bid ID if API call fails
+        setShowPenaltyMessage(false);
+        setSelectedBidForRejection(null);
+        navigate(`/payment-form?type=penalty&bidId=${selectedBidForRejection._id}&amount=${selectedBidForRejection.amount}`);
+      }
+    }
+  };
+
+  const handleCancelRejection = () => {
+    setShowPenaltyMessage(false);
+    setSelectedBidForRejection(null);
   };
 
   return (
@@ -719,14 +817,48 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
                                   Winning Bid
                                 </p>
                               )}
+                              
+                              {/* Payment Status */}
+                              {bid.paymentStatus === "completed" && (
+                                <p className="text-xs text-green-600 font-medium">
+                                  Payment Completed
+                                </p>
+                              )}
+                              {bid.paymentStatus === "rejected" && (
+                                <p className="text-xs text-red-600 font-medium">
+                                  Payment Rejected
+                                </p>
+                              )}
+                              {bid.paymentStatus === "pending" && (
+                                <p className="text-xs text-yellow-600 font-medium">
+                                  Payment Pending
+                                </p>
+                              )}
+                              {bid.paymentStatus === "penalty_pending" && (
+                                <p className="text-xs text-orange-600 font-medium">
+                                  Penalty Payment Pending
+                                </p>
+                              )}
 
                               {/* Proceed Button */}
-                              <button
-                                onClick={() => handleProceed(bid._id)}
-                                className="mt-1 w-full bg-blue-600 text-white py-1 px-3 rounded-lg text-sm hover:bg-blue-700 transition-colors"
-                              >
-                                Proceed
-                              </button>
+                              {!bid.paymentStatus && (
+                                <button
+                                  onClick={() => handleProceed(bid._id)}
+                                  className="mt-1 w-full bg-blue-600 text-white py-1 px-3 rounded-lg text-sm hover:bg-blue-700 transition-colors"
+                                >
+                                  Proceed
+                                </button>
+                              )}
+                              
+                              {/* Reject Button */}
+                              {!bid.paymentStatus && (
+                                <button
+                                  onClick={() => handleReject(bid._id)}
+                                  className="mt-2 w-full bg-red-600 text-white py-1 px-3 rounded-lg text-sm hover:bg-red-700 transition-colors"
+                                >
+                                  Reject
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))
@@ -958,6 +1090,68 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
           </div>
         </div>
       </div>
+
+      {/* Penalty Message Container */}
+      {showPenaltyMessage && selectedBidForRejection && (
+        <div className="fixed inset-0 bg-white bg-opacity-95 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border-4 border-gray-200">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="text-red-600" size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Rejection Penalty Fee
+              </h3>
+              <p className="text-gray-600 mb-4">
+                You are about to reject a bid. This action will incur a penalty fee.
+              </p>
+            </div>
+
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <div className="text-center">
+                <p className="text-sm text-gray-600 mb-2">Original Bid Amount</p>
+                <p className="text-2xl font-bold text-gray-900 mb-3">
+                  LKR {selectedBidForRejection.amount.toLocaleString()}
+                </p>
+                <div className="border-t border-red-200 pt-3">
+                  <p className="text-sm text-red-600 mb-1">Penalty Fee (15%)</p>
+                  <p className="text-xl font-bold text-red-600">
+                    LKR {Math.round(selectedBidForRejection.amount * 0.15).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 p-3 rounded-lg mb-6">
+              <div className="flex items-start space-x-2">
+                <AlertCircle size={16} className="text-yellow-600 mt-0.5" />
+                <div className="text-sm text-yellow-800">
+                  <p className="font-medium">Important Notice</p>
+                  <p>
+                    By proceeding with rejection, you agree to pay the penalty fee of 15% of the bid amount.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={handleCancelRejection}
+                className="flex-1 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmRejection}
+                className="flex-1 py-3 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              >
+                Pay Penalty & Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modals */}
       {showBidModal && gemData && (
         <BidModal

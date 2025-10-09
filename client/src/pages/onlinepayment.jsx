@@ -1,11 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useSearchParams } from "react-router-dom";
 
-const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData }) => {
+const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, paymentType = "order", penaltyData = null }) => {
+  const [searchParams] = useSearchParams();
+  const isRegistrationPayment = paymentType === 'registration';
   const [formData, setFormData] = useState({
     // Use bidder data if available
-    auctionId: bidderData?.auctionId || "",
-    amount: bidderData?.amount || "",
+    bidId: bidderData?.bidId || "",
+    amount: isRegistrationPayment ? "1000" : (bidderData?.amount || ""),
     remark: bidderData?.remark || "",
     cardType: "visa",
     cardNumber: "",
@@ -19,12 +22,30 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
     billingAddress: bidderData?.billingAddress || "",
   });
 
+  const [saveCardDetails, setSaveCardDetails] = useState(false);
+
   const [currentStep, setCurrentStep] = useState(1);
   const [otpCode, setOtpCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentId, setPaymentId] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState(""); // pending, confirmed, etc.
   const [errors, setErrors] = useState({});
+
+  // Update form data when bidderData changes
+  useEffect(() => {
+    if (bidderData) {
+      setFormData(prev => ({
+        ...prev,
+        bidId: bidderData.bidId || prev.bidId,
+        amount: isRegistrationPayment ? "1000" : (bidderData.amount || prev.amount),
+        remark: bidderData.remark || prev.remark,
+        fullName: bidderData.fullName || prev.fullName,
+        emailAddress: bidderData.emailAddress || prev.emailAddress,
+        contactNumber: bidderData.contactNumber || prev.contactNumber,
+        billingAddress: bidderData.billingAddress || prev.billingAddress,
+      }));
+    }
+  }, [bidderData, isRegistrationPayment]);
 
   const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, "0"));
   const years = Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() + i).toString().slice(2));
@@ -34,6 +55,11 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
     
     // Payment amount validation - only allow positive numbers and decimal point (exact same as bank deposit)
     if (name === 'amount') {
+      // For registration payments, amount is read-only
+      if (isRegistrationPayment) {
+        return;
+      }
+      
       // Remove all characters except numbers and decimal point
       let numericValue = value.replace(/[^0-9.]/g, '');
       
@@ -106,6 +132,27 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
         // Validate CVV when complete
         if (numericValue.length === 3) {
           const validation = validateCVV(numericValue);
+          if (!validation.valid) {
+            setErrors(prev => ({ ...prev, [name]: validation.message }));
+          } else {
+            setErrors(prev => ({ ...prev, [name]: "" }));
+          }
+        } else {
+          setErrors(prev => ({ ...prev, [name]: "" }));
+        }
+      }
+      return;
+    }
+    
+    // Contact number validation - only allow numbers and limit to 10 digits
+    if (name === 'contactNumber') {
+      const numericValue = value.replace(/\D/g, ''); // Remove non-numeric characters
+      if (numericValue.length <= 10) {
+        setFormData((prev) => ({ ...prev, [name]: numericValue }));
+        
+        // Validate contact number when complete
+        if (numericValue.length === 10) {
+          const validation = validateContactNumber(numericValue);
           if (!validation.valid) {
             setErrors(prev => ({ ...prev, [name]: validation.message }));
           } else {
@@ -236,6 +283,25 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
     return { valid: true, message: "" };
   };
 
+  // Contact number validation
+  const validateContactNumber = (contactNumber) => {
+    if (!contactNumber || contactNumber.length !== 10) {
+      return { valid: false, message: "Contact number must be 10 digits" };
+    }
+    
+    // Check if all digits
+    if (!/^\d{10}$/.test(contactNumber)) {
+      return { valid: false, message: "Contact number must contain only digits" };
+    }
+    
+    // Check if starts with 0
+    if (!contactNumber.startsWith('0')) {
+      return { valid: false, message: "Contact number must start with 0" };
+    }
+    
+    return { valid: true, message: "" };
+  };
+
   const clearAllData = () => {
     setCurrentStep(1);
     setOtpCode("");
@@ -243,7 +309,7 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
     setPaymentId(null);
     setPaymentStatus("");
     setFormData({
-      auctionId: "",
+      bidId: "",
       amount: "",
       remark: "",
       cardType: "visa",
@@ -270,8 +336,9 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
   const nextStep = async () => {
     // Validation per step
     if (currentStep === 1) {
-      if (!formData.auctionId || !formData.amount || !formData.contactNumber) {
-        toast.error("Please fill in Auction ID, Payment Amount, and Contact Number");
+      // BID ID is not required for any payment type
+      if (!formData.amount || !formData.contactNumber) {
+        toast.error("Please fill in Payment Amount and Contact Number");
         return;
       }
       
@@ -344,12 +411,19 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
   const createPaymentAndSendOTP = async () => {
     try {
       setIsSubmitting(true);
+      const requestData = {
+        ...formData,
+        paymentType: paymentType,
+        saveCardDetails: saveCardDetails
+      };
+      console.log('Sending payment data to backend:', requestData);
+      
       const response = await fetch('http://localhost:5001/api/online-payments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(requestData),
       });
 
       const result = await response.json();
@@ -400,6 +474,12 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
         if (updateResponse.ok) {
           toast.success("Payment successful!");
           setCurrentStep(4); // success screen
+          
+          // Store payment status in localStorage
+          if (formData.bidId) {
+            const status = paymentType === 'penalty' ? 'rejected' : 'completed';
+            localStorage.setItem(`payment_status_${formData.bidId}`, status);
+          }
         } else {
           toast.error("Payment verification failed");
           setCurrentStep(5); // error screen
@@ -445,24 +525,28 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
       case 1:
         return (
           <div className="bg-white p-8 shadow-lg" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Online Payment Portal</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-6">
+              Online Payment Portal
+            </h1>
             
             <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
-                  Auction ID
-                  <span className="text-red-500 ml-1">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="auctionId"
-                  value={formData.auctionId}
-                  onChange={handleInputChange}
-                  placeholder="Enter auction ID"
-                  className="w-full px-4 py-3 border border-gray-300 outline-none focus:border-blue-500 bg-white"
-                  style={{ borderRadius: "30px" }}
-                />
-              </div>
+              {!isRegistrationPayment && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
+                    BID ID
+                  </label>
+                  <input
+                    type="text"
+                    name="bidId"
+                    value={formData.bidId}
+                    onChange={handleInputChange}
+                    placeholder="Enter BID ID"
+                    readOnly
+                    className="w-full px-4 py-3 border border-gray-300 outline-none focus:border-blue-500 bg-gray-100 cursor-not-allowed"
+                    style={{ borderRadius: "30px" }}
+                  />
+                </div>
+              )}
               
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
@@ -474,7 +558,12 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
                   name="amount"
                   value={formData.amount}
                   onChange={handleInputChange}
-                  className={`w-full px-4 py-3 border outline-none focus:border-blue-500 bg-white ${
+                  readOnly={isRegistrationPayment}
+                  className={`w-full px-4 py-3 border outline-none focus:border-blue-500 ${
+                    isRegistrationPayment 
+                      ? 'bg-gray-100 cursor-not-allowed' 
+                      : 'bg-white'
+                  } ${
                     errors.amount 
                       ? 'border-red-400 focus:border-red-500' 
                       : 'border-gray-300 focus:border-blue-500'
@@ -503,11 +592,41 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
                 />
               </div>
               
+              {/* Show contact number field if not provided in bidderData */}
+              {!bidderData?.contactNumber && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2" style={{ fontFamily: 'Poppins' }}>
+                    Contact Number
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    name="contactNumber"
+                    value={formData.contactNumber}
+                    onChange={handleInputChange}
+                    placeholder="0701354967"
+                    maxLength="10"
+                    autoComplete="off"
+                    className={`w-full px-4 py-3 border outline-none focus:border-blue-500 bg-white ${
+                      errors.contactNumber 
+                        ? 'border-red-400 focus:border-red-500' 
+                        : 'border-gray-300 focus:border-blue-500'
+                    }`}
+                    style={{ borderRadius: "30px" }}
+                  />
+                  {errors.contactNumber && (
+                    <p className="text-red-500 text-sm mt-1" style={{ fontFamily: 'Poppins' }}>
+                      {errors.contactNumber}
+                    </p>
+                  )}
+                </div>
+              )}
+              
               <div className="flex justify-end gap-4 mt-8">
-                <button onClick={goBack} className="px-8 py-3 bg-gray-500 hover:bg-gray-600 text-white transition-colors" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>
+                <button onClick={goBack} className="px-8 py-2 bg-gray-500 hover:bg-gray-600 text-white transition-colors rounded-lg" style={{ fontFamily: "Poppins" }}>
                   Back
                 </button>
-                <button onClick={nextStep} className="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white transition-colors" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>
+                <button onClick={nextStep} className="px-8 py-2 bg-blue-500 hover:bg-blue-600 text-white transition-colors rounded-lg" style={{ fontFamily: "Poppins" }}>
                   Next
                 </button>
               </div>
@@ -517,7 +636,9 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
       case 2:
         return (
           <div className="bg-white p-8 shadow-lg" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Online Payment Portal</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-6">
+              Online Payment Portal
+            </h1>
             <h2 className="text-2xl font-bold text-blue-800 mb-6">Card Details</h2>
             
             <div className="space-y-6">
@@ -534,6 +655,7 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
                       checked={formData.cardType === "visa"}
                       onChange={handleInputChange}
                       className="mr-2"
+                      style={{ accentColor: '#dc2626' }}
                     />
                     VISA
                   </label>
@@ -545,6 +667,7 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
                       checked={formData.cardType === "mastercard"}
                       onChange={handleInputChange}
                       className="mr-2"
+                      style={{ accentColor: '#dc2626' }}
                     />
                     MasterCard
                   </label>
@@ -676,11 +799,29 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
                 </p>
               </div>
               
+              {/* Save Card Details Option */}
+              <div className="mt-6">
+                <label className="flex items-center cursor-pointer" style={{ fontFamily: "Poppins" }}>
+                  <input
+                    type="checkbox"
+                    checked={saveCardDetails}
+                    onChange={(e) => setSaveCardDetails(e.target.checked)}
+                    className="mr-3 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <span className="text-sm text-gray-700">
+                    Save card details for future payments
+                  </span>
+                </label>
+                <p className="mt-1 text-xs text-gray-500" style={{ fontFamily: "Poppins" }}>
+                  Your card details will be securely stored for faster checkout next time
+                </p>
+              </div>
+              
               <div className="flex justify-end gap-4 mt-8">
-                <button onClick={prevStep} className="px-8 py-3 bg-gray-500 hover:bg-gray-600 text-white transition-colors" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>
+                <button onClick={prevStep} className="px-8 py-2 bg-gray-500 hover:bg-gray-600 text-white transition-colors rounded-lg" style={{ fontFamily: "Poppins" }}>
                   Back
                 </button>
-                <button onClick={nextStep} className="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white transition-colors" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>
+                <button onClick={nextStep} className="px-8 py-2 bg-blue-500 hover:bg-blue-600 text-white transition-colors rounded-lg" style={{ fontFamily: "Poppins" }}>
                   Next
                 </button>
               </div>
@@ -690,7 +831,9 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
       case 3:
         return (
           <div className="bg-white p-8 shadow-lg" style={{ borderRadius: "30px", fontFamily: "Poppins" }}>
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Online Payment Portal</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-6">
+              Online Payment Portal
+            </h1>
             
             <div className="space-y-6 text-center">
               <div className="bg-blue-50 p-6 rounded-[20px]">
@@ -715,34 +858,31 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData })
                 <div className="flex justify-center space-x-4 mt-6">
                   <button 
                     onClick={handleResendOTP}
-                    className="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white transition-colors" 
-                    style={{ borderRadius: "30px", fontFamily: "Poppins" }}
+                    className="px-4 py-1.5 bg-gray-500 hover:bg-gray-600 text-white transition-colors rounded-lg text-sm" 
+                    style={{ fontFamily: "Poppins" }}
                   >
                     RESEND
                   </button>
                   <button
                     onClick={() => setCurrentStep(1)}
-                    className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white transition-colors"
-                    style={{ borderRadius: "30px", fontFamily: "Poppins" }}
+                    className="px-4 py-1.5 bg-red-500 hover:bg-red-600 text-white transition-colors rounded-lg text-sm"
+                    style={{ fontFamily: "Poppins" }}
                   >
                     CANCEL
                   </button>
                 </div>
-                <p className="mt-4 text-xs text-gray-500" style={{ fontFamily: "Poppins" }}>
-                  This page will automatically timeout after 30 seconds.
-                </p>
               </div>
               
               <div className="mt-6">
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className={`px-8 py-3 text-white transition-colors ${
+                  className={`px-8 py-2 text-white transition-colors rounded-lg ${
                     isSubmitting 
                       ? 'bg-blue-300 cursor-not-allowed' 
                       : 'bg-blue-500 hover:bg-blue-600'
                   }`}
-                  style={{ borderRadius: "30px", fontFamily: "Poppins" }}
+                  style={{ fontFamily: "Poppins" }}
                 >
                   {isSubmitting ? "Verifying..." : "Confirm"}
                 </button>

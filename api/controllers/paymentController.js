@@ -29,10 +29,10 @@ export async function createPayment(req, res) {
     console.log("Request file:", req.file);
     console.log("Request headers:", req.headers);
     
-   const { amount, paiddate, bank, branch, remark, fullName, emailAddress, contactNumber, billingAddress, auctionId } = req.body;
+   const { amount, paiddate, bank, branch, remark, fullName, emailAddress, contactNumber, billingAddress, bidId } = req.body;
    
    console.log("Extracted fields:", {
-     amount, paiddate, bank, branch, remark, fullName, emailAddress, contactNumber, billingAddress, auctionId
+     amount, paiddate, bank, branch, remark, fullName, emailAddress, contactNumber, billingAddress, bidId
    });
    
    // Handle file upload - if slip is uploaded, use the file path
@@ -49,9 +49,9 @@ export async function createPayment(req, res) {
      return res.status(400).json({ message: "Slip image is required" });
    }
    
-   const paymentData = { 
-     amount, 
-     paiddate, 
+   const paymentData = {
+     amount,
+     paiddate,
      bank, 
      branch, 
      slip: slipPath, 
@@ -60,7 +60,7 @@ export async function createPayment(req, res) {
      emailAddress,
      contactNumber,
      billingAddress,
-     auctionId
+     auctionId: bidId // Map bidId to auctionId in database
    };
    
    console.log("Payment data to save:", paymentData);
@@ -88,9 +88,9 @@ export async function createPayment(req, res) {
 
 export async function updatePayment(req, res) {
   try {
-     const { amount, paiddate, bank, branch, slip, remark, fullName, emailAddress, contactNumber, billingAddress, auctionId } = req.body;
+     const { amount, paiddate, bank, branch, slip, remark, fullName, emailAddress, contactNumber, billingAddress, bidId } = req.body;
      const payment = await Payment.findByIdAndUpdate(req.params.id, {
-       amount, paiddate, bank, branch, slip, remark, fullName, emailAddress, contactNumber, billingAddress, auctionId
+       amount, paiddate, bank, branch, slip, remark, fullName, emailAddress, contactNumber, billingAddress, auctionId: bidId
      }, { new: true });
      if (!payment) return res.status(404).json({ message: "Payment not found!" });
      res.json(payment);
@@ -169,8 +169,8 @@ export async function softDeletePayment(req, res) {
 
 export async function getPaymentHistory(req, res) {
   try {
-    const { auctionId } = req.params;
-    const payments = await Payment.find({ auctionId }).sort({ createdAt: -1 });
+    const { bidId } = req.params;
+    const payments = await Payment.find({ auctionId: bidId }).sort({ createdAt: -1 });
     res.status(200).json({
       success: true,
       count: payments.length,

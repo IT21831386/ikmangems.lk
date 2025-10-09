@@ -1,8 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function AccountSettings() {
   const [activeTab, setActiveTab] = useState('general');
   const [showEmailVerification, setShowEmailVerification] = useState(true);
+  const [loading, setLoading] = useState(true);
+  
+  // Load user data from backend
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        // Get user email from localStorage or context
+        const userEmail = localStorage.getItem('userEmail') || 'dananjaya@example.com';
+        
+        const response = await fetch(`http://localhost:5001/api/users/profile?email=${userEmail}`);
+        if (response.ok) {
+          const userData = await response.json();
+          
+          // Update general settings
+          setGeneralSettings({
+            firstName: userData.firstName || 'Dananjaya',
+            lastName: userData.lastName || '',
+            email: userData.email || 'dananjaya@example.com',
+            username: userData.username || 'dananjaya_gems',
+            phone: userData.phone || '',
+            country: userData.country || 'Sri Lanka',
+            city: userData.city || 'Negombo',
+            address: userData.address || '',
+            bio: userData.bio || ''
+          });
+          
+          // Update credit cards from backend
+          console.log('User data from backend:', userData);
+          console.log('Saved cards from backend:', userData.savedCards);
+          
+          if (userData.savedCards && userData.savedCards.length > 0) {
+            const mappedCards = userData.savedCards.map((card, index) => ({
+              id: index + 1,
+              cardNumber: card.cardNumber,
+              cardType: card.cardType,
+              expiryDate: card.expiryDate,
+              holderName: card.holderName,
+              isDefault: card.isDefault || false
+            }));
+            console.log('Mapped credit cards:', mappedCards);
+            setCreditCards(mappedCards);
+          } else {
+            console.log('No saved cards found, keeping default cards');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadUserData();
+  }, []);
   
   // State for General Settings
   const [generalSettings, setGeneralSettings] = useState({

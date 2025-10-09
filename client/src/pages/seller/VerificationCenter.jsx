@@ -1,8 +1,34 @@
 /*import React, { useState } from 'react';
 import { Check, Circle, Lock, Mail, CreditCard, FileText, Building2, Wallet, CheckCircle2, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const VerificationCenter= () => {
-  const [currentStep, setCurrentStep] = useState(2);
+  const [currentStep, setCurrentStep] = useState(6);
+  const [completedSteps, setCompletedSteps] = useState(new Set());
+  const [paymentStatus, setPaymentStatus] = useState('pending');
+  const navigate = useNavigate();
+  
+  // Check for payment completion on component mount - Updated: 2024
+  useEffect(() => {
+    const checkPaymentStatus = () => {
+      // Check localStorage for registration payment status
+      const registrationPaymentStatus = localStorage.getItem('payment_status_REGISTRATION');
+      if (registrationPaymentStatus === 'completed') {
+        setPaymentStatus('completed');
+        setCompletedSteps(prev => new Set([...prev, 6])); // Mark step 6 as completed
+        setCurrentStep(7); // Move to next step (Platform Review)
+        // Clear the payment status from localStorage
+        localStorage.removeItem('payment_status_REGISTRATION');
+      }
+    };
+
+    checkPaymentStatus();
+    
+    // Also check periodically in case user returns from payment
+    const interval = setInterval(checkPaymentStatus, 2000);
+    
+    return () => clearInterval(interval);
+  }, []);
   
   const steps = [
     {
@@ -72,9 +98,27 @@ const VerificationCenter= () => {
   ];
 
   const getStepStatus = (step) => {
-    if (step.id < currentStep) return 'completed';
+    if (completedSteps.has(step.id)) return 'completed';
     if (step.id === currentStep) return 'current';
     return 'upcoming';
+  };
+
+  const handleStepAction = (step) => {
+    // Don't allow action on completed steps
+    if (completedSteps.has(step.id)) {
+      return;
+    }
+    
+    if (step.id === 6 && step.name === 'Pay Registration Fee') {
+      // Navigate to payment form for registration fee
+      navigate('/payment-form?type=registration');
+    } else if (step.id === 7 && step.name === 'Platform Review') {
+      // Platform review is handled by admin, just show message
+      alert('Your documents are under review. You will be notified once the review is complete.');
+    } else {
+      // Default behavior for other steps
+      setCurrentStep(currentStep + 1);
+    }
   };
 
   const StatusIcon = ({ step }) => {
@@ -193,10 +237,15 @@ const VerificationCenter= () => {
                     
                         {status === 'current' && (
                           <button 
-                            onClick={() => setCurrentStep(currentStep + 1)}
+                            onClick={() => handleStepAction(step)}
                             className="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors duration-200"
                           >
-                            Continue
+                            {step.id === 6 && step.name === 'Pay Registration Fee' 
+                              ? (paymentStatus === 'completed' ? 'Payment Completed' : 'Pay Registration Fee')
+                              : step.id === 7 && step.name === 'Platform Review'
+                              ? 'Under Review'
+                              : 'Continue'
+                            }
                           </button>
                         )}
                         
