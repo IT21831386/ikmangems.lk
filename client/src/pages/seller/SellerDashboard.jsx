@@ -4,6 +4,7 @@ import AccountSettings from "../user/AccountSettings";
 import Gems from "../gem-listing/GemDisplay";
 import GemCreate from "../gem-listing/Gemstone";
 import GemAnalytics from "./GemAnalytics";
+import Navigation from "../../components/navigation";
 
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -762,7 +763,9 @@ export default function SellerDashboard() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      <div className="flex h-screen bg-gray-50">
       <Sidebar
         isCollapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -809,6 +812,7 @@ export default function SellerDashboard() {
           {renderContent()}
         </div>
       </main>
+      </div>
     </div>
   );
 }
