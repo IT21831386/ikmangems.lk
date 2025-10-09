@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Search, User, Menu, Star, Shield, Award } from "lucide-react";
+import ChatBot from "../components/ChatBot";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Hero Section Component
@@ -224,6 +225,7 @@ const App = () => {
       <WelcomeSection />
       <PopularGems />
       <VerifiedSellers />
+      <ChatBot />
     </div>
   );
 };

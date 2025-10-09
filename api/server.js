@@ -19,6 +19,7 @@ import TicketRoute from "./routes/TicketRoute.js";
 import FeedbackRoute from "./routes/feedbackRoute.js";
 // import AdminTicketRoutes from "./routes/ticketAdminRoutes.js";
 import SupportTicketRoutes from "./routes/supportTicketRoutes.js";
+import faqRoutes from "./routes/faqRoutes.js";
 import verificationRoutes from "./routes/verificationRoutes.js";
 import businessRoutes from "./routes/businessRoutes.js";
 
@@ -30,7 +31,7 @@ dotenv.config();
 const corsOptions = {
   origin: "http://localhost:5173", // your frontend origin
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "x-user-type"], // allow your custom header here
+  allowedHeaders: ["Content-Type", "x-user-type", "x-user-email"], // allow your custom header here
   credentials: true, // if you use cookies or auth headers
 };
 
@@ -79,6 +80,8 @@ app.use("/api/tickets", TicketRoute);
 app.use("/api/feedbacks", FeedbackRoute);
 // app.use("/api/admin/tickets", AdminTicketRoutes);
 app.use("/api/support", SupportTicketRoutes);
+app.use("/api/faqs", faqRoutes);
+
 app.use("/api/verification", verificationRoutes);
 app.use("/api/business", businessRoutes);
 
