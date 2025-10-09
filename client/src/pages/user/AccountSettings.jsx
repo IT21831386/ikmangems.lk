@@ -1,20 +1,31 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function AccountSettings() {
   const [activeTab, setActiveTab] = useState('general');
   const [showEmailVerification, setShowEmailVerification] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [userId, setUserId] = useState(null);
+  const { user: authUser } = useAuth();
   
   // Load user data from backend
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        // Get user email from localStorage or context
-        const userEmail = localStorage.getItem('userEmail') || 'dananjaya@example.com';
+        // Resolve email: AuthContext -> localStorage.user -> localStorage.userEmail
+        const lsUserRaw = localStorage.getItem('user');
+        const lsUser = (() => { try { return lsUserRaw ? JSON.parse(lsUserRaw) : null; } catch { return null; } })();
+        const userEmail = authUser?.email || lsUser?.email || localStorage.getItem('userEmail');
+        if (!userEmail) {
+          setError('No user email found. Please sign in again.');
+          return;
+        }
         
-        const response = await fetch(`http://localhost:5001/api/users/profile?email=${userEmail}`);
+        const response = await fetch(`http://localhost:5001/api/user/profile?email=${encodeURIComponent(userEmail)}`);
         if (response.ok) {
           const userData = await response.json();
+          if (userData._id) setUserId(userData._id);
           
           // Update general settings
           setGeneralSettings({
@@ -33,7 +44,7 @@ export default function AccountSettings() {
           console.log('User data from backend:', userData);
           console.log('Saved cards from backend:', userData.savedCards);
           
-          if (userData.savedCards && userData.savedCards.length > 0) {
+          if (Array.isArray(userData.savedCards) && userData.savedCards.length > 0) {
             const mappedCards = userData.savedCards.map((card, index) => ({
               id: index + 1,
               cardNumber: card.cardNumber,
@@ -45,11 +56,16 @@ export default function AccountSettings() {
             console.log('Mapped credit cards:', mappedCards);
             setCreditCards(mappedCards);
           } else {
-            console.log('No saved cards found, keeping default cards');
+            console.log('No saved cards found');
+            setCreditCards([]);
           }
+        } else {
+          const err = await response.json().catch(() => ({ message: 'Failed to load profile' }));
+          setError(err.message || 'Failed to load profile');
         }
       } catch (error) {
         console.error('Error loading user data:', error);
+        setError(error.message || 'Error loading user data');
       } finally {
         setLoading(false);
       }
@@ -110,8 +126,38 @@ export default function AccountSettings() {
 
   const [showAddCard, setShowAddCard] = useState(false);
 
-  const handleGeneralUpdate = () => {
-    alert('General settings updated successfully!');
+  const handleGeneralUpdate = async () => {
+    if (!userId) {
+      alert('User not loaded yet');
+      return;
+    }
+    try {
+      const response = await fetch(`http://localhost:5001/api/user/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          firstName: generalSettings.firstName,
+          lastName: generalSettings.lastName,
+          username: generalSettings.username,
+          email: generalSettings.email,
+          phone: generalSettings.phone,
+          country: generalSettings.country,
+          city: generalSettings.city,
+          address: generalSettings.address,
+          bio: generalSettings.bio
+        })
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ message: 'Update failed' }));
+        throw new Error(err.message || 'Update failed');
+      }
+      alert('General settings updated successfully!');
+    } catch (e) {
+      console.error('Failed to update user:', e);
+      alert(`Failed to update: ${e.message}`);
+    }
   };
 
   const handlePasswordUpdate = () => {
@@ -183,6 +229,13 @@ export default function AccountSettings() {
         <div className="border-b border-gray-200 p-6">
           <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
         </div>
+
+        {loading && (
+          <div className="p-6 text-gray-600">Loading profile…</div>
+        )}
+        {!loading && error && (
+          <div className="p-6 text-red-600">{error}</div>
+        )}
 
         {/* Tab Navigation */}
         <div className="border-b border-gray-200">

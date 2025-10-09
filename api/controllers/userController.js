@@ -28,6 +28,7 @@ export async function getUserProfile (req, res) {
         
         // Return user data without sensitive information
         const userProfile = {
+            _id: user._id,
             firstName: user.firstName,
             lastName: user.lastName,
             username: user.username,
