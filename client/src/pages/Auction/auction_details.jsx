@@ -69,13 +69,13 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
           category: apiData.category,
           currentBid: apiData.minimumBid,
           startingBid: apiData.minimumBid,
-          reservePrice: apiData.minimumBid + 1000, // You can adjust this logic
+          reservePrice: apiData.minimumBid + 1000,
           nextBidIncrement: 500,
           endTime: new Date(Date.now() + 2 * 60 * 60 * 1000),
-          bidCount: 0, // No bid history in API
+          bidCount: 0,
           views: apiData.views || 0,
-          watchers: 0, // Not provided in API
-          location: "Unknown", // Not provided
+          watchers: 0,
+          location: "Unknown",
           seller: {
             name: apiData.sellerInfo?.name || "Unknown Seller",
             rating: 0,
@@ -109,8 +109,8 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
               (img) => `http://localhost:5001/${img.url.replace(/\\/g, "/")}`
             ) || [],
 
-          bidHistory: [], // Not provided in API
-          relatedGems: [], // Use 'related' if you want
+          bidHistory: [],
+          relatedGems: [],
         };
 
         setGemData(mappedGemData);
@@ -167,117 +167,12 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
     }
   };
 
-  // Mock gem data (in real app, this would come from API based on gemId)
-  // const gemData = {
-  //   id: 1,
-  //   title: "Exceptional Ceylon Blue Sapphire",
-  //   category: "Sapphire",
-  //   currentBid: 15750,
-  //   startingBid: 8500,
-  //   reservePrice: 18000,
-  //   nextBidIncrement: 500,
-  //   endTime: new Date(Date.now() + 2 * 60 * 60 * 1000 + 45 * 60 * 1000),
-  //   bidCount: 23,
-  //   views: 456,
-  //   watchers: 89,
-  //   location: "Colombo",
-  //   seller: {
-  //     name: "Merit Gems Lanka",
-  //     rating: 4.9,
-  //     totalSales: "1.2M",
-  //     yearsActive: 8,
-  //     verified: true,
-  //     avatar: "MGL",
-  //   },
-  //   certification: {
-  //     lab: "GIA",
-  //     number: "GIA-2118234567",
-  //     date: "2024-01-15",
-  //   },
-  //   specifications: {
-  //     weight: "5.42 ct",
-  //     dimensions: "11.2 x 9.8 x 6.4 mm",
-  //     shape: "Oval",
-  //     cut: "Excellent",
-  //     color: "Royal Blue",
-  //     clarity: "VVS1",
-  //     origin: "Ceylon (Sri Lanka)",
-  //     treatment: "No Heat",
-  //   },
-  //   features: [
-  //     "Natural",
-  //     "Unheated",
-  //     "Eye Clean",
-  //     "Cornflower Blue",
-  //     "Excellent Cut",
-  //   ],
-  //   description:
-  //     "This exceptional Ceylon blue sapphire exhibits the coveted cornflower blue color that has made Sri Lankan sapphires world-renowned. The stone displays excellent transparency with remarkable brilliance and fire. Sourced from the famous Ratnapura mines, this unheated natural sapphire represents the pinnacle of Ceylon's gem heritage.",
-  //   image: "/images/auction-gems/1.jpg",
-  //   images: [
-  //     "/images/auction-gems/1.jpg",
-  //     "/images/auction-gems/2.png",
-  //     "/images/auction-gems/3.jpg",
-  //     "/images/auction-gems/4.jpg",
-  //   ],
-  //   bidHistory: [
-  //     {
-  //       bidder: "B****r",
-  //       amount: 15750,
-  //       time: "2 minutes ago",
-  //       isWinning: true,
-  //     },
-  //     {
-  //       bidder: "G****s",
-  //       amount: 15250,
-  //       time: "5 minutes ago",
-  //       isWinning: false,
-  //     },
-  //     {
-  //       bidder: "S****e",
-  //       amount: 14800,
-  //       time: "12 minutes ago",
-  //       isWinning: false,
-  //     },
-  //     {
-  //       bidder: "B****r",
-  //       amount: 14300,
-  //       time: "18 minutes ago",
-  //       isWinning: false,
-  //     },
-  //     {
-  //       bidder: "C****l",
-  //       amount: 13750,
-  //       time: "25 minutes ago",
-  //       isWinning: false,
-  //     },
-  //   ],
-  //   relatedGems: [
-  //     {
-  //       id: 2,
-  //       title: "Blue Sapphire 4.2ct",
-  //       price: 12500,
-  //       image:
-  //         "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzM2NjZGMSIvPjwvc3ZnPg==",
-  //     },
-  //     {
-  //       id: 3,
-  //       title: "Ceylon Sapphire 3.8ct",
-  //       price: 18900,
-  //       image:
-  //         "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzYzNjZGMSIvPjwvc3ZnPg==",
-  //     },
-  //   ],
-  // };
-
-  // Timer effect
-
   useEffect(() => {
-    if (!gemData?.endTime) return; // Wait until gemData is available
+    if (!gemData?.endTime) return;
 
     const timer = setInterval(() => {
       const now = new Date().getTime();
-      const end = new Date(gemData.endTime).getTime(); // Ensure it's a Date object
+      const end = new Date(gemData.endTime).getTime();
       const distance = end - now;
 
       if (distance > 0) {
@@ -299,15 +194,12 @@ const GemDetailPage = ({ gemId = 1, onBack }) => {
   if (error) return <p className="text-red-600">{error}</p>;
   if (!gemData) return <p>No gem data found</p>;
 
-  // Handle bid submission
   const handleBidSubmission = () => {
     const bidValue = parseFloat(bidAmount);
     if (bidValue >= gemData.currentBid + gemData.nextBidIncrement) {
-      // Here you would submit the bid to your API
       console.log(`Bid submitted: $${bidValue}`);
       setShowBidModal(false);
       setBidAmount("");
-      // Update current bid (in real app, this would come from API response)
       gemData.currentBid = bidValue;
       gemData.bidCount += 1;
     }

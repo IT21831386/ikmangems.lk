@@ -256,7 +256,9 @@ export const gemstoneAPI = {
   // --- Analytics ---
   getGemstoneAnalytics: async ({ name, start, end }) => {
     try {
-      const response = await api.get(`/analytics`, { params: { name, start, end } });
+      const response = await api.get(`/analytics`, {
+        params: { name, start, end },
+      });
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: "Failed to fetch analytics" };

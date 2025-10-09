@@ -219,28 +219,32 @@ const GemsAuctionPage = () => {
         const response = await gemstoneAPI.getGemstones();
         const gemstones = response.data.gemstones;
 
-        // Map gemstones to auction-like objects expected by AuctionCard
-        const mappedAuctions = gemstones.map((gem) => ({
+        // Filter gems that are active and already auctioned
+        const filteredGems = gemstones.filter(
+          (gem) => gem.isActive && gem.isAuctioned
+        );
+
+        const mappedAuctions = filteredGems.map((gem) => ({
           id: gem._id,
           title: gem.name,
           description: gem.description,
           currentBid: gem.minimumBid,
-          startingBid: gem.minimumBid, // assuming startingBid same as minimumBid
-          weight: `${gem.weight} ${gem.weightUnit}`, // e.g., "23 carats"
+          startingBid: gem.minimumBid,
+          weight: `${gem.weight} ${gem.weightUnit}`,
           certification: gem.certificateDetails.hasCertificate
             ? gem.certificateDetails.certifyingBody
             : "No Certificate",
-          location: "Unknown", // no location in API, replace or leave default
+          location: gem.location || "Unknown",
           views: gem.views || 0,
           features: gem.tags || [],
           seller: gem.sellerInfo.name,
-          sellerRating: 0, // no rating info, default 0
+          sellerRating: gem.sellerInfo.rating || 0,
           image:
             "http://localhost:5001/" + gem.primaryImage.replace(/\\/g, "/"),
-          status: "active", // or set based on your logic
-          bidCount: 0, // no bids info, default 0
-          timeLeft: 0, // no time info, default 0
-          // eslint-disable-next-line no-dupe-keys
+          status: "active",
+          isAuctioned: gem.isAuctioned,
+          bidCount: gem.bidCount || 0,
+          timeLeft: gem.timeLeft || Math.floor(Math.random() * 48) + 1,
         }));
 
         setAuctions(mappedAuctions);

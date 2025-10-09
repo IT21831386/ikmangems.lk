@@ -4,7 +4,7 @@ import AccountSettings from "../user/AccountSettings";
 import Gems from "../gem-listing/GemDisplay";
 import GemCreate from "../gem-listing/Gemstone";
 import GemAnalytics from "./GemAnalytics";
-
+import AuctionPage from "./AuctionPage";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import VerificationCenter from "./VerificationCenter";
@@ -610,80 +610,87 @@ export default function SellerDashboard() {
 
   const fetchVerificationStatus = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/api/verification/status', {
-        withCredentials: true,
-      });
-      
+      const response = await axios.get(
+        "http://localhost:5001/api/verification/status",
+        {
+          withCredentials: true,
+        }
+      );
+
       if (response.data.success) {
         const status = response.data.data;
         setVerificationStatus(status);
         generateNotifications(status);
       }
     } catch (err) {
-      console.error('Failed to fetch verification status:', err);
+      console.error("Failed to fetch verification status:", err);
     }
   };
 
   const generateNotifications = (status) => {
     const newNotifications = [];
-    
+
     // NIC verification notifications
-    if (status.nicStatus === 'rejected') {
+    if (status.nicStatus === "rejected") {
       newNotifications.push({
-        id: 'nic-rejected',
-        type: 'error',
-        title: 'NIC Verification Rejected',
-        message: 'Your NIC documents have been rejected. Please resubmit with clearer images.',
-        action: 'Resubmit NIC',
-        actionUrl: '/upload-nic'
+        id: "nic-rejected",
+        type: "error",
+        title: "NIC Verification Rejected",
+        message:
+          "Your NIC documents have been rejected. Please resubmit with clearer images.",
+        action: "Resubmit NIC",
+        actionUrl: "/upload-nic",
       });
-    } else if (status.nicStatus === 'approved') {
+    } else if (status.nicStatus === "approved") {
       newNotifications.push({
-        id: 'nic-approved',
-        type: 'success',
-        title: 'NIC Verification Approved',
-        message: 'Your identity has been successfully verified!',
-        action: null
+        id: "nic-approved",
+        type: "success",
+        title: "NIC Verification Approved",
+        message: "Your identity has been successfully verified!",
+        action: null,
       });
     }
 
     // Business verification notifications
-    if (status.businessStatus === 'rejected') {
+    if (status.businessStatus === "rejected") {
       newNotifications.push({
-        id: 'business-rejected',
-        type: 'error',
-        title: 'Business Verification Rejected',
-        message: 'Your business documents have been rejected. Please resubmit with proper documentation.',
-        action: 'Resubmit Business',
-        actionUrl: '/upload-business'
+        id: "business-rejected",
+        type: "error",
+        title: "Business Verification Rejected",
+        message:
+          "Your business documents have been rejected. Please resubmit with proper documentation.",
+        action: "Resubmit Business",
+        actionUrl: "/upload-business",
       });
-    } else if (status.businessStatus === 'approved') {
+    } else if (status.businessStatus === "approved") {
       newNotifications.push({
-        id: 'business-approved',
-        type: 'success',
-        title: 'Business Verification Approved',
-        message: 'Your business documents have been successfully verified!',
-        action: null
+        id: "business-approved",
+        type: "success",
+        title: "Business Verification Approved",
+        message: "Your business documents have been successfully verified!",
+        action: null,
       });
     }
 
     // Overall verification status
-    if (status.sellerVerificationStatus === 'rejected') {
+    if (status.sellerVerificationStatus === "rejected") {
       newNotifications.push({
-        id: 'overall-rejected',
-        type: 'error',
-        title: 'Seller Verification Rejected',
-        message: 'Your seller application has been rejected. Please review and resubmit your documents.',
-        action: 'Review Status',
-        actionUrl: '/verification-center'
+        id: "overall-rejected",
+        type: "error",
+        title: "Seller Verification Rejected",
+        message:
+          "Your seller application has been rejected. Please review and resubmit your documents.",
+        action: "Review Status",
+        actionUrl: "/verification-center",
       });
-    } else if (status.sellerVerificationStatus === 'verified') {
+    } else if (status.sellerVerificationStatus === "verified") {
       newNotifications.push({
-        id: 'overall-approved',
-        type: 'success',
-        title: 'Seller Verification Complete',
-        message: 'Congratulations! You are now a verified seller on our platform.',
-        action: null
+        id: "overall-approved",
+        type: "success",
+        title: "Seller Verification Complete",
+        message:
+          "Congratulations! You are now a verified seller on our platform.",
+        action: null,
       });
     }
 
@@ -728,6 +735,7 @@ export default function SellerDashboard() {
 
   const sidebarItems = [
     { title: "Dashboard", key: "dashboard", icon: "" },
+    { title: "Auction Management", key: "auction", icon: "" },
     { title: "My Listings", key: "listings", icon: "" },
     { title: "Add New Gem", key: "add-gem", icon: "" },
     { title: "Analytics", key: "analytics", icon: "" },
@@ -741,6 +749,8 @@ export default function SellerDashboard() {
     switch (activeSection) {
       case "dashboard":
         return <DashboardOverview revenue={mockRevenue} gems={gems} />;
+      case "auction":
+        return <AuctionPage />;
       case "listings":
         return <Gems />;
       case "add-gem":
@@ -805,9 +815,7 @@ export default function SellerDashboard() {
       </Sidebar>
 
       <main className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 p-6 overflow-auto">
-          {renderContent()}
-        </div>
+        <div className="flex-1 p-6 overflow-auto">{renderContent()}</div>
       </main>
     </div>
   );
