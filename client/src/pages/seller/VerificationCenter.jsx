@@ -305,6 +305,7 @@ export default VerificationCenter;*/
 
 import React, { useState, useEffect } from 'react';
 import { Check, Circle, Lock, Mail, CreditCard, FileText, Building2, Wallet, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const VerificationCenter = () => {
   const [nicStatus, setNicStatus] = useState('not_uploaded');
@@ -314,6 +315,8 @@ const VerificationCenter = () => {
   const [reviewStatus, setReviewStatus] = useState('not_started');
   const [loading, setLoading] = useState(true);
   
+  const navigate = useNavigate();
+
   useEffect(() => {
     fetchUserVerificationStatus();
   }, []);
@@ -682,16 +685,17 @@ const VerificationCenter = () => {
                         {/* Payment - Step 6 */}
                         {step.id === 6 && (status === 'available' || status === 'rejected') && (
                           <div className="mt-4">
-                            <a
-                              href="/registration-payment"
+                            <button
+                              onClick={() => navigate('/payment-form?type=registration')}
                               className={`inline-block px-6 py-2 ${
                                 status === 'rejected' ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
                               } text-white font-medium rounded-lg transition-colors duration-200`}
                             >
                               {status === 'rejected' ? 'Retry Payment' : 'Pay Registration Fee'}
-                            </a>
+                            </button>
                           </div>
                         )}
+
                         
                         {/* Pending Status */}
                         {status === 'pending' && (
