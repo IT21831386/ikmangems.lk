@@ -3,6 +3,8 @@ import OrderHistoryPage from "../user/OrderHistoryPage";
 import AccountSettings from "../user/AccountSettings";
 import Gems from "../gem-listing/GemDisplay";
 import GemCreate from "../gem-listing/Gemstone";
+import GemAnalytics from "./GemAnalytics";
+
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import VerificationCenter from "./VerificationCenter";
@@ -728,6 +730,8 @@ export default function SellerDashboard() {
     { title: "Dashboard", key: "dashboard", icon: "" },
     { title: "My Listings", key: "listings", icon: "" },
     { title: "Add New Gem", key: "add-gem", icon: "" },
+    { title: "Analytics", key: "analytics", icon: "" },
+    { title: "Revenue", key: "revenue", icon: "" },
     { title: "Order History", key: "order-history", icon: "" },
     { title: "Profile", key: "profile", icon: "" },
     { title: "Verification Center", key: "verification", icon: "" },
@@ -743,6 +747,8 @@ export default function SellerDashboard() {
         return <GemCreate />;
       case "order-history":
         return <OrderHistoryPage />;
+      case "analytics":
+        return <GemAnalytics />;
 
       case "profile":
         return <AccountSettings />;

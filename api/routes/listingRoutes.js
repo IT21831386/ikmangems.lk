@@ -17,6 +17,7 @@ import {
   getBidsByUser,
   getAllBids,
 } from "../controllers/bidController.js";
+import { getGemstoneAnalytics } from "../controllers/analyticsController.js";
 
 import multer, { diskStorage } from "multer";
 import { extname } from "path";
@@ -143,6 +144,8 @@ router.post(
   createGemstone
 );
 router.get("/", getGemstones);
+// Analytics route
+router.get("/analytics", getGemstoneAnalytics);
 router.get("/:id", getGemstone);
 router.put(
   "/:id",
