@@ -48,16 +48,29 @@ export default function Signin() {
 
       if (response.data.success) {
         const loggedInUser = response.data.user;
-        setUser(loggedInUser);
-        localStorage.setItem("user", JSON.stringify(loggedInUser));
+        
+        // Check account status
+        if (loggedInUser.status === "suspended") {
+          // Redirect to suspension page
+          navigate("/account-suspended", { replace: true });
+          return;
+        }
+        
+        // Only proceed if account is active
+        if (loggedInUser.status === "active") {
+          setUser(loggedInUser);
+          localStorage.setItem("user", JSON.stringify(loggedInUser));
 
-        // Role-based navigation
-        if (loggedInUser.role === "seller") {
-          navigate("/seller-dashboard", { replace: true });
-        } else if (loggedInUser.role === "admin") {
-          navigate("/admin-dashboard", { replace: true });
+          // Role-based navigation
+          if (loggedInUser.role === "seller") {
+            navigate("/seller-dashboard", { replace: true });
+          } else if (loggedInUser.role === "admin") {
+            navigate("/admin-dashboard", { replace: true });
+          } else {
+            navigate("/bidder-dashboard", { replace: true });
+          }
         } else {
-          navigate("/bidder-dashboard", { replace: true });
+          setServerError("Your account is not active. Please contact support.");
         }
       } else {
         setServerError(response.data.message || "Login failed");

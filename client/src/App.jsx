@@ -16,6 +16,7 @@ import AddUser from "./pages/admin/admin-um/AddUser";
 //import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
+import AccountSuspended from "./pages/auth/AccountSuspended";
 import NICUpload from './components/NICUpload';
 import VerificationCenter from './pages/seller/VerificationCenter';
 import AdminNICReview from './pages/admin/admin-um/AdminNICReview';
@@ -88,6 +89,7 @@ const App = () => {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/account-suspended" element={<AccountSuspended />} />
       <Route path="/get-otp" element={<GetOTP />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/reset-password" element={<ResetPassword />} />
