@@ -480,6 +480,11 @@ const OnlinePayment = ({ goBack, clearAllData: parentClearAllData, bidderData, p
             const status = paymentType === 'penalty' ? 'rejected' : 'completed';
             localStorage.setItem(`payment_status_${formData.bidId}`, status);
           }
+          
+          // Set flag for registration payment completion to trigger VerificationCenter refresh
+          if (paymentType === 'registration') {
+            sessionStorage.setItem('payment_completed', 'true');
+          }
         } else {
           toast.error("Payment verification failed");
           setCurrentStep(5); // error screen

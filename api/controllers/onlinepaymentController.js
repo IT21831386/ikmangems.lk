@@ -254,6 +254,23 @@ export const completePayment = async (req, res) => {
     onlinePayment.completedAt = new Date();
     await onlinePayment.save();
 
+    // Update user's registration payment status if this is a registration payment
+    if (onlinePayment.paymentType === 'registration') {
+      try {
+        const user = await User.findOne({ email: onlinePayment.emailAddress });
+        if (user) {
+          user.registrationPaymentStatus = 'paid';
+          await user.save();
+          console.log(`Updated user ${user.email} registration payment status to paid`);
+        } else {
+          console.warn(`User not found for email: ${onlinePayment.emailAddress}`);
+        }
+      } catch (userUpdateError) {
+        console.error('Error updating user registration payment status:', userUpdateError);
+        // Don't fail the payment completion if user update fails
+      }
+    }
+
     // Send confirmation email
     try {
       const emailData = {
@@ -326,6 +343,23 @@ export const updatePaymentStatus = async (req, res) => {
         success: false,
         message: "Online payment not found"
       });
+    }
+
+    // Update user's registration payment status if this is a registration payment and status is completed
+    if (onlinePayment.paymentType === 'registration' && status === 'completed') {
+      try {
+        const user = await User.findOne({ email: onlinePayment.emailAddress });
+        if (user) {
+          user.registrationPaymentStatus = 'paid';
+          await user.save();
+          console.log(`Updated user ${user.email} registration payment status to paid via status update`);
+        } else {
+          console.warn(`User not found for email: ${onlinePayment.emailAddress}`);
+        }
+      } catch (userUpdateError) {
+        console.error('Error updating user registration payment status:', userUpdateError);
+        // Don't fail the status update if user update fails
+      }
     }
 
     res.status(200).json({

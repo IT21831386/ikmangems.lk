@@ -319,6 +319,27 @@ const VerificationCenter = () => {
 
   useEffect(() => {
     fetchUserVerificationStatus();
+    
+    // Check for payment completion when component mounts or becomes visible
+    const checkPaymentCompletion = () => {
+      // Check if user is returning from payment completion
+      const paymentCompleted = sessionStorage.getItem('payment_completed');
+      if (paymentCompleted === 'true') {
+        // Clear the flag
+        sessionStorage.removeItem('payment_completed');
+        // Refresh status to get updated payment status
+        fetchUserVerificationStatus();
+      }
+    };
+    
+    checkPaymentCompletion();
+    
+    // Also check periodically in case user returns from payment
+    const interval = setInterval(() => {
+      fetchUserVerificationStatus();
+    }, 10000); // Check every 10 seconds
+    
+    return () => clearInterval(interval);
   }, []);
 
   // Add refresh functionality
@@ -333,11 +354,18 @@ const VerificationCenter = () => {
       });
       const data = await response.json();
       if (data.success) {
+        const previousPaymentStatus = paymentStatus;
         setNicStatus(data.data.nicStatus || 'not_uploaded');
         setBusinessStatus(data.data.businessStatus || 'not_uploaded');
         setPayoutStatus(data.data.payoutStatus || 'not_completed');
         setPaymentStatus(data.data.registrationPaymentStatus || 'unpaid');
         setReviewStatus(data.data.sellerVerificationStatus || 'not_started');
+        
+        // Show success message if payment status changed from unpaid to paid
+        if (previousPaymentStatus === 'unpaid' && data.data.registrationPaymentStatus === 'paid') {
+          // You can add a toast notification here if you have a toast system
+          console.log('✅ Registration payment completed successfully!');
+        }
       }
     } catch (err) {
       console.error('Failed to fetch verification status:', err);
