@@ -79,7 +79,7 @@ const SetupPayoutMethod = () => {
       if (data.success) {
         setSuccess(true);
         setTimeout(() => {
-          window.location.href = '/verification';
+          window.location.href = '/seller-dashboard';
         }, 2000);
       } else {
         setError(data.message || 'Failed to setup payout method');

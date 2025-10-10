@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import AccountSettings from "../user/AccountSettings"; 
 import DisplayUsers from "./admin-um/DisplayUsers";
 //import AddUser from '../admin-um/AddUser'
+import ReviewDoc from "./admin-um/AdminDocumentReview"
+import AddUsers from "./admin-um/AddUser";
 
 import {
   Inbox,
@@ -78,6 +80,7 @@ export default function ManageUsers() {
     { title: "Add User", key: "transactions", icon: UserCog},
     { title: "My Bids", key: "mybids", icon: Gavel },
     { title: "Profile", key: "profile", icon: UserCog },
+    { title: "RevDoc", key: "revdoc", icon: HelpCircle},
   ];
 
   const renderContent = () => {
@@ -125,6 +128,9 @@ export default function ManageUsers() {
       case "manageusers":
         return <DisplayUsers />;
 
+      case "addusers":
+        return <AddUsers />;  
+
       case "transactions":
         return <AdminPaymentStatus />;
 
@@ -139,6 +145,9 @@ export default function ManageUsers() {
 
       case "profile":
         return <AccountSettings />;
+
+      case "revdoc":
+        return <ReviewDoc/>;  
 
       default:
         return (
@@ -184,12 +193,32 @@ export default function ManageUsers() {
 
               <SidebarMenuItem>
                 <SidebarMenuButton
+                  onClick={() => setActiveSection("revdoc")} // <- this is missing
+                  className={activeSection === "revdoc" ? "bg-gray-200" : ""}
+                >
+                  <HelpCircle className="mr-2" /> RevDoc
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
                   onClick={() => setActiveSection("manageusers")}
                   className={
                     activeSection === "manageusers" ? "bg-gray-200" : ""
                   }
                 >
                   <Users className="mr-2" /> Manage Users
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setActiveSection("addusers")}
+                  className={
+                    activeSection === "addusers" ? "bg-gray-200" : ""
+                  }
+                >
+                  <Users className="mr-2" /> Add Users
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
