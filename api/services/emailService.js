@@ -1,17 +1,25 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 class EmailService {
   constructor() {
-    // Email configuration - you can use Gmail, Outlook, or any SMTP service
+    // Email configuration - using Brevo SMTP
     this.transporter = nodemailer.createTransport({
-      service: 'gmail', // You can change this to 'outlook', 'yahoo', etc.
+      host: "smtp-relay.brevo.com",
+      port: 587,
+      secure: false, // true for 465, false for other ports
       auth: {
-        user: process.env.EMAIL_USER || 'your-email@gmail.com',
-        pass: process.env.EMAIL_PASS || 'your-app-password' // Use app password for Gmail
+        user: process.env.SMTP_USER || process.env.EMAIL_USER,
+        pass: process.env.SMTP_PASS || process.env.EMAIL_PASS
       }
     });
 
-    console.log('Email Service initialized');
+    console.log('Email Service initialized with Brevo SMTP');
+    console.log('SMTP_USER:', process.env.SMTP_USER ? 'SET' : 'NOT SET');
+    console.log('SMTP_PASS:', process.env.SMTP_PASS ? 'SET' : 'NOT SET');
   }
 
   // Send payment confirmation email
@@ -176,7 +184,7 @@ class EmailService {
 
       // Send email
       const mailOptions = {
-        from: `"ikmangems.lk" <${process.env.EMAIL_USER || 'noreply@ikmangems.lk'}>`,
+        from: `"ikmangems.lk" <${process.env.SENDER_EMAIL || process.env.SMTP_USER || 'noreply@ikmangems.lk'}>`,
         to: emailAddress,
         subject: subject,
         text: textContent,
@@ -206,7 +214,7 @@ class EmailService {
   async testEmail(toEmail) {
     try {
       const mailOptions = {
-        from: `"ikmangems.lk" <${process.env.EMAIL_USER || 'noreply@ikmangems.lk'}>`,
+        from: `"ikmangems.lk" <${process.env.SENDER_EMAIL || process.env.SMTP_USER || 'noreply@ikmangems.lk'}>`,
         to: toEmail,
         subject: 'Test Email from ikmangems.lk',
         text: 'This is a test email from ikmangems.lk payment system.',
