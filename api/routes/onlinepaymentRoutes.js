@@ -12,11 +12,17 @@ import {
   //testTextLK,
   //testSMS,
   //testSMSSimple,
+  testEmailConfig,
   testEmail,
   softDeleteOnlinePayment
 } from "../controllers/onlinepaymentController.js";
 
 const router = express.Router();
+
+
+
+router.get('/test-email-config', testEmailConfig);  // ADD THIS
+router.post('/test-email', testEmail);  
 
 // GET routes
 router.get("/", getAllOnlinePayments);
@@ -30,7 +36,7 @@ router.post("/", createOnlinePayment);
 router.post("/verify-otp", verifyOTP);
 router.post("/resend-otp", resendOTP);
 //router.post("/test-sms", testSMS);
-router.post("/test-email", testEmail);
+//router.post("/test-email", testEmail);
 
 // PUT routes
 router.put("/:id/status", updatePaymentStatus);

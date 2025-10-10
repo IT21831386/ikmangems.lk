@@ -5,6 +5,40 @@ import transporter from "../config/nodemailer.js";
 import dotenv from "dotenv";
 dotenv.config();
 
+// Test email configuration
+export const testEmailConfig = async (req, res) => {
+  try {
+    console.log('=== EMAIL CONFIG TEST ===');
+    console.log('SMTP_USER:', process.env.SMTP_USER);
+    console.log('SMTP_PASS:', process.env.SMTP_PASS ? '***SET***' : 'NOT SET');
+    console.log('SENDER_EMAIL:', process.env.SENDER_EMAIL);
+    
+    const info = await transporter.sendMail({
+      from: process.env.SENDER_EMAIL,
+      to: process.env.SENDER_EMAIL, // Send to yourself for testing
+      subject: 'Email Configuration Test - ikmangems.lk',
+      text: 'If you receive this, your email is configured correctly! ✅'
+    });
+    
+    console.log('✅ Email sent successfully!');
+    console.log('Message ID:', info.messageId);
+    
+    res.json({ 
+      success: true, 
+      messageId: info.messageId,
+      message: 'Email sent! Check your inbox at ' + process.env.SENDER_EMAIL
+    });
+  } catch (error) {
+    console.error('❌ Email sending failed:', error);
+    res.json({ 
+      success: false, 
+      error: error.message,
+      details: error
+    });
+  }
+};
+
+
 // Create a new online payment
 export const createOnlinePayment = async (req, res) => {
   try {
@@ -343,6 +377,7 @@ Email: support@ikmangems.lk | Tel: +94 11 234 5678
 };
 
 // Update payment status
+// Update payment status - FIXED VERSION
 export const updatePaymentStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -357,7 +392,11 @@ export const updatePaymentStatus = async (req, res) => {
 
     const onlinePayment = await OnlinePayment.findByIdAndUpdate(
       id,
-      { status, updatedAt: new Date() },
+      { 
+        status, 
+        updatedAt: new Date(),
+        completedAt: status === 'completed' ? new Date() : undefined 
+      },
       { new: true }
     );
 
@@ -381,7 +420,66 @@ export const updatePaymentStatus = async (req, res) => {
         }
       } catch (userUpdateError) {
         console.error('Error updating user registration payment status:', userUpdateError);
-        // Don't fail the status update if user update fails
+      }
+    }
+
+    // Send confirmation email when status is completed
+    if (status === 'completed') {
+      try {
+        const paymentId = `ONL_${onlinePayment._id.toString().slice(-8).toUpperCase()}`;
+        const amount = new Intl.NumberFormat('en-LK', {
+          style: 'currency',
+          currency: 'LKR',
+          minimumFractionDigits: 0
+        }).format(onlinePayment.amount);
+
+        const emailSubject = `Payment Confirmation - ${paymentId}`;
+        const emailText = `
+Payment Confirmation - ${paymentId}
+
+Dear ${onlinePayment.fullName},
+
+Thank you for your payment! We are pleased to confirm that your payment has been processed successfully.
+
+Payment Details:
+- Payment Number: ${paymentId}
+- Transaction ID: ${onlinePayment.transactionId}
+- Auction ID: ${onlinePayment.bidId}
+- Payment Method: Online Payment
+- Card Type: ${onlinePayment.cardType === 'visa' ? 'Visa Card' : onlinePayment.cardType === 'mastercard' ? 'Master Card' : 'Card Payment'}
+- Amount: ${amount}
+- Payment Date: ${new Date().toLocaleDateString('en-LK')}
+- Status: COMPLETED
+
+You can download your payment invoice from your payment history page.
+
+If you have any questions or concerns, please don't hesitate to contact our support team.
+
+Best regards,
+ikmangems.lk Team
+Colombo, Sri Lanka
+Email: support@ikmangems.lk | Tel: +94 11 234 5678
+        `;
+
+        console.log('Attempting to send confirmation email to:', onlinePayment.emailAddress);
+        console.log('Using sender email:', process.env.SENDER_EMAIL);
+        
+        const emailResult = await transporter.sendMail({
+          from: process.env.SENDER_EMAIL,
+          to: onlinePayment.emailAddress,
+          subject: emailSubject,
+          text: emailText,
+        });
+
+        console.log('Payment confirmation email sent successfully:', emailResult);
+      } catch (emailError) {
+        console.error('Error sending confirmation email:', emailError);
+        console.error('Email error details:', {
+          message: emailError.message,
+          code: emailError.code,
+          response: emailError.response
+        });
+        // Don't fail the payment completion if email fails
       }
     }
 
