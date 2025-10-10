@@ -1,8 +1,9 @@
 import OnlinePayment from "../models/onlinepaymentModel.js";
 import User from "../models/userModel.js";
 import textlkService from "../services/textlkService.js";
-import emailService from "../services/emailService.js";
-//import axios from "axios";
+import transporter from "../config/nodemailer.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Create a new online payment
 export const createOnlinePayment = async (req, res) => {
@@ -273,27 +274,49 @@ export const completePayment = async (req, res) => {
 
     // Send confirmation email
     try {
-      const emailData = {
-        fullName: onlinePayment.fullName,
-        emailAddress: onlinePayment.emailAddress,
-        paymentId: `ONL_${onlinePayment._id.slice(-8).toUpperCase()}`,
-        transactionId: onlinePayment.transactionId,
-        bidId: onlinePayment.bidId,
-        amount: onlinePayment.amount,
-        paymentType: 'Online Payment',
-        cardType: onlinePayment.cardType,
-        bank: 'IPG',
-        branch: 'IPG',
-        date: new Date().toLocaleDateString('en-LK')
-      };
+      const paymentId = `ONL_${onlinePayment._id.slice(-8).toUpperCase()}`;
+      const amount = new Intl.NumberFormat('en-LK', {
+        style: 'currency',
+        currency: 'LKR',
+        minimumFractionDigits: 0
+      }).format(onlinePayment.amount);
 
-      const emailResult = await emailService.sendPaymentConfirmation(emailData);
-      
-      if (emailResult.success) {
-        console.log('Confirmation email sent successfully:', emailResult.messageId);
-      } else {
-        console.error('Failed to send confirmation email:', emailResult.error);
-      }
+      const emailSubject = `Payment Confirmation - ${paymentId}`;
+      const emailText = `
+Payment Confirmation - ${paymentId}
+
+Dear ${onlinePayment.fullName},
+
+Thank you for your payment! We are pleased to confirm that your payment has been processed successfully.
+
+Payment Details:
+- Payment Number: ${paymentId}
+- Transaction ID: ${onlinePayment.transactionId}
+- Auction ID: ${onlinePayment.bidId}
+- Payment Method: Online Payment
+- Card Type: ${onlinePayment.cardType === 'visa' ? 'Visa Card' : onlinePayment.cardType === 'mastercard' ? 'Master Card' : 'Card Payment'}
+- Amount: ${amount}
+- Payment Date: ${new Date().toLocaleDateString('en-LK')}
+- Status: COMPLETED
+
+You can download your payment invoice from your payment history page.
+
+If you have any questions or concerns, please don't hesitate to contact our support team.
+
+Best regards,
+ikmangems.lk Team
+Colombo, Sri Lanka
+Email: support@ikmangems.lk | Tel: +94 11 234 5678
+      `;
+
+      await transporter.sendMail({
+        from: process.env.SENDER_EMAIL,
+        to: onlinePayment.emailAddress,
+        subject: emailSubject,
+        text: emailText,
+      });
+
+      console.log('Payment confirmation email sent successfully to:', onlinePayment.emailAddress);
     } catch (emailError) {
       console.error('Error sending confirmation email:', emailError);
       // Don't fail the payment completion if email fails
@@ -859,12 +882,20 @@ export const testEmail = async (req, res) => {
       });
     }
 
-    const result = await emailService.testEmail(email);
-    
+    await transporter.sendMail({
+      from: process.env.SENDER_EMAIL,
+      to: email,
+      subject: 'Test Email from ikmangems.lk',
+      text: 'This is a test email from ikmangems.lk payment system. If you receive this email, the email service is working correctly!',
+    });
+
     res.status(200).json({
-      success: result.success,
-      message: result.message,
-      data: result
+      success: true,
+      message: "Test email sent successfully",
+      data: {
+        success: true,
+        message: "Test email sent successfully"
+      }
     });
   } catch (error) {
     console.error("Error testing email:", error);

@@ -1,5 +1,7 @@
    import Payment from "../models/paymentModel.js"
-   import emailService from "../services/emailService.js"
+   import transporter from "../config/nodemailer.js"
+   import dotenv from "dotenv"
+   dotenv.config()
 
 export async function getAllPayments(_, res) {
   try {
@@ -213,27 +215,49 @@ export async function updatePaymentStatus(req, res) {
     // Send confirmation email if status is success
     if (status === 'success') {
       try {
-        const emailData = {
-          fullName: payment.fullName,
-          emailAddress: payment.emailAddress,
-          paymentId: `BNK_${payment._id.slice(-8).toUpperCase()}`,
-          transactionId: null, // Bank deposits don't have transaction ID
-          auctionId: payment.auctionId,
-          amount: payment.amount,
-          paymentType: 'Bank Deposit',
-          cardType: null,
-          bank: payment.bank,
-          branch: payment.branch,
-          date: payment.paiddate ? new Date(payment.paiddate).toLocaleDateString('en-LK') : new Date().toLocaleDateString('en-LK')
-        };
+        const paymentId = `BNK_${payment._id.slice(-8).toUpperCase()}`;
+        const amount = new Intl.NumberFormat('en-LK', {
+          style: 'currency',
+          currency: 'LKR',
+          minimumFractionDigits: 0
+        }).format(payment.amount);
 
-        const emailResult = await emailService.sendPaymentConfirmation(emailData);
-        
-        if (emailResult.success) {
-          console.log('Bank deposit confirmation email sent successfully:', emailResult.messageId);
-        } else {
-          console.error('Failed to send bank deposit confirmation email:', emailResult.error);
-        }
+        const emailSubject = `Payment Confirmation - ${paymentId}`;
+        const emailText = `
+Payment Confirmation - ${paymentId}
+
+Dear ${payment.fullName},
+
+Thank you for your payment! We are pleased to confirm that your bank deposit has been approved and processed successfully.
+
+Payment Details:
+- Payment Number: ${paymentId}
+- Auction ID: ${payment.auctionId}
+- Payment Method: Bank Deposit
+- Bank: ${payment.bank}
+- Branch: ${payment.branch}
+- Amount: ${amount}
+- Payment Date: ${payment.paiddate ? new Date(payment.paiddate).toLocaleDateString('en-LK') : new Date().toLocaleDateString('en-LK')}
+- Status: COMPLETED
+
+You can download your payment invoice from your payment history page.
+
+If you have any questions or concerns, please don't hesitate to contact our support team.
+
+Best regards,
+ikmangems.lk Team
+Colombo, Sri Lanka
+Email: support@ikmangems.lk | Tel: +94 11 234 5678
+        `;
+
+        await transporter.sendMail({
+          from: process.env.SENDER_EMAIL,
+          to: payment.emailAddress,
+          subject: emailSubject,
+          text: emailText,
+        });
+
+        console.log('Bank deposit confirmation email sent successfully to:', payment.emailAddress);
       } catch (emailError) {
         console.error('Error sending bank deposit confirmation email:', emailError);
         // Don't fail the status update if email fails
