@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Edit, Eye, ArrowLeft, Save, X, AlertCircle, CheckCircle, Clock, User, Mail, Phone, MapPin, Calendar, Shield, Activity } from 'lucide-react';
+import { Search, Filter, Edit, Eye, ArrowLeft, Save, X, AlertCircle, CheckCircle, Clock, User, Mail, Phone, MapPin, Calendar, Shield, Activity, Download, FileText } from 'lucide-react';
 import AddUser from './AddUser';
 
 export default function AdminUserManagement() {
@@ -19,6 +19,8 @@ export default function AdminUserManagement() {
 
   const [phoneError, setPhoneError] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -42,6 +44,20 @@ export default function AdminUserManagement() {
     };
     fetchUsers();
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showExportDropdown && !event.target.closest('.export-dropdown-container')) {
+        setShowExportDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showExportDropdown]);
 
   // Clear success message after 5 seconds
   useEffect(() => {
@@ -208,6 +224,222 @@ export default function AdminUserManagement() {
     );
   };
 
+  // Report Generation Functions
+  const exportToCSV = () => {
+    if (filteredUsers.length === 0) {
+      alert('No users to export');
+      return;
+    }
+
+    const csvHeaders = ['Name', 'Email', 'Role', 'Status', 'Join Date', 'Phone', 'Country', 'City', 'Address'];
+    const csvData = filteredUsers.map(user => [
+      `"${(`${user.firstName || ''} ${user.lastName || ''}`).trim() || 'N/A'}"`,
+      `"${user.email || 'N/A'}"`,
+      `"${user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}"`,
+      `"${user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : 'Active'}"`,
+      `"${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}"`,
+      `"${user.phone || 'N/A'}"`,
+      `"${user.country || 'N/A'}"`,
+      `"${user.city || 'N/A'}"`,
+      `"${user.address || 'N/A'}"`
+    ]);
+
+    const csvContent = [csvHeaders.join(','), ...csvData.map(row => row.join(','))].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `user-management-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    alert('✅ CSV file exported successfully!');
+  };
+
+  const generateUserReport = async (reportType = 'all') => {
+    const confirmed = window.confirm(
+      `Do you want to download the User Management Report as PDF?\n\n` +
+      `This will generate a comprehensive report including:\n` +
+      `• User summary and statistics\n` +
+      `• User details and information\n` +
+      `• Role and status distribution\n` +
+      `• Registration trends`
+    );
+    
+    if (!confirmed) return;
+    
+    setGeneratingReport(true);
+    
+    try {
+      const { jsPDF } = await import("jspdf");
+      const autoTable = (await import("jspdf-autotable")).default;
+      
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      let yPosition = 20;
+      
+      // Helper function to add text with word wrap
+      const addText = (text, x, y, options = {}) => {
+        const { fontSize = 12, fontStyle = 'normal', color = '#000000', align = 'left' } = options;
+        doc.setFontSize(fontSize);
+        doc.setFont('helvetica', fontStyle);
+        doc.setTextColor(color);
+        doc.text(text, x, y, { align });
+        return y + fontSize * 0.5;
+      };
+      
+      // Helper function to add a line
+      const addLine = (x1, y1, x2, y2) => {
+        doc.setDrawColor(200, 200, 200);
+        doc.line(x1, y1, x2, y2);
+      };
+      
+      // Header
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text('User Management Report', pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 15;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 20;
+      
+      // Filters applied
+      if (searchTerm || roleFilter) {
+        yPosition += 10;
+        addText('Filters Applied:', 20, yPosition, { fontSize: 14, fontStyle: 'bold' });
+        yPosition += 10;
+        
+        if (searchTerm) {
+          addText(`Search: "${searchTerm}"`, 20, yPosition);
+          yPosition += 8;
+        }
+        if (roleFilter) {
+          addText(`Role: ${roleFilter.charAt(0).toUpperCase() + roleFilter.slice(1)}`, 20, yPosition);
+          yPosition += 8;
+        }
+        yPosition += 10;
+      }
+      
+      // Summary Statistics
+      const totalUsers = filteredUsers.length;
+      const activeUsers = filteredUsers.filter(u => u.status === 'active').length;
+      const adminUsers = filteredUsers.filter(u => u.role === 'admin').length;
+      const sellerUsers = filteredUsers.filter(u => u.role === 'seller').length;
+      const regularUsers = filteredUsers.filter(u => u.role === 'user').length;
+      
+      addText('Summary Statistics', 20, yPosition, { fontSize: 16, fontStyle: 'bold' });
+      yPosition += 15;
+      
+      addText(`Total Users: ${totalUsers}`, 20, yPosition);
+      yPosition += 8;
+      addText(`Active Users: ${activeUsers}`, 20, yPosition);
+      yPosition += 8;
+      addText(`Admin Users: ${adminUsers}`, 20, yPosition);
+      yPosition += 8;
+      addText(`Seller Users: ${sellerUsers}`, 20, yPosition);
+      yPosition += 8;
+      addText(`Regular Users: ${regularUsers}`, 20, yPosition);
+      yPosition += 20;
+      
+      // User Details Table
+      if (yPosition > pageHeight - 100) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      
+      addText('User Details', 20, yPosition, { fontSize: 16, fontStyle: 'bold' });
+      yPosition += 15;
+      
+      // Prepare table data
+      const tableData = filteredUsers.map(user => [
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'N/A',
+        user.email || 'N/A',
+        user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User',
+        user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : 'Active',
+        user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A',
+        user.phone || 'N/A',
+        user.country || 'N/A'
+      ]);
+      
+      autoTable(doc, {
+        startY: yPosition,
+        head: [['Name', 'Email', 'Role', 'Status', 'Join Date', 'Phone', 'Country']],
+        body: tableData,
+        styles: {
+          fontSize: 9,
+          cellPadding: 3,
+        },
+        headStyles: {
+          fillColor: [59, 130, 246], // Blue color
+          textColor: 255,
+          fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+          fillColor: [249, 250, 251], // Light gray
+        },
+        margin: { left: 20, right: 20 },
+        didDrawPage: (data) => {
+          // Add page numbers
+          const totalPages = doc.internal.getNumberOfPages();
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`Page ${data.pageNumber} of ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        }
+      });
+      
+      // Role Distribution Chart (Text-based)
+      const finalY = doc.lastAutoTable.finalY || yPosition;
+      yPosition = finalY + 20;
+      
+      if (yPosition > pageHeight - 80) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      
+      addText('Role Distribution', 20, yPosition, { fontSize: 16, fontStyle: 'bold' });
+      yPosition += 15;
+      
+      const roleDistribution = [
+        { role: 'Admin', count: adminUsers, percentage: totalUsers > 0 ? ((adminUsers / totalUsers) * 100).toFixed(1) : 0 },
+        { role: 'Seller', count: sellerUsers, percentage: totalUsers > 0 ? ((sellerUsers / totalUsers) * 100).toFixed(1) : 0 },
+        { role: 'User', count: regularUsers, percentage: totalUsers > 0 ? ((regularUsers / totalUsers) * 100).toFixed(1) : 0 }
+      ];
+      
+      roleDistribution.forEach(role => {
+        addText(`${role.role}: ${role.count} users (${role.percentage}%)`, 20, yPosition);
+        yPosition += 8;
+      });
+      
+      // Footer
+      yPosition += 20;
+      addLine(20, yPosition, pageWidth - 20, yPosition);
+      yPosition += 10;
+      
+      addText('This report contains user management data from the IKM Gems platform.', 20, yPosition, { fontSize: 10, color: '#666666' });
+      yPosition += 8;
+      addText(`Report generated on ${new Date().toLocaleString()}`, 20, yPosition, { fontSize: 10, color: '#666666' });
+      
+      // Save the PDF
+      const fileName = `user-management-report-${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(fileName);
+      
+      // Show success message
+      alert('✅ User Management Report generated successfully!\n\nThe report has been downloaded to your default download folder.');
+      
+    } catch (error) {
+      console.error('Error generating report:', error);
+      alert('❌ Error generating report. Please try again.');
+    } finally {
+      setGeneratingReport(false);
+    }
+  };
+
   const tabs = [
     { id: 'general', label: 'General', icon: User },
     { id: 'security', label: 'Security', icon: Shield },
@@ -260,33 +492,100 @@ export default function AdminUserManagement() {
             </div>
           )}
 
-          {/* Filters */}
+          {/* Filters and Actions */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search users by name or email..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 flex-1">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder="Search users by name or email..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div className="relative">
+                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <select
+                    value={roleFilter}
+                    onChange={e => setRoleFilter(e.target.value)}
+                    className="pl-10 pr-8 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="seller">Seller</option>
+                    <option value="user">User</option>
+                  </select>
+                </div>
               </div>
-              <div className="relative">
-                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <select
-                  value={roleFilter}
-                  onChange={e => setRoleFilter(e.target.value)}
-                  className="pl-10 pr-8 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">All Roles</option>
-                  <option value="admin">Admin</option>
-                  <option value="seller">Seller</option>
-                  <option value="user">User</option>
-                </select>
+              
+              {/* Export Options */}
+              <div className="flex items-center">
+                <div className="relative export-dropdown-container">
+                  <button
+                    onClick={() => setShowExportDropdown(!showExportDropdown)}
+                    disabled={generatingReport || filteredUsers.length === 0}
+                    className="inline-flex items-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {generatingReport ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 mr-2" />
+                        Export Data
+                      </>
+                    )}
+                  </button>
+                  
+                  {/* Export Options Dropdown */}
+                  {showExportDropdown && !generatingReport && filteredUsers.length > 0 && (
+                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                      <div className="py-1">
+                        <button
+                          onClick={() => {
+                            generateUserReport('all');
+                            setShowExportDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                        >
+                          <FileText className="w-4 h-4 mr-2 text-blue-600" />
+                          Export as PDF Report
+                        </button>
+                        <button
+                          onClick={() => {
+                            exportToCSV();
+                            setShowExportDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                        >
+                          <FileText className="w-4 h-4 mr-2 text-green-600" />
+                          Export as CSV
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+            
+            {/* Report Info */}
+            {filteredUsers.length > 0 && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center">
+                  <FileText className="w-4 h-4 text-blue-600 mr-2" />
+                  <span className="text-sm text-blue-800">
+                    Report will include {filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''}
+                    {searchTerm && ` matching "${searchTerm}"`}
+                    {roleFilter && ` with role "${roleFilter}"`}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Users Table */}
