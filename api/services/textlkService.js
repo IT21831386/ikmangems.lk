@@ -3,9 +3,9 @@ import axios from 'axios';
 class TextLKService {
   constructor() {
     // Use your new TextLK API credentials
-    this.apiKey = process.env.TEXTLK_API_KEY || '1652|LpFvluflFii5JufVSbQ6qO6G5ffTnCyxkDyrnFqF68828cb0';
-    this.baseURL = 'https://app.text.lk/api/http'; // Use HTTP API for SMS
-    this.senderId = process.env.TEXTLK_SENDER_ID || 'ikmangems';
+    this.apiKey = process.env.TEXTLK_API_TOKEN;
+    this.baseURL = 'https://app.text.lk/api/http/'; // Use HTTP API for SMS
+    this.senderId = process.env.SENDER_ID;
     
     console.log('TextLK Service initialized with new API key');
     console.log('API Key:', this.apiKey ? this.apiKey.substring(0, 10) + '...' : 'NOT SET');

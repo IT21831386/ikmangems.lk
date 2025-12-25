@@ -12,8 +12,8 @@ const Navigation = () => {
   const menuItems = [
     { name: "Home", path: "/" },
     { name: "Auction", path: "/auction" },
-    { name: "Contact us", path: "/contact" },
-    { name: "Notifications", path: "/notifications" },
+    { name: "Contact us", path: "/contact-us" },
+    { name: "Feedback", path: "/feedback" },
   ];
 
   const handleLogout = () => {

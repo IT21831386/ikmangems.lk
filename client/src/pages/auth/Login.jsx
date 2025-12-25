@@ -47,19 +47,17 @@ export default function Signin() {
       );
 
       if (response.data.success) {
-        const loggedInUser = response.data.user; // user object with role
+        const loggedInUser = response.data.user;
         setUser(loggedInUser);
         localStorage.setItem("user", JSON.stringify(loggedInUser));
 
         // Role-based navigation
-        if (loggedInUser.role === "buyer") {
-          navigate("/", { replace: true });
-        } else if (loggedInUser.role === "seller") {
+        if (loggedInUser.role === "seller") {
           navigate("/seller-dashboard", { replace: true });
         } else if (loggedInUser.role === "admin") {
           navigate("/admin-dashboard", { replace: true });
         } else {
-          navigate("/", { replace: true });
+          navigate("/bidder-dashboard", { replace: true });
         }
       } else {
         setServerError(response.data.message || "Login failed");
@@ -82,13 +80,12 @@ export default function Signin() {
 
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-          {/* Email */}
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              placeholder="m@example.com"
+              placeholder="you@example.com"
               {...register("email")}
             />
             {errors.email && (
@@ -96,7 +93,6 @@ export default function Signin() {
             )}
           </div>
 
-          {/* Password */}
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
@@ -113,7 +109,6 @@ export default function Signin() {
             )}
           </div>
 
-          {/* Server error */}
           {serverError && <p className="text-red-500 text-sm">{serverError}</p>}
 
           <CardFooter className="flex flex-col gap-2">
@@ -129,7 +124,7 @@ export default function Signin() {
             </Button>
 
             <div className="text-center text-sm mt-2">
-              Dont have a accont?{" "}
+              Don't have an account?{" "}
               <Link to="/signup" className="text-blue-500 hover:text-blue-800">
                 Sign Up
               </Link>

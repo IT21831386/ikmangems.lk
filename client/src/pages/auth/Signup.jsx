@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,16 +17,41 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-// Zod schema for signup
+// Step 1: Ask question
+function RoleSelector({ onSelectRole }) {
+  return (
+    <Card className="w-full max-w-md mx-auto mt-40">
+      <CardHeader>
+        <CardTitle>Select Registration type</CardTitle>
+        <CardDescription></CardDescription>
+      </CardHeader>
+      <CardContent className="flex gap-4 justify-center">
+        <Button
+          onClick={() => onSelectRole("seller")}
+          className="bg-transparent border text-black hover:text-white border-blue-500 hover:bg-blue-800"
+        >
+          Register as a seller
+        </Button>
+        <Button
+          onClick={() => onSelectRole("user")}
+          className="bg-blue-600 hover:bg-blue-800"
+        >
+          Register as a Bidder
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Step 2: Signup form
 const signupSchema = z
   .object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
+    firstName: z.string().min(2, "First name must be at least 2 characters"),
+    lastName: z.string().min(2, "Last name must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(6, "Confirm Password is required"),
-    role: z.enum(["seller", "bidder"], "Select a user type"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -33,22 +59,22 @@ const signupSchema = z
   });
 
 export default function Signup() {
-  const navigate = useNavigate();
+  const [role, setRole] = useState(null);
   const [serverError, setServerError] = useState("");
+  const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      name: "",
+      firstName: "",
+      lastName: "",
       email: "",
       password: "",
       confirmPassword: "",
-      role: "bidder",
     },
   });
 
@@ -58,10 +84,12 @@ export default function Signup() {
       const response = await axios.post(
         "http://localhost:5001/api/auth/register",
         {
-          name: data.name,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          name: `${data.firstName} ${data.lastName}`, // full name for backend
           email: data.email,
           password: data.password,
-          role: data.role,
+          role, // seller or user
         }
       );
 
@@ -78,39 +106,45 @@ export default function Signup() {
     }
   };
 
+  if (!role) {
+    return <RoleSelector onSelectRole={setRole} />;
+  }
+
   return (
     <Card className="w-full max-w-md mx-auto mt-10 mb-10">
       <CardHeader>
         <CardTitle>Sign Up</CardTitle>
-        <CardDescription>Create your account</CardDescription>
+        <CardDescription>
+          Create your account as a {role === "seller" ? "Seller" : "User"}
+        </CardDescription>
       </CardHeader>
 
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          {/* Name */}
           <div className="grid gap-2">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" {...register("name")} placeholder="Your name" />
-            {errors.name && (
-              <p className="text-red-500 text-sm">{errors.name.message}</p>
+            <Label htmlFor="firstName">First Name</Label>
+            <Input id="firstName" {...register("firstName")} />
+            {errors.firstName && (
+              <p className="text-red-500 text-sm">{errors.firstName.message}</p>
             )}
           </div>
 
-          {/* Email */}
+          <div className="grid gap-2">
+            <Label htmlFor="lastName">Last Name</Label>
+            <Input id="lastName" {...register("lastName")} />
+            {errors.lastName && (
+              <p className="text-red-500 text-sm">{errors.lastName.message}</p>
+            )}
+          </div>
+
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              {...register("email")}
-              placeholder="you@example.com"
-            />
+            <Input id="email" type="email" {...register("email")} />
             {errors.email && (
               <p className="text-red-500 text-sm">{errors.email.message}</p>
             )}
           </div>
 
-          {/* Password */}
           <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" {...register("password")} />
@@ -119,7 +153,6 @@ export default function Signup() {
             )}
           </div>
 
-          {/* Confirm Password */}
           <div className="grid gap-2">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
             <Input
@@ -128,38 +161,7 @@ export default function Signup() {
               {...register("confirmPassword")}
             />
             {errors.confirmPassword && (
-              <p className="text-red-500 text-sm">
-                {errors.confirmPassword.message}
-              </p>
-            )}
-          </div>
-
-          {/* User Type */}
-          <div className="grid gap-2">
-            <Label>Register As</Label>
-            <Controller
-              name="role"
-              control={control}
-              render={({ field }) => (
-                <RadioGroup
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="bidder" id="bidder" />
-                    <Label htmlFor="bidder">Bidder</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="seller" id="seller" />
-                    <Label htmlFor="seller">Seller</Label>
-                  </div>
-                </RadioGroup>
-              )}
-            />
-
-            {errors.role && (
-              <p className="text-red-500 text-sm">{errors.role.message}</p>
+              <p className="text-red-500 text-sm">{errors.confirmPassword.message}</p>
             )}
           </div>
 
@@ -169,19 +171,21 @@ export default function Signup() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full  hover:bg-blue-800 bg-blue-600"
+              className="w-full hover:bg-blue-800 bg-blue-600"
             >
               {isSubmitting ? "Signing up..." : "Sign Up"}
             </Button>
 
-            <div className="text-center text-sm mt-2">
-              Already have an account?{" "}
+          </CardFooter>
+        </form>
+
+            <div className="text-center text-sm mt-5">
+              Log in instead?{" "}
               <Link to="/login" className="text-blue-500 hover:text-blue-800">
                 Login
               </Link>
             </div>
-          </CardFooter>
-        </form>
+
       </CardContent>
     </Card>
   );

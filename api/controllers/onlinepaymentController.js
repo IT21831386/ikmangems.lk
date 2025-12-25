@@ -1,7 +1,7 @@
 import OnlinePayment from "../models/onlinepaymentModel.js";
 import textlkService from "../services/textlkService.js";
 import emailService from "../services/emailService.js";
-import axios from "axios";
+//import axios from "axios";
 
 // Create a new online payment
 export const createOnlinePayment = async (req, res) => {
@@ -32,11 +32,13 @@ export const createOnlinePayment = async (req, res) => {
 
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    
+
     // Send OTP via TextLK
     console.log('Sending OTP to:', contactNumber);
-    console.log('Generated OTP:', otp);
-    const smsResult = await textlkService.sendOTP(contactNumber, `Your OTP for ikmangems.lk payment verification is: ${otp}. Valid for 7 minutes.`);
+    const smsResult = await textlkService.sendOTP(
+      contactNumber,
+      `Your OTP for ikmangems.lk payment verification is: ${otp}. Valid for 7 minutes.`
+    );
     console.log('SMS Result:', smsResult);
     
     if (!smsResult.success) {
@@ -70,7 +72,7 @@ export const createOnlinePayment = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "OTP sent successfully to your mobile number",
+      message: "Payment initiated successfully",
       data: {
         id: onlinePayment._id,
         status: onlinePayment.status,
@@ -307,12 +309,12 @@ export const verifyOTP = async (req, res) => {
     // Debug logging
     console.log('=== OTP VERIFICATION DEBUG ===');
     console.log('Payment ID:', paymentId);
-    console.log('Expected OTP (from DB):', onlinePayment.otp);
-    console.log('Provided OTP (from user):', otp);
-    console.log('OTP Match:', onlinePayment.otp === otp);
-    console.log('OTP Expiry:', onlinePayment.otpExpiry);
+    //console.log('Expected OTP (from DB):', onlinePayment.otp);
+    //console.log('Provided OTP (from user):', otp);
+    //console.log('OTP Match:', onlinePayment.otp === otp);
+    //console.log('OTP Expiry:', onlinePayment.otpExpiry);
     console.log('Current Time:', new Date());
-    console.log('OTP Expired:', new Date() > onlinePayment.otpExpiry);
+    //console.log('OTP Expired:', new Date() > onlinePayment.otpExpiry);
 
     // Verify OTP
     if (onlinePayment.otp !== otp) {
@@ -376,7 +378,10 @@ export const resendOTP = async (req, res) => {
     const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
     
     // Send OTP via TextLK
-    const smsResult = await textlkService.sendOTP(onlinePayment.contactNumber);
+    const smsResult = await textlkService.sendOTP(
+      onlinePayment.contactNumber,
+      `Your OTP for ikmangems.lk payment verification is: ${newOtp}. Valid for 7 minutes.`
+    );
     
     if (!smsResult.success) {
       return res.status(500).json({
@@ -434,7 +439,7 @@ export const testServer = async (req, res) => {
 };
 
 // Test TextLK connection
-export const testTextLK = async (req, res) => {
+/*export const testTextLK = async (req, res) => {
   try {
     const apiKey = process.env.TEXTLK_API_KEY || '1652|LpFvluflFii5JufVSbQ6qO6G5ffTnCyxkDyrnFqF68828cb0';
     
@@ -464,14 +469,14 @@ export const testTextLK = async (req, res) => {
           }
         });
         
-        console.log(`✅ ${endpoint} worked! Status: ${response.status}`);
+        console.log(` ${endpoint} worked! Status: ${response.status}`);
         console.log('Response:', response.data);
         
         workingEndpoint = endpoint;
         responseData = response.data;
         break;
       } catch (error) {
-        console.log(`❌ ${endpoint} failed:`, error.response?.status, error.response?.data?.message || error.message);
+        console.log(` ${endpoint} failed:`, error.response?.status, error.response?.data?.message || error.message);
       }
     }
     
@@ -638,10 +643,10 @@ export const testSMSSimple = async (req, res) => {
             workingPayload = payload;
             break;
           } else {
-            console.log('❌ Response indicates failure:', response.data);
+            console.log(' Response indicates failure:', response.data);
           }
         } catch (error) {
-          console.log(`❌ ${endpoint} failed:`, error.response?.status, error.response?.data?.message || error.message);
+          console.log(` ${endpoint} failed:`, error.response?.status, error.response?.data?.message || error.message);
         }
       }
       if (success) break;
@@ -714,7 +719,7 @@ export const testSMS = async (req, res) => {
     });
   }
 };
-
+*/
 // Delete online payment
 export const deleteOnlinePayment = async (req, res) => {
   try {

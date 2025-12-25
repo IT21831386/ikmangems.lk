@@ -461,7 +461,7 @@ const AdminPaymentStatus = () => {
                 setBankFilter('');
                 setStatusFilter('');
               }}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all duration-200 text-sm font-semibold"
+              style={{ backgroundColor: '#4ECDC4' }} className="px-4 py-2 text-black rounded-lg hover:bg-gray-600 transition-all duration-200 text-sm font-semibold"
             >
               Clear All Filters
             </button>
@@ -469,8 +469,8 @@ const AdminPaymentStatus = () => {
         </div>
 
         {/* Payment Management Table */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
-          <div style={{ backgroundColor: '#2C3E50' }} className="text-white px-8 py-6 rounded-t-3xl">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div style={{ backgroundColor: '#fff' }} className="text-blue-600 px-8 py-6 rounded-t-2xl">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Transaction History</h2>
               <button
@@ -594,7 +594,7 @@ const AdminPaymentStatus = () => {
                           <span 
                             className="text-xs font-semibold"
                             style={{ 
-                              color: payment.deleted ? '#6B7280' : (payment.status === 'complete' || payment.status === 'success' ? '#4ECDC4' : '#FF6B6B')
+                              color: payment.deleted ? '#6B7280' : (payment.status === 'complete' || payment.status === 'success' ? '#4ECDC4': '#FF6B6B')
                             }}
                           >
                             {payment.deleted ? 'Deleted by user' : (payment.status === 'success' ? 'Approved' : payment.status === 'failure' ? 'Rejected' : getStatusText(payment.status))}

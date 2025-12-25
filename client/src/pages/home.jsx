@@ -77,7 +77,7 @@ const WelcomeSection = () => {
             <div className="w-10 h-10 bg-blue-600 rounded-full"></div>
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Ayubowani!</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Ayubowan!</h2>
             <h3 className="text-3xl font-bold text-gray-900">
               Explore Sri Lankan Authentic Gems
             </h3>
